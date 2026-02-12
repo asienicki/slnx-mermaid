@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/SlnxMermaid.CLI/SlnxMermaid.CLI.csproj" />
+  <Project Path="src/SlnxMermaid.Core/SlnxMermaid.Core.csproj" Id="d5badfcd-044d-4ead-b30a-699167eac31b" />
+</Solution>

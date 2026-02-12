@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SlnxMermaid.CLI": {
+      "commandName": "Project",
+      "commandLineArgs": "--config ..\\..\\..\\..\\..\\slnx-mermaid.yml"
+    }
+  }
+}

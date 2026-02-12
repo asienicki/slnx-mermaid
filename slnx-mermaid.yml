@@ -1,0 +1,24 @@
+# slnx-mermaid.yml example file
+
+solution: ../slnx-mermaid/SlnxMermaid.slnx
+
+diagram:
+  direction: TD   # TD (top-down) | LR (left-right)
+
+filters:
+  exclude:
+    - Tests
+    - Dto
+    - Enums
+    - AppHost
+    - ServiceDefaults
+    - Seeder
+
+naming:
+  stripPrefix: SlnxMermaid_
+  aliases:
+    Core: CORE
+    CLI: Command Line Interface
+
+output:
+  file: docs\architecture\{date}-dependency-graph-mermaid.md
