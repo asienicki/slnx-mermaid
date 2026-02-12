@@ -1,3 +1,9 @@
+[![CI](https://github.com/asienicki/slnx-mermaid/actions/workflows/ci.yml/badge.svg)](https://github.com/asienicki/slnx-mermaid/actions/workflows/ci.yml)
+![License](https://img.shields.io/github/license/asienicki/slnx-mermaid)
+![Last Commit](https://img.shields.io/github/last-commit/asienicki/slnx-mermaid)
+![PRs](https://img.shields.io/github/issues-pr/asienicki/slnx-mermaid)
+[![NuGet](https://img.shields.io/nuget/v/slnx-mermaid.svg)](https://www.nuget.org/packages/slnx-mermaid/)
+
 # 🧜 slnx-mermaid
 
 Generate Mermaid dependency diagrams from .NET solution files (`.slnx`, `.sln`).
