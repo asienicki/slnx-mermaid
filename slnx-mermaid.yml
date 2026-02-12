@@ -18,7 +18,7 @@ naming:
   stripPrefix: SlnxMermaid_
   aliases:
     Core: CORE
-    CLI: Command Line Interface
+    CLI: CommandLineInterface
 
 output:
   file: docs\architecture\{date}-dependency-graph-mermaid.md
