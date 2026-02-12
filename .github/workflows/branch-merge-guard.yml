@@ -37,7 +37,7 @@ jobs:
           #
           if [[ "$BASE" == "master" ]]; then
             # manual dev flow
-            if [[ "$HEAD" =~ ^feat/.* || "$HEAD" =~ ^fix/.* ]]; then
+            if [[ "$HEAD" =~ ^feat/.* || "$HEAD" =~ ^fix/.* || "$HEAD" =~ ^codex/.* ]]; then
               exit 0
             fi
 
@@ -46,7 +46,7 @@ jobs:
               exit 0
             fi
 
-            fail "Into **master** allowed only from **feat/***, **fix/*** or **rc**."
+            fail "Into **master** allowed only from **feat/***, **fix/***, **codex/*** or **rc**."
           fi
 
           #
