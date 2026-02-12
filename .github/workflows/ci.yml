@@ -6,16 +6,20 @@ on:
       - master
       - feat/**
       - fix/**
-      
+
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
+      - rc
 
 jobs:
   build-test:
     uses: ./.github/workflows/build-test.yml
 
   sonar:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
+      (github.event_name == 'pull_request')
     needs: build-test
     uses: ./.github/workflows/sonar.yml
     secrets:

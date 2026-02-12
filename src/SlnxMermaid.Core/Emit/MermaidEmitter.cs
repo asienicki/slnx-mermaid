@@ -34,12 +34,12 @@ public sealed class MermaidEmitter
 
             var from = _naming.Transform(node.Id);
 
-            foreach (var dep in node.Dependencies)
+            foreach (var depId in node.Dependencies.Select(dep => dep.Id))
             {
-                if (!_filter.IsAllowed(dep.Id))
+                if (!_filter.IsAllowed(depId))
                     continue;
 
-                var to = _naming.Transform(dep.Id);
+                var to = _naming.Transform(depId);
                 edges.Add((from, to));
             }
         }

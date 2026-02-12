@@ -5,7 +5,7 @@ namespace SlnxMermaid.Core.Naming;
 public sealed class NameTransformer
 {
     private readonly string? _stripPrefix;
-    private readonly IReadOnlyDictionary<string, string> _aliases;
+    private readonly Dictionary<string, string> _aliases;
 
     public NameTransformer(NamingConfig namingConfig)
     {
