@@ -15,8 +15,7 @@ public static class SlnxMermaidConfigExtensions
 
     public static SlnxMermaidConfig Normalize(this SlnxMermaidConfig config, string configPath)
     {
-        if (config is null)
-            throw new ArgumentNullException(nameof(config));
+        ArgumentNullException.ThrowIfNull(config);
 
         var baseDir = configPath.ResolveBaseDirectory();
 

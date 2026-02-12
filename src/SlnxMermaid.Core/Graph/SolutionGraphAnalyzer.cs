@@ -2,9 +2,9 @@
 
 namespace SlnxMermaid.Core.Graph;
 
-public sealed class SolutionGraphAnalyzer
+public static class SolutionGraphAnalyzer
 {
-    public IReadOnlyCollection<ProjectNode> Analyze(string solutionPath)
+    public static IReadOnlyCollection<ProjectNode> Analyze(string solutionPath)
     {
         var graph = new ProjectGraph(solutionPath);
 
