@@ -9,10 +9,8 @@ public class GenerateCommandHandleResultTests
     [Fact]
     public async Task HandleResult_WhenOutputPathIsMissing_ShouldThrowDiagramOutputPathMissingException()
     {
-        var exception = await Assert.ThrowsAsync<TargetInvocationException>(() =>
+        await Assert.ThrowsAsync<DiagramOutputPathMissingException>(() =>
             InvokeHandleResultAsync(null, "graph TD", _ => { }, CancellationToken.None));
-
-        Assert.IsType<DiagramOutputPathMissingException>(exception.InnerException);
     }
 
     [Fact]

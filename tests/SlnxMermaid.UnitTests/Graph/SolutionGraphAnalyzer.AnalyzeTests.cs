@@ -1,9 +1,16 @@
+using Microsoft.Build.Locator;
 ﻿using SlnxMermaid.Core.Graph;
 
 namespace SlnxMermaid.Core.Tests.Graph;
 
 public class SolutionGraphAnalyzerAnalyzeTests
 {
+    public SolutionGraphAnalyzerAnalyzeTests()
+    {
+        if (!MSBuildLocator.IsRegistered)
+            MSBuildLocator.RegisterDefaults();
+    }
+
     [Fact]
     public void Analyze_WhenSolutionContainsProjectReference_ShouldCreateDependencyEdge()
     {
