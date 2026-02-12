@@ -124,12 +124,13 @@ jobs:
           echo "Testing with version: ${{ steps.version.outputs.version }}"
           dotnet test SlnxMermaid.slnx -c Release /p:Version=${{ steps.version.outputs.version }}
 
-      - name: Pack
+      - name: Pack CLI only
         run: |
-          echo "Packing NuGet version: ${{ steps.version.outputs.version }}"
-          dotnet pack -c Release \
+          echo "Packing CLI only - version: ${{ steps.version.outputs.version }}"
+
+          dotnet pack src/SlnxMermaid.CLI/SlnxMermaid.CLI.csproj \
+            -c Release \
             /p:Version=${{ steps.version.outputs.version }} \
-            /p:IsPacking=true \
             -o ./nupkg
 
           echo "Generated packages:"
