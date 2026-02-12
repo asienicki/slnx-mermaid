@@ -1,0 +1,225 @@
+name: License compliance check
+
+on:
+  push:
+    branches: [ "main", "feat/**" ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  license-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout
+        uses: actions/checkout@v4
+
+      - name: 2. Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: 3. Ensure tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq unzip curl
+
+      - name: 4. Restore
+        run: dotnet restore
+
+      - name: 5. Export dependency list
+        run: |
+          dotnet list package \
+            --include-transitive \
+            --format json > packages.json
+
+      - name: 6. Setup yq
+        uses: mikefarah/yq@v4
+
+      - name: 7. License compliance check (NuGet nuspec)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          WHITELIST=$(yq -r '.whitelist[]' licenses/policy.yml)
+          WARNLIST=$(yq -r '.warnlist[]' licenses/policy.yml)
+          BLACKLIST=$(yq -r '.blacklist[]' licenses/policy.yml)
+          
+          mkdir -p .licenses
+          RESULTS=".licenses/results.tsv"
+          mkdir -p .licenses/tmp
+          : > "$RESULTS"
+
+          FAIL=0
+
+          normalize() {
+            echo "$1" | sed -E '
+              s#https://licenses\.nuget\.org/MIT#MIT#I;
+              s#https://licenses\.nuget\.org/Apache-2\.0#Apache-2.0#I;
+              s#https://licenses\.nuget\.org/BSD-3-Clause#BSD-3-Clause#I;
+              s#https://licenses\.nuget\.org/BSD-2-Clause#BSD-2-Clause#I;
+              s#https://aka.ms/deprecateLicenseUrl#DEPRECATED_LICENSE_URL#I;
+              s/ License//I;
+              s/^Apache License 2.0$/Apache-2.0/I;
+            ' | xargs
+          }
+
+          is_exception() {
+            local name=$1
+            local version=$2
+            yq -e ".exceptions.\"$name\" and .exceptions.\"$name\".version == \"$version\"" \
+              licenses/policy.yml > /dev/null 2>&1
+          }
+
+          while IFS=$'\t' read -r NAME VERSION; do
+            LICENSE=""
+
+            echo "→ $NAME $VERSION"
+
+            if is_exception "$NAME" "$VERSION"; then
+              EX_LICENSE=$(yq -r ".exceptions.\"$NAME\".license" licenses/policy.yml)
+              EX_LICENSE=$(normalize "$EX_LICENSE")
+
+              if echo "$BLACKLIST" | grep -qx "$EX_LICENSE"; then
+                echo "::error::Exception violates blacklist: $NAME $VERSION ($EX_LICENSE)"
+                echo -e "$NAME\t$VERSION\t$EX_LICENSE\tDISALLOWED" >> "$RESULTS"
+                FAIL=1
+              else
+                echo "::notice::Exception applied for $NAME $VERSION ($EX_LICENSE)"
+                echo -e "$NAME\t$VERSION\t$EX_LICENSE\tEXCEPTION" >> "$RESULTS"
+              fi
+              continue
+            fi
+
+            NUPKG=".licenses/$NAME.$VERSION.nupkg"
+            TMP=".licenses/tmp/$NAME.$VERSION"
+            mkdir -p "$TMP"
+
+            URL="https://api.nuget.org/v3-flatcontainer/${NAME,,}/$VERSION/${NAME,,}.$VERSION.nupkg"
+
+            if ! curl -fsSL "$URL" -o "$NUPKG"; then
+              LICENSE="UNKNOWN"
+            else
+              unzip -qq -o "$NUPKG" '*.nuspec' -d "$TMP" || true
+              NUSPEC=$(ls "$TMP"/*.nuspec 2>/dev/null | head -n 1)
+
+              if [[ -z "${NUSPEC:-}" ]]; then
+                LICENSE="UNKNOWN"
+              else
+                LICENSE=$(sed -nE 's:.*<(licenseExpression|license)>([^<]+)<.*:\2:p' "$NUSPEC")
+                [[ -z "$LICENSE" ]] && LICENSE=$(sed -nE 's:.*<licenseUrl>([^<]+)<.*:\1:p' "$NUSPEC")
+                LICENSE=${LICENSE:-UNKNOWN}
+              fi
+            fi
+
+            rm -rf "$TMP"
+            LICENSE=$(normalize "$LICENSE")
+            echo "   license: $LICENSE"
+
+            if [[ "$LICENSE" == "DEPRECATED_LICENSE_URL" ]]; then
+              echo "::error::Unclassified dependency – deprecated licenseUrl used: $NAME $VERSION"
+              echo -e "$NAME\t$VERSION\t$LICENSE\tUNCLASSIFIED" >> "$RESULTS"
+              FAIL=1
+              continue
+            fi
+
+            if [[ "$LICENSE" == "UNKNOWN" ]]; then
+              echo "::error::Unclassified dependency – missing license: $NAME $VERSION"
+              echo -e "$NAME\t$VERSION\t$LICENSE\tUNCLASSIFIED" >> "$RESULTS"
+              FAIL=1
+              continue
+            fi
+
+            if echo "$BLACKLIST" | grep -qx "$LICENSE"; then
+              echo "::error::Disallowed license detected: $NAME ($LICENSE)"
+              echo -e "$NAME\t$VERSION\t$LICENSE\tDISALLOWED" >> "$RESULTS"
+              FAIL=1
+            elif echo "$WARNLIST" | grep -qx "$LICENSE"; then
+              echo "::warning::Conditionally allowed license: $NAME ($LICENSE)"
+              echo -e "$NAME\t$VERSION\t$LICENSE\tCONDITIONALLY_ALLOWED" >> "$RESULTS"
+            elif ! echo "$WHITELIST" | grep -qx "$LICENSE"; then
+              echo "::error::Non-compliant license (not classified): $NAME ($LICENSE)"
+              echo -e "$NAME\t$VERSION\t$LICENSE\tUNCLASSIFIED" >> "$RESULTS"
+              FAIL=1
+            else
+              echo "   ✅ compliant"
+              echo -e "$NAME\t$VERSION\t$LICENSE\tOK" >> "$RESULTS"
+            fi
+
+          done < <(
+            jq -r '
+              .projects[]?
+              | .frameworks[]?
+              | (.topLevelPackages[]?, .transitivePackages[]?)
+              | [.id, .resolvedVersion] | @tsv
+            ' packages.json | sort -u
+          )
+
+          exit $FAIL
+
+      - name: 8. Build PR comment
+        if: always() && github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          RESULTS=".licenses/results.tsv"
+
+          echo "## 📜 License Compliance Report" > comment.md
+
+          # ❌ Non-compliant / Unclassified
+          if awk -F'\t' '$4=="DISALLOWED" || $4=="UNCLASSIFIED" {exit 1}' "$RESULTS"; then
+            :
+          else
+            echo "" >> comment.md
+            echo "### ❌ Non-compliant / Unclassified" >> comment.md
+            awk -F'\t' '$4=="DISALLOWED" || $4=="UNCLASSIFIED" {printf "- **%s** %s — %s\n",$1,$2,$3}' \
+              "$RESULTS" >> comment.md
+          fi
+
+          # 🟦 Exceptions applied
+          if awk -F'\t' '$4=="EXCEPTION" {exit 1}' "$RESULTS"; then
+            :
+          else
+            echo "" >> comment.md
+            echo "### 🟦 Exceptions applied" >> comment.md
+            awk -F'\t' '$4=="EXCEPTION" {printf "- **%s** %s — %s\n",$1,$2,$3}' \
+              "$RESULTS" >> comment.md
+          fi
+
+          # ⚠️ Conditionally Allowed
+          if awk -F'\t' '$4=="CONDITIONALLY_ALLOWED" {exit 1}' "$RESULTS"; then
+            :
+          else
+            echo "" >> comment.md
+            echo "### ⚠️ Conditionally Allowed" >> comment.md
+            awk -F'\t' '$4=="CONDITIONALLY_ALLOWED" {printf "- **%s** %s — %s\n",$1,$2,$3}' \
+              "$RESULTS" >> comment.md
+          fi
+
+          # ✅ Summary (by license) – zawsze ma sens
+          echo "" >> comment.md
+          echo "### ✅ Summary (by license)" >> comment.md
+          awk -F'\t' '{print $3}' "$RESULTS" \
+            | sort | uniq -c | sort -nr \
+            | awk '{printf "- **%s**: %s deps\n",$2,$1}' >> comment.md
+
+      - name: 9. Comment on PR
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('comment.md', 'utf8');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body
+            });
