@@ -1,3 +1,5 @@
+[![CI](https://github.com/asienicki/slnx-mermaid/actions/workflows/ci.yml/badge.svg)](https://github.com/asienicki/slnx-mermaid/actions/workflows/ci.yml)
+
 # 🧜 slnx-mermaid
 
 Generate Mermaid dependency diagrams from .NET solution files (`.slnx`, `.sln`).
