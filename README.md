@@ -148,7 +148,7 @@ Example Mermaid content:
 
 ```mermaid
 graph TD
-    CORE --> Command Line Interface
+    CORE --> CommandLineInterface
 ```
 
 ---
