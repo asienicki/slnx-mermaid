@@ -71,14 +71,14 @@ jobs:
         run: |
           set -euo pipefail
 
-          echo "Listing all v2.* tags:"
-          ALL_TAGS=$(git tag --list 'v2.*' --sort=-v:refname)
+          echo "Listing all v1.* tags:"
+          ALL_TAGS=$(git tag --list 'v1.*' --sort=-v:refname)
           echo "$ALL_TAGS"
 
           STABLE_TAG=$(echo "$ALL_TAGS" | grep -Ev '\-rc\.' | head -n 1)
 
           if [ -z "$STABLE_TAG" ]; then
-            echo "ERROR: No stable v2 tag found (expected e.g. v2.0.1)"
+            echo "ERROR: No stable v1 tag found (expected e.g. v1.0.1)"
             exit 1
           fi
 
