@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable">
+  <Extern href="stdidcmd.h" />
+  <Extern href="vsshlids.h" />
+
+  <Commands package="guidSlnxMermaidPackage">
+    <Groups>
+      <Group guid="guidSlnxMermaidCommandSet" id="MyMenuGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE" />
+      </Group>
+    </Groups>
+
+    <Buttons>
+      <Button guid="guidSlnxMermaidCommandSet" id="cmdidCreateMermaidDiagram" priority="0x0100" type="Button">
+        <Parent guid="guidSlnxMermaidCommandSet" id="MyMenuGroup" />
+        <Strings>
+          <ButtonText>Stwórz diagram mermaid</ButtonText>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+
+  <Symbols>
+    <GuidSymbol name="guidSlnxMermaidPackage" value="{8f17fd67-7aa8-4fd6-8f7a-2f4bad8b9400}" />
+    <GuidSymbol name="guidSlnxMermaidCommandSet" value="{7d71780f-b20f-4672-9732-aab300428f2d}">
+      <IDSymbol name="MyMenuGroup" value="0x1020" />
+      <IDSymbol name="cmdidCreateMermaidDiagram" value="0x0100" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>
