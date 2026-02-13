@@ -7,9 +7,7 @@ public class FilePathExtensionsResolveBaseDirectoryTests
     [Fact]
     public void ResolveBaseDirectory_WhenConfigPathIsNull_ShouldReturnCurrentDirectory()
     {
-        string? configPath = null;
-
-        var result = configPath.ResolveBaseDirectory();
+        var result = FilePathExtensions.ResolveBaseDirectory(null!);
 
         Assert.Equal(Directory.GetCurrentDirectory(), result);
     }

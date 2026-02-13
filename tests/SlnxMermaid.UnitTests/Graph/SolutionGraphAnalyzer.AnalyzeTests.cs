@@ -1,5 +1,5 @@
 using Microsoft.Build.Locator;
-﻿using SlnxMermaid.Core.Graph;
+using SlnxMermaid.Core.Graph;
 
 namespace SlnxMermaid.Core.Tests.Graph;
 
@@ -51,8 +51,8 @@ public class SolutionGraphAnalyzerAnalyzeTests
 """);
 
             var nodes = SolutionGraphAnalyzer.Analyze(solution);
-            var a = Assert.Single(nodes.Where(n => n.Id == "Project_A"));
-            var b = Assert.Single(nodes.Where(n => n.Id == "Project_B"));
+            var a = Assert.Single(nodes, n => n.Id == "Project_A");
+            var b = Assert.Single(nodes, n => n.Id == "Project_B");
 
             Assert.Contains(b, a.Dependencies);
         }
