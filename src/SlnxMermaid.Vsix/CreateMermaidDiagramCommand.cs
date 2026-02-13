@@ -166,9 +166,14 @@ output:
 
             var serviceProvider = (IServiceProvider)package;
             var dte = serviceProvider.GetService(typeof(SDTE)) as DTE;
-            if (dte == null || dte.SelectedItems == null || dte.SelectedItems.Count == 0)
+            if (dte == null)
             {
                 return string.Empty;
+            }
+
+            if (dte.SelectedItems == null || dte.SelectedItems.Count == 0)
+            {
+                return dte.Solution != null ? dte.Solution.FullName ?? string.Empty : string.Empty;
             }
 
             var selectedItem = dte.SelectedItems.Item(1);
