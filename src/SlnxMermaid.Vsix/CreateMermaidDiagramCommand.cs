@@ -63,7 +63,7 @@ namespace SlnxMermaid.Vsix
 
         private void Execute(object sender, EventArgs e)
         {
-            ThreadHelper.JoinableTaskFactory.RunAsync(async delegate
+            ThreadHelper.JoinableTaskFactory.Run(async delegate
             {
                 await ExecuteAsync();
             });
@@ -172,7 +172,8 @@ output:
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            var dte = package.GetService(typeof(SDTE)) as DTE;
+            var serviceProvider = (IServiceProvider)package;
+            var dte = serviceProvider.GetService(typeof(SDTE)) as DTE;
             if (dte == null || dte.SelectedItems == null || dte.SelectedItems.Count == 0)
             {
                 return string.Empty;
