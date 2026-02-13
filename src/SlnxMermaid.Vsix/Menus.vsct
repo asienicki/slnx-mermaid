@@ -6,7 +6,7 @@
   <Commands package="guidSlnxMermaidPackage">
     <Groups>
       <Group guid="guidSlnxMermaidCommandSet" id="MyMenuGroup" priority="0x0600">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE" />
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_SOLNNODE" />
       </Group>
     </Groups>
 
@@ -18,15 +18,6 @@
         </Strings>
       </Button>
     </Buttons>
-
-    <CommandPlacements>
-      <CommandPlacement guid="guidSlnxMermaidCommandSet" id="cmdidCreateMermaidDiagram" priority="0x0100">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_SOLNNODE" />
-      </CommandPlacement>
-      <CommandPlacement guid="guidSlnxMermaidCommandSet" id="cmdidCreateMermaidDiagram" priority="0x0100">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_ITEMNODE" />
-      </CommandPlacement>
-    </CommandPlacements>
   </Commands>
 
   <Symbols>

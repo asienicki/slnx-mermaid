@@ -59,8 +59,10 @@ namespace SlnxMermaid.Vsix
 
             var targetPath = GetSelectedPath();
             var extension = Path.GetExtension(targetPath);
+
             var isSolution = extension.Equals(".sln", StringComparison.OrdinalIgnoreCase)
-                || extension.Equals(".slnx", StringComparison.OrdinalIgnoreCase);
+                || extension.Equals(".slnx", StringComparison.OrdinalIgnoreCase)
+                || IsAnySolutionOpen();
 
             command.Visible = isSolution;
             command.Enabled = isSolution;
@@ -158,6 +160,16 @@ naming:
 output:
   file: docs/dependencies.md
 ", solutionFileName, inferredPrefix);
+        }
+
+
+        private bool IsAnySolutionOpen()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            var serviceProvider = (IServiceProvider)package;
+            var dte = serviceProvider.GetService(typeof(SDTE)) as DTE;
+            return dte != null && dte.Solution != null && dte.Solution.IsOpen;
         }
 
         private string GetSelectedPath()
