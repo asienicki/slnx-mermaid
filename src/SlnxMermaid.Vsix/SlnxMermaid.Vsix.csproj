@@ -23,6 +23,10 @@
     <Reference Include="System.Design" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SlnxMermaid.Core\SlnxMermaid.Core.csproj" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <EmbeddedResource Include="Menus.vsct">

@@ -20,7 +20,7 @@ public sealed class NameTransformer
         if (!string.IsNullOrEmpty(_stripPrefix) &&
             name.StartsWith(_stripPrefix, StringComparison.Ordinal))
         {
-            name = name[_stripPrefix.Length..];
+            name = name.Substring(_stripPrefix.Length);
         }
 
         return _aliases.TryGetValue(name, out var alias)

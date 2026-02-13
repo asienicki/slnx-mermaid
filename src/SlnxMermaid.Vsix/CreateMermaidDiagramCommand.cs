@@ -2,9 +2,14 @@
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using SlnxMermaid.Core.Config;
+using SlnxMermaid.Core.Emit;
+using SlnxMermaid.Core.Extensions;
+using SlnxMermaid.Core.Filtering;
+using SlnxMermaid.Core.Graph;
+using SlnxMermaid.Core.Naming;
 using System;
 using System.ComponentModel.Design;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -93,51 +98,38 @@ namespace SlnxMermaid.Vsix
                     File.WriteAllText(configPath, BuildDefaultConfig(selectedPath), Encoding.UTF8);
                 }
 
-                var runResult = RunCli(configPath, solutionDirectory);
-
-                if (runResult.exitCode == 0)
+                var outputPath = await Task.Run(delegate
                 {
-                    await ShowMessageAsync("Diagram Mermaid wygenerowany.\nPlik domyślny: docs/dependencies.md", OLEMSGICON.OLEMSGICON_INFO);
-                    return;
-                }
+                    var config = YamlConfigLoader.Load(configPath)
+                        .Normalize(configPath)
+                        .Validate();
 
-                await ShowMessageAsync(
-                    "Nie udało się uruchomić narzędzia 'slnx-mermaid'.\n" +
-                    "Upewnij się, że CLI jest zainstalowane i dostępne w PATH.\n\n" +
-                    runResult.output,
-                    OLEMSGICON.OLEMSGICON_WARNING);
+                    var nodes = SolutionGraphAnalyzer.Analyze(config.Solution);
+                    var naming = new NameTransformer(config.Naming);
+                    var filter = new ProjectFilter(config.Filters.Exclude);
+                    var emitter = new MermaidEmitter(naming, filter);
+
+                    var mermaid = emitter.Emit(nodes, config.Diagram.Direction).WrapCodeForMarkdown();
+
+                    var targetOutput = config.Output.File;
+                    if (string.IsNullOrWhiteSpace(targetOutput))
+                        throw new InvalidOperationException("Brak output.file w konfiguracji.");
+
+                    var outputDirectory = Path.GetDirectoryName(targetOutput);
+                    if (!string.IsNullOrWhiteSpace(outputDirectory))
+                    {
+                        Directory.CreateDirectory(outputDirectory);
+                    }
+
+                    File.WriteAllText(targetOutput, mermaid, Encoding.UTF8);
+                    return targetOutput;
+                });
+
+                await ShowMessageAsync("Diagram Mermaid zapisano do:\n" + outputPath, OLEMSGICON.OLEMSGICON_INFO);
             }
             catch (Exception ex)
             {
                 await ShowMessageAsync("Nie udało się wygenerować diagramu.\n\n" + ex.Message, OLEMSGICON.OLEMSGICON_CRITICAL);
-            }
-        }
-
-        private static (int exitCode, string output) RunCli(string configPath, string workingDirectory)
-        {
-            var psi = new ProcessStartInfo
-            {
-                FileName = "slnx-mermaid",
-                Arguments = "--config \"" + configPath + "\"",
-                WorkingDirectory = workingDirectory,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using (var process = Process.Start(psi))
-            {
-                if (process == null)
-                {
-                    return (-1, "Nie udało się uruchomić procesu slnx-mermaid.");
-                }
-
-                var stdout = process.StandardOutput.ReadToEnd();
-                var stderr = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-
-                return (process.ExitCode, (stdout + Environment.NewLine + stderr).Trim());
             }
         }
 

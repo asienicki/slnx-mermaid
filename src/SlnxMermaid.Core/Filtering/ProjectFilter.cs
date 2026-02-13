@@ -13,5 +13,5 @@ public sealed class ProjectFilter
 
     public bool IsAllowed(string projectId)
         => _excluded.All(x =>
-            !projectId.Contains(x, StringComparison.OrdinalIgnoreCase));
+            projectId.IndexOf(x, StringComparison.OrdinalIgnoreCase) < 0);
 }
