@@ -16,11 +16,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.14.40264" ExcludeAssets="runtime" NoWarn="NU1701" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.14.40265" ExcludeAssets="runtime" NoWarn="NU1701" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SlnxMermaid.Core\SlnxMermaid.Core.csproj" />
+    <Reference Include="System.Design" />
   </ItemGroup>
 
 
