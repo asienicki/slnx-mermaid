@@ -21,16 +21,25 @@ public static class SlnxMermaidConfigExtensions
         var baseDir = configPath.ResolveBaseDirectory();
 
         if (!string.IsNullOrWhiteSpace(config.Solution))
-            config.Solution = config.Solution.ToAbsolute(baseDir);
-
-        if (!string.IsNullOrWhiteSpace(config.Output?.File))
-            config.Output.File = config.Output.File.ToAbsolute(baseDir);
-
-        var file = config.Output?.File;
-
-        if (file?.Contains("{date}") == true)
         {
-            config.Output!.File = file.Replace(
+            config.Solution = config.Solution.ToAbsolute(baseDir);
+        }
+
+        if (config.Output == null)
+        {
+            config.Output = new OutputConfig();
+        }
+
+        var outputFile = config.Output.File;
+        if (!string.IsNullOrWhiteSpace(outputFile))
+        {
+            config.Output.File = outputFile.ToAbsolute(baseDir);
+        }
+
+        outputFile = config.Output.File;
+        if (!string.IsNullOrWhiteSpace(outputFile) && outputFile.Contains("{date}"))
+        {
+            config.Output.File = outputFile.Replace(
                 "{date}",
                 DateTime.Now.ToString("yyyy-MM-dd HH_mm_ss"));
         }
