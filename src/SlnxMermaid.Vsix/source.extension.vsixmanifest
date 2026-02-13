@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Vsix Version="1.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011">
+  <Identifier Id="SlnxMermaid.Vsix">
+    <Name>slnx-mermaid VSIX</Name>
+    <Author>Sharp Code</Author>
+    <Version>1.0.0</Version>
+    <Description xml:space="preserve">Dodaje opcję "Stwórz diagram mermaid" dla plików .sln/.slnx i generuje diagram do docs/dependencies.md.</Description>
+    <ProductArchitecture>amd64</ProductArchitecture>
+  </Identifier>
+  <Installation>
+    <InstallationTarget Id="Microsoft.VisualStudio" Version="[18.0,19.0)" />
+  </Installation>
+  <Dependencies>
+    <Dependency Id="Microsoft.Framework.NDP" DisplayName=".NET Framework" d:Source="Installed" Version="4.8" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011" />
+  </Dependencies>
+  <Assets>
+    <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011" />
+  </Assets>
+</Vsix>

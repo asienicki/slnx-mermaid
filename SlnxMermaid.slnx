@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="src/SlnxMermaid.CLI/SlnxMermaid.CLI.csproj" />
   <Project Path="src/SlnxMermaid.Core/SlnxMermaid.Core.csproj" Id="d5badfcd-044d-4ead-b30a-699167eac31b" />
+  <Project Path="src/SlnxMermaid.Vsix/SlnxMermaid.Vsix.csproj" />
   <Project Path="tests/SlnxMermaid.UnitTests/SlnxMermaid.UnitTests.csproj" Id="b6bc326c-ac66-4d57-b144-8e7a66f968f8" />
 </Solution>
