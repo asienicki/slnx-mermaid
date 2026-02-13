@@ -1,22 +1,32 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
+    <OutputType>Library</OutputType>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
+
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <GeneratePkgDefFile>true</GeneratePkgDefFile>
+    <UseVsixOutput>true</UseVsixOutput>
     <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
     <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
     <IncludeDebugSymbolsInLocalVSIXDeployment>false</IncludeDebugSymbolsInLocalVSIXDeployment>
     <CopyBuildOutputToOutputDirectory>true</CopyBuildOutputToOutputDirectory>
     <UseCodebase>true</UseCodebase>
-    <UseVsixOutput>true</UseVsixOutput>
+
     <AssemblyName>SlnxMermaid.Vsix</AssemblyName>
     <RootNamespace>SlnxMermaid.Vsix</RootNamespace>
+
+    <!-- Enable F5/debug launch into Experimental Visual Studio instance -->
+    <StartAction>Program</StartAction>
+    <StartProgram>$(DevEnvDir)devenv.exe</StartProgram>
+    <StartArguments>/rootsuffix Exp</StartArguments>
+    <StartWorkingDirectory>$(DevEnvDir)</StartWorkingDirectory>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.14.40265" ExcludeAssets="runtime" NoWarn="NU1701" />
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.14.2120" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,7 +36,6 @@
   <ItemGroup>
     <ProjectReference Include="..\SlnxMermaid.Core\SlnxMermaid.Core.csproj" />
   </ItemGroup>
-
 
   <ItemGroup>
     <EmbeddedResource Include="Menus.vsct">
