@@ -16,6 +16,36 @@ blacklist:
   - AGPL-3.0
 
 exceptions:
+  coverlet.msbuild:
+    version: "6.0.4"
+    license: MIT
+    source: https://www.nuget.org/packages/coverlet.msbuild
+    rationale: "Package is distributed under MIT license (manual annotation for dependency review)."
+
+  microsoft.build:
+    version: "18.3.3"
+    license: MIT
+    source: https://www.nuget.org/packages/Microsoft.Build
+    rationale: "Package is distributed under MIT license (manual annotation for dependency review)."
+
+  microsoft.build.locator:
+    version: "1.11.2"
+    license: MIT
+    source: https://www.nuget.org/packages/Microsoft.Build.Locator
+    rationale: "Package is distributed under MIT license (manual annotation for dependency review)."
+
+  spectre.console.cli:
+    version: "0.53.1"
+    license: MIT
+    source: https://www.nuget.org/packages/Spectre.Console.Cli
+    rationale: "Package is distributed under MIT license (manual annotation for dependency review)."
+
+  yamldotnet:
+    version: "16.3.0"
+    license: MIT
+    source: https://www.nuget.org/packages/YamlDotNet
+    rationale: "Package is distributed under MIT license (manual annotation for dependency review)."
+
   xunit.abstractions:
     version: "2.0.3"
     license: Apache-2.0
