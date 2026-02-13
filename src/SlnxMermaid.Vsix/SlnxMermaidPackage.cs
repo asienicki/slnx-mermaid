@@ -9,6 +9,7 @@ namespace SlnxMermaid.Vsix
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("slnx-mermaid", "Generate Mermaid diagram for .sln/.slnx files", "1.0")]
     [ProvideMenuResource("Menus.ctmenu", 1)]
+    [ProvideAutoLoad(UIContextGuids80.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
     [Guid(PackageGuidString)]
     public sealed class SlnxMermaidPackage : AsyncPackage
     {

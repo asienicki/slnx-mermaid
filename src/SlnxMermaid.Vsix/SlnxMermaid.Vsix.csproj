@@ -38,9 +38,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Menus.vsct">
+    <VSCTCompile Include="Menus.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
       <SubType>Designer</SubType>
-    </EmbeddedResource>
+    </VSCTCompile>
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
