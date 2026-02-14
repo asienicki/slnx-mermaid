@@ -5,23 +5,23 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace SlnxMermaid.Core.Config
 {
-public static class YamlConfigLoader
-{
-    public static SlnxMermaidConfig Load(string path)
+    public static class YamlConfigLoader
     {
-        using (var reader = File.OpenText(path))
+        public static SlnxMermaidConfig Load(string path)
         {
-            var deserializer = new DeserializerBuilder()
-                .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                .IgnoreUnmatchedProperties()
-                .Build();
+            using (var reader = File.OpenText(path))
+            {
+                var deserializer = new DeserializerBuilder()
+                    .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                    .IgnoreUnmatchedProperties()
+                    .Build();
 
-            var result = deserializer.Deserialize<SlnxMermaidConfig>(reader);
-            if (result == null)
-                throw new YamlDeserializeException(path);
+                var result = deserializer.Deserialize<SlnxMermaidConfig>(reader);
+                if (result == null)
+                    throw new YamlDeserializeException(path);
 
-            return result;
+                return result;
+            }
         }
     }
-}
 }
