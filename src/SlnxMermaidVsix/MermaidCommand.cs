@@ -6,6 +6,10 @@ using Task = System.Threading.Tasks.Task;
 
 namespace SlnxMermaidVsix
 {
+    /// <summary>
+    /// Rejestruje i obsługuje komendę VSIX odpowiedzialną za uruchomienie generowania diagramu Mermaid.
+    /// Klasa utrzymuje wyłącznie rolę warstwy wejścia (command handler) oraz deleguje logikę wykonania do workflow.
+    /// </summary>
     internal sealed class MermaidCommand
     {
         public const int CommandId = 0x0100;
@@ -22,6 +26,9 @@ namespace SlnxMermaidVsix
 
         public static MermaidCommand Instance { get; private set; }
 
+        /// <summary>
+        /// Inicjalizuje instancję komendy i podpina ją do menu Visual Studio.
+        /// </summary>
         private MermaidCommand(
             AsyncPackage package,
             OleMenuCommandService commandService)
@@ -40,6 +47,9 @@ namespace SlnxMermaidVsix
             commandService.AddCommand(menuItem);
         }
 
+        /// <summary>
+        /// Tworzy i rejestruje singleton komendy oraz pobiera wymagane usługi VS (DTE, MenuCommandService).
+        /// </summary>
         public static async Task InitializeAsync(AsyncPackage package)
         {
             await ThreadHelper.JoinableTaskFactory
@@ -64,6 +74,9 @@ namespace SlnxMermaidVsix
             Instance = instance;
         }
 
+        /// <summary>
+        /// Punkt wejścia kliknięcia komendy w UI; uruchamia wykonanie asynchroniczne bez blokowania wątku UI.
+        /// </summary>
         private void Execute(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
@@ -74,6 +87,9 @@ namespace SlnxMermaidVsix
             }).FileAndForget("SlnxMermaidVsix/MermaidCommand");
         }
 
+        /// <summary>
+        /// Przygotowuje zależności wykonania i deleguje pełny przebieg generowania do workflow.
+        /// </summary>
         private async Task ExecuteAsync()
         {
             await ThreadHelper.JoinableTaskFactory
@@ -91,6 +107,9 @@ namespace SlnxMermaidVsix
             await workflow.RunAsync(pane, this.package.DisposalToken);
         }
 
+        /// <summary>
+        /// Aktualizuje stan dostępności komendy (enabled/disabled) przed wyświetleniem pozycji menu.
+        /// </summary>
         private void OnBeforeQueryStatus(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
@@ -101,6 +120,9 @@ namespace SlnxMermaidVsix
             }
         }
 
+        /// <summary>
+        /// Sprawdza, czy w środowisku Visual Studio jest aktualnie otwarte rozwiązanie.
+        /// </summary>
         private bool IsSolutionLoaded()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
