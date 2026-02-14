@@ -7,6 +7,8 @@
 
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <GeneratePkgDefFile>true</GeneratePkgDefFile>
+    <GenerateVsixContainer>true</GenerateVsixContainer>
+    <DeployExtension>true</DeployExtension>
     <UseVsixOutput>true</UseVsixOutput>
     <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
     <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>

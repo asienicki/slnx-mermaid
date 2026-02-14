@@ -4,16 +4,34 @@
   <Extern href="vsshlids.h" />
 
   <Commands package="guidSlnxMermaidPackage">
+    <Menus>
+      <Menu guid="guidSlnxMermaidCommandSet" id="menuidMermaid" priority="0x0900" type="Menu">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+        <Strings>
+          <ButtonText>Mermaid</ButtonText>
+        </Strings>
+      </Menu>
+    </Menus>
+
+    <Groups>
+      <Group guid="guidSlnxMermaidCommandSet" id="groupMermaidMenu" priority="0x0100">
+        <Parent guid="guidSlnxMermaidCommandSet" id="menuidMermaid" />
+      </Group>
+    </Groups>
+
     <Buttons>
       <Button guid="guidSlnxMermaidCommandSet" id="cmdidCreateMermaidDiagram" priority="0x0100" type="Button">
-        <Parent guid="guidSHLMainMenu" id="IDG_VS_CTXT_SOLNNODE_ADD_INS" />
+        <Parent guid="guidSlnxMermaidCommandSet" id="groupMermaidMenu" />
         <Strings>
-          <ButtonText>Stwórz diagram mermaid</ButtonText>
+          <ButtonText>Generate diagram</ButtonText>
         </Strings>
       </Button>
     </Buttons>
 
     <CommandPlacements>
+      <CommandPlacement guid="guidSlnxMermaidCommandSet" id="cmdidCreateMermaidDiagram" priority="0x0100">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_CTXT_SOLNNODE_ADD_INS" />
+      </CommandPlacement>
       <CommandPlacement guid="guidSlnxMermaidCommandSet" id="cmdidCreateMermaidDiagram" priority="0x0100">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_SOLNNODE" />
       </CommandPlacement>
@@ -29,6 +47,8 @@
   <Symbols>
     <GuidSymbol name="guidSlnxMermaidPackage" value="{8f17fd67-7aa8-4fd6-8f7a-2f4bad8b9400}" />
     <GuidSymbol name="guidSlnxMermaidCommandSet" value="{7d71780f-b20f-4672-9732-aab300428f2d}">
+      <IDSymbol name="menuidMermaid" value="0x1000" />
+      <IDSymbol name="groupMermaidMenu" value="0x1020" />
       <IDSymbol name="cmdidCreateMermaidDiagram" value="0x0100" />
     </GuidSymbol>
   </Symbols>
