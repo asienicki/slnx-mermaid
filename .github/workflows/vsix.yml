@@ -18,12 +18,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
 
       - name: Restore
-        run: dotnet restore SlnxMermaidVisualStudio.slnx
+        run: msbuild SlnxMermaidVisualStudio.slnx /t:Restore
 
-      - name: Build
-        run: dotnet build SlnxMermaidVisualStudio.slnx --configuration Release
+      - name: Build VSIX
+        run: msbuild SlnxMermaidVisualStudio.slnx /p:Configuration=Release
