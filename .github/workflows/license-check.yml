@@ -34,7 +34,7 @@ jobs:
 
       - name: 5. Export dependency list
         run: |
-          dotnet list package \
+          dotnet list SlnxMermaid.slnx package \
             --include-transitive \
             --format json > packages.json
 
