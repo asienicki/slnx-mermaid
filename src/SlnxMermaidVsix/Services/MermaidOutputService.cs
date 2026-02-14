@@ -22,10 +22,10 @@ namespace SlnxMermaidVsix
         public async Task<IVsOutputWindowPane> GetOrCreateOutputPaneAsync()
         {
             await ThreadHelper.JoinableTaskFactory
-                .SwitchToMainThreadAsync(this.package.DisposalToken);
+                .SwitchToMainThreadAsync(package.DisposalToken);
 
             IVsOutputWindow outputWindow =
-                await this.package.GetServiceAsync(typeof(SVsOutputWindow))
+                await package.GetServiceAsync(typeof(SVsOutputWindow))
                 as IVsOutputWindow;
 
             if (outputWindow == null)
@@ -58,7 +58,7 @@ namespace SlnxMermaidVsix
             string message)
         {
             await ThreadHelper.JoinableTaskFactory
-                .SwitchToMainThreadAsync(this.package.DisposalToken);
+                .SwitchToMainThreadAsync(package.DisposalToken);
 
             pane.OutputString(
                 $"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
@@ -67,9 +67,9 @@ namespace SlnxMermaidVsix
         public async Task SendMessageToStatusBarAsync(string message)
         {
             await ThreadHelper.JoinableTaskFactory
-                .SwitchToMainThreadAsync(this.package.DisposalToken);
+                .SwitchToMainThreadAsync(package.DisposalToken);
 
-            var statusBar = (await this.package.GetServiceAsync(typeof(SVsStatusbar)))
+            var statusBar = (await package.GetServiceAsync(typeof(SVsStatusbar)))
                 as IVsStatusbar;
 
             if (statusBar != null)

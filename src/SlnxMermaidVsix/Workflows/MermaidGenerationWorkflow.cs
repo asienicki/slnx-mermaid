@@ -32,31 +32,31 @@ namespace SlnxMermaidVsix
 
         public async Task RunAsync(IVsOutputWindowPane pane, CancellationToken cancellationToken)
         {
-            await this.outputService.LogAsync(pane,
+            await outputService.LogAsync(pane,
                 "Generate Mermaid Diagram command invoked.");
 
             try
             {
-                var context = this.TryBuildContext();
+                var context = TryBuildContext();
 
                 if (context == null)
                 {
-                    await this.HandleMissingSolutionAsync(pane);
+                    await HandleMissingSolutionAsync(pane);
                     return;
                 }
 
-                await this.GenerateDiagramAsync(context, pane, cancellationToken);
-                await this.HandleSuccessAsync(pane);
+                await GenerateDiagramAsync(context, pane, cancellationToken);
+                await HandleSuccessAsync(pane);
             }
             catch (Exception ex)
             {
-                await this.HandleFailureAsync(pane, ex);
+                await HandleFailureAsync(pane, ex);
             }
         }
 
         private MermaidGenerationContext TryBuildContext()
         {
-            var solutionPath = this.dte.Solution?.FullName;
+            var solutionPath = dte.Solution?.FullName;
 
             if (string.IsNullOrWhiteSpace(solutionPath))
                 return null;
@@ -76,19 +76,19 @@ namespace SlnxMermaidVsix
             IVsOutputWindowPane pane,
             CancellationToken cancellationToken)
         {
-            await this.configBootstrapper.EnsureConfigFileExistsAsync(
+            await configBootstrapper.EnsureConfigFileExistsAsync(
                 context.ConfigPath,
                 context.SolutionPath,
                 pane,
                 cancellationToken);
 
-            await this.outputService.LogAsync(
+            await outputService.LogAsync(
                 pane,
                 $"Selected solution: {context.SolutionPath} {Environment.NewLine} Invoking SlnxMermaid.Core with argument: --config \"{context.ConfigPath}\"");
 
             await Task.Run(async () =>
             {
-                await this.diagramGenerator.GenerateAsync(
+                await diagramGenerator.GenerateAsync(
                     context.ConfigPath,
                     pane,
                     cancellationToken);
@@ -99,16 +99,16 @@ namespace SlnxMermaidVsix
         {
             const string successMessage = "Mermaid diagram generation completed successfully.";
 
-            await this.outputService.LogAsync(pane, successMessage);
-            await this.outputService.SendMessageToStatusBarAsync(successMessage);
+            await outputService.LogAsync(pane, successMessage);
+            await outputService.SendMessageToStatusBarAsync(successMessage);
         }
 
         private async Task HandleFailureAsync(IVsOutputWindowPane pane, Exception ex)
         {
-            await this.outputService.LogAsync(pane, $"Generation failed: {ex}");
+            await outputService.LogAsync(pane, $"Generation failed: {ex}");
 
             VsShellUtilities.ShowMessageBox(
-                this.package,
+                package,
                 $"Mermaid diagram generation failed. See '{MermaidOutputService.OutputPaneTitle}' in the Output window for details.\n\n{ex.Message}",
                 "Slnx Mermaid",
                 OLEMSGICON.OLEMSGICON_CRITICAL,
@@ -118,12 +118,12 @@ namespace SlnxMermaidVsix
 
         private async Task HandleMissingSolutionAsync(IVsOutputWindowPane pane)
         {
-            await this.outputService.LogAsync(
+            await outputService.LogAsync(
                 pane,
                 "Generation skipped because no solution is currently loaded.");
 
             VsShellUtilities.ShowMessageBox(
-                this.package,
+                package,
                 "Open a solution file first, then run 'Generate Mermaid Diagram'.",
                 "Slnx Mermaid",
                 OLEMSGICON.OLEMSGICON_INFO,
@@ -135,8 +135,8 @@ namespace SlnxMermaidVsix
         {
             public MermaidGenerationContext(string solutionPath, string configPath)
             {
-                this.SolutionPath = solutionPath;
-                this.ConfigPath = configPath;
+                SolutionPath = solutionPath;
+                ConfigPath = configPath;
             }
 
             public string SolutionPath { get; }

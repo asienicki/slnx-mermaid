@@ -22,7 +22,7 @@ namespace SlnxMermaidVsix
         public MermaidDiagramGenerator(AsyncPackage package)
         {
             this.package = package ?? throw new ArgumentNullException(nameof(package));
-            this.outputService = new MermaidOutputService(package);
+            outputService = new MermaidOutputService(package);
         }
 
         public async Task GenerateAsync(
@@ -32,40 +32,36 @@ namespace SlnxMermaidVsix
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            await this.outputService.LogAsync(pane,
+            await outputService.LogAsync(pane,
                 $"Loading config: {configPath}");
 
             var config = YamlConfigLoader.Load(configPath)
                 .Normalize(configPath)
                 .Validate();
 
-            await this.outputService.LogAsync(pane,
+            await outputService.LogAsync(pane,
                 $"Analyzing solution graph: {config.Solution}");
 
             var nodes = SolutionGraphAnalyzer.Analyze(config.Solution);
 
-            await this.outputService.LogAsync(pane,
+            await outputService.LogAsync(pane,
                 $"Discovered {nodes.Count} projects.");
 
             var naming = new NameTransformer(config.Naming);
             var filter = new ProjectFilter(config.Filters.Exclude);
             var emitter = new MermaidEmitter(naming, filter);
 
-            await this.outputService.LogAsync(pane,
+            await outputService.LogAsync(pane,
                 "Emitting Mermaid diagram...");
 
-            var mermaid =
-                emitter.Emit(nodes, config.Diagram.Direction);
-
-            var markdownDiagram =
-                mermaid.WrapCodeForMarkdown();
+            var mermaid = emitter.Emit(nodes, config.Diagram.Direction);
+            var markdownDiagram = mermaid.WrapCodeForMarkdown();
 
             if (string.IsNullOrWhiteSpace(config.Output?.File))
                 throw new DiagramOutputPathMissingException();
 
             var outputFile = config.Output.File;
-            var outputDirectory =
-                Path.GetDirectoryName(outputFile);
+            var outputDirectory = Path.GetDirectoryName(outputFile);
 
             if (!string.IsNullOrWhiteSpace(outputDirectory))
                 Directory.CreateDirectory(outputDirectory);
@@ -74,11 +70,10 @@ namespace SlnxMermaidVsix
 
             File.WriteAllText(outputFile, markdownDiagram);
 
-            await this.outputService.LogAsync(pane,
+            await outputService.LogAsync(pane,
                 $"Diagram written to: {outputFile}");
 
-            VsShellUtilities.OpenDocument(this.package, outputFile);
+            VsShellUtilities.OpenDocument(package, outputFile);
         }
-
     }
 }
