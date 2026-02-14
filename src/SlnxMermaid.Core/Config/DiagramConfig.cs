@@ -1,6 +1,7 @@
-﻿namespace SlnxMermaid.Core.Config;
-
+﻿namespace SlnxMermaid.Core.Config
+{
 public sealed class DiagramConfig
 {
-    public string Direction { get; init; } = "TD";
+    public string Direction { get; set; } = "TD";
+}
 }

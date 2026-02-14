@@ -1,5 +1,9 @@
-﻿namespace SlnxMermaid.Core.Filtering;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
+namespace SlnxMermaid.Core.Filtering
+{
 public sealed class ProjectFilter
 {
     private readonly string[] _excluded;
@@ -12,6 +16,9 @@ public sealed class ProjectFilter
     }
 
     public bool IsAllowed(string projectId)
-        => _excluded.All(x =>
-            !projectId.Contains(x, StringComparison.OrdinalIgnoreCase));
+    {
+        return _excluded.All(x =>
+            projectId.IndexOf(x, StringComparison.OrdinalIgnoreCase) < 0);
+    }
+}
 }

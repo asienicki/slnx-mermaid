@@ -1,4 +1,6 @@
-﻿namespace SlnxMermaid.CLI.Exceptions
+﻿using System;
+
+namespace SlnxMermaid.CLI.Exceptions
 {
     public sealed class YamlDeserializeException : Exception
     {

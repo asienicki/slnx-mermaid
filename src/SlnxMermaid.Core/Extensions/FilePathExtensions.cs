@@ -1,5 +1,7 @@
-﻿namespace SlnxMermaid.Core.Extensions;
+﻿using System.IO;
 
+namespace SlnxMermaid.Core.Extensions
+{
 public static class FilePathExtensions
 {
     public static string ToAbsolute(this string path, string baseDir)
@@ -16,6 +18,7 @@ public static class FilePathExtensions
             return Directory.GetCurrentDirectory();
 
         return Path.GetDirectoryName(
-            Path.GetFullPath(configPath))!;
+            Path.GetFullPath(configPath));
     }
+}
 }
