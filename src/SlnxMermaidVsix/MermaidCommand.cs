@@ -20,36 +20,28 @@ using Task = System.Threading.Tasks.Task;
 
 namespace SlnxMermaidVsix
 {
-    /// <summary>
-    /// Command handler
-    /// </summary>
     internal sealed class MermaidCommand
     {
-        /// <summary>
-        /// Command ID.
-        /// </summary>
         public const int CommandId = 0x0100;
 
-        /// <summary>
-        /// Command menu group (command set GUID).
-        /// </summary>
-        public static readonly Guid CommandSet = new Guid("b3477400-4987-402f-9e32-eb89274610d6");
+        public static readonly Guid CommandSet =
+            new Guid("b3477400-4987-402f-9e32-eb89274610d6");
 
-        private static readonly Guid OutputPaneGuidValue = new Guid("7DB87FC4-AE9B-4AAB-9E32-F893A4B23DBB");
+        private static readonly Guid OutputPaneGuidValue =
+            new Guid("7DB87FC4-AE9B-4AAB-9E32-F893A4B23DBB");
+
         private const string OutputPaneTitle = "Slnx Mermaid";
 
-        /// <summary>
-        /// VS Package that provides this command, not null.
-        /// </summary>
         private readonly AsyncPackage package;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MermaidCommand"/> class.
-        /// Adds our command handlers for menu (commands must exist in the command table file)
-        /// </summary>
-        /// <param name="package">Owner package, not null.</param>
-        /// <param name="commandService">Command service to add command to, not null.</param>
-        private MermaidCommand(AsyncPackage package, OleMenuCommandService commandService)
+        // ✅ Cache DTE – brak sync wait
+        private DTE _dte;
+
+        public static MermaidCommand Instance { get; private set; }
+
+        private MermaidCommand(
+            AsyncPackage package,
+            OleMenuCommandService commandService)
         {
             this.package = package ?? throw new ArgumentNullException(nameof(package));
             commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
@@ -57,40 +49,34 @@ namespace SlnxMermaidVsix
             var menuCommandID = new CommandID(CommandSet, CommandId);
             var menuItem = new OleMenuCommand(this.Execute, menuCommandID);
             menuItem.BeforeQueryStatus += this.OnBeforeQueryStatus;
+
             commandService.AddCommand(menuItem);
         }
 
-        /// <summary>
-        /// Gets the instance of the command.
-        /// </summary>
-        public static MermaidCommand Instance { get; private set; }
-
-        /// <summary>
-        /// Initializes the singleton instance of the command.
-        /// </summary>
-        /// <param name="package">Owner package, not null.</param>
         public static async Task InitializeAsync(AsyncPackage package)
         {
-            // Switch to the main thread - the call to AddCommand in MermaidCommand's constructor requires
-            // the UI thread.
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
+            await ThreadHelper.JoinableTaskFactory
+                .SwitchToMainThreadAsync(package.DisposalToken);
 
-            OleMenuCommandService commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
+            OleMenuCommandService commandService =
+                await package.GetServiceAsync(typeof(IMenuCommandService))
+                as OleMenuCommandService;
+
             if (commandService == null)
-            {
-                throw new InvalidOperationException("Unable to acquire OleMenuCommandService.");
-            }
+                throw new InvalidOperationException(
+                    "Unable to acquire OleMenuCommandService.");
 
-            Instance = new MermaidCommand(package, commandService);
+            var instance = new MermaidCommand(package, commandService);
+
+            instance._dte = (await package.GetServiceAsync(typeof(DTE))) as DTE;
+
+            if (instance._dte == null)
+                throw new InvalidOperationException(
+                    "Unable to acquire DTE service.");
+
+            Instance = instance;
         }
 
-        /// <summary>
-        /// This function is the callback used to execute the command when the menu item is clicked.
-        /// See the constructor to see how the menu item is associated with this function using
-        /// OleMenuCommandService service and MenuCommand class.
-        /// </summary>
-        /// <param name="sender">Event sender.</param>
-        /// <param name="e">Event args.</param>
         private void Execute(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
@@ -103,24 +89,24 @@ namespace SlnxMermaidVsix
 
         private async Task ExecuteAsync()
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(this.package.DisposalToken);
+            await ThreadHelper.JoinableTaskFactory
+                .SwitchToMainThreadAsync(this.package.DisposalToken);
 
-            IVsOutputWindowPane pane = await this.GetOrCreateOutputPaneAsync();
-            await this.LogAsync(pane, "Generate Mermaid Diagram command invoked.");
+            IVsOutputWindowPane pane =
+                await this.GetOrCreateOutputPaneAsync();
+
+            await this.LogAsync(pane,
+                "Generate Mermaid Diagram command invoked.");
 
             try
             {
-                DTE dte = await this.package.GetServiceAsync(typeof(DTE)) as DTE;
-                if (dte == null)
-                {
-                    throw new InvalidOperationException("Unable to acquire DTE service.");
-                }
-
-                var solutionPath = dte.Solution?.FullName;
+                var solutionPath = _dte?.Solution?.FullName;
 
                 if (string.IsNullOrWhiteSpace(solutionPath))
                 {
-                    await this.LogAsync(pane, "Generation skipped because no solution is currently loaded.");
+                    await this.LogAsync(
+                        pane,
+                        "Generation skipped because no solution is currently loaded.");
 
                     VsShellUtilities.ShowMessageBox(
                         this.package,
@@ -134,23 +120,36 @@ namespace SlnxMermaidVsix
                 }
 
                 var solutionDirectory = Path.GetDirectoryName(solutionPath);
+
                 if (string.IsNullOrWhiteSpace(solutionDirectory))
-                {
                     throw new InvalidOperationException("Unable to determine the solution directory.");
-                }
 
                 var configPath = Path.Combine(solutionDirectory, "slnx-mermaid.yml");
-                await this.EnsureConfigFileExistsAsync(configPath, solutionPath, pane, this.package.DisposalToken);
 
-                await this.LogAsync(pane, $"Selected solution: {solutionPath}");
-                await this.LogAsync(pane, $"Invoking SlnxMermaid.Core with argument: --config \"{configPath}\"");
+                await this.EnsureConfigFileExistsAsync(
+                    configPath,
+                    solutionPath,
+                    pane,
+                    this.package.DisposalToken);
+                                
+                await this.LogAsync(pane,
+                    $"Selected solution: {solutionPath} {Environment.NewLine} Invoking SlnxMermaid.Core with argument: --config \"{configPath}\"");
 
                 await Task.Run(async () =>
                 {
-                    await this.GenerateDiagramAsync(configPath, pane, this.package.DisposalToken);
+                    await this.GenerateDiagramAsync(
+                        configPath,
+                        pane,
+                        this.package.DisposalToken);
                 }, this.package.DisposalToken);
 
-                await this.LogAsync(pane, "Mermaid diagram generation completed successfully.");
+                var successMessage = "Mermaid diagram generation completed successfully.";
+
+                await this.LogAsync(pane, successMessage);
+
+
+                await SendMessageToStatusBarAsync(successMessage);
+
             }
             catch (Exception ex)
             {
@@ -166,65 +165,92 @@ namespace SlnxMermaidVsix
             }
         }
 
+        private async Task SendMessageToStatusBarAsync(string message)
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(this.package.DisposalToken);
+
+            var statusBar = (await package.GetServiceAsync(typeof(SVsStatusbar))) as IVsStatusbar;
+
+            if (statusBar != null)
+            {
+                statusBar.Clear();
+                statusBar.SetText(message);
+            }
+        }
+
         private void OnBeforeQueryStatus(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            if (!(sender is OleMenuCommand command))
+            if (sender is OleMenuCommand command)
             {
-                return;
+                command.Enabled = this.IsSolutionLoaded();
             }
-
-            command.Enabled = this.IsSolutionLoaded();
         }
 
+        // ✅ Brak sync GetResult
         private bool IsSolutionLoaded()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            var dte = this.package.GetServiceAsync(typeof(DTE)).ConfigureAwait(true).GetAwaiter().GetResult() as DTE;
-            return dte?.Solution != null
-                && dte.Solution.IsOpen
-                && !string.IsNullOrWhiteSpace(dte.Solution.FullName);
+            return _dte?.Solution != null
+                && _dte.Solution.IsOpen
+                && !string.IsNullOrWhiteSpace(_dte.Solution.FullName);
         }
 
-        private async Task GenerateDiagramAsync(string configPath, IVsOutputWindowPane pane, CancellationToken cancellationToken)
+        private async Task GenerateDiagramAsync(
+            string configPath,
+            IVsOutputWindowPane pane,
+            CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            await this.LogAsync(pane, $"Loading config: {configPath}");
+            await this.LogAsync(pane,
+                $"Loading config: {configPath}");
+
             var config = YamlConfigLoader.Load(configPath)
                 .Normalize(configPath)
                 .Validate();
 
-            await this.LogAsync(pane, $"Analyzing solution graph: {config.Solution}");
+            await this.LogAsync(pane,
+                $"Analyzing solution graph: {config.Solution}");
+
             var nodes = SolutionGraphAnalyzer.Analyze(config.Solution);
-            await this.LogAsync(pane, $"Discovered {nodes.Count} projects.");
+
+            await this.LogAsync(pane,
+                $"Discovered {nodes.Count} projects.");
 
             var naming = new NameTransformer(config.Naming);
             var filter = new ProjectFilter(config.Filters.Exclude);
             var emitter = new MermaidEmitter(naming, filter);
 
-            await this.LogAsync(pane, "Emitting Mermaid diagram...");
-            var mermaid = emitter.Emit(nodes, config.Diagram.Direction);
-            var markdownDiagram = mermaid.WrapCodeForMarkdown();
+            await this.LogAsync(pane,
+                "Emitting Mermaid diagram...");
+
+            var mermaid =
+                emitter.Emit(nodes, config.Diagram.Direction);
+
+            var markdownDiagram =
+                mermaid.WrapCodeForMarkdown();
 
             if (string.IsNullOrWhiteSpace(config.Output?.File))
-            {
                 throw new DiagramOutputPathMissingException();
-            }
 
             var outputFile = config.Output.File;
-            var outputDirectory = Path.GetDirectoryName(outputFile);
+            var outputDirectory =
+                Path.GetDirectoryName(outputFile);
 
             if (!string.IsNullOrWhiteSpace(outputDirectory))
-            {
                 Directory.CreateDirectory(outputDirectory);
-            }
 
             cancellationToken.ThrowIfCancellationRequested();
+
             File.WriteAllText(outputFile, markdownDiagram);
-            await this.LogAsync(pane, $"Diagram written to: {outputFile}");
+
+            await this.LogAsync(pane,
+                $"Diagram written to: {outputFile}");
+
+            VsShellUtilities.OpenDocument(package, outputFile);
         }
 
         private async Task EnsureConfigFileExistsAsync(
@@ -234,9 +260,7 @@ namespace SlnxMermaidVsix
             CancellationToken cancellationToken)
         {
             if (File.Exists(configPath))
-            {
                 return;
-            }
 
             var defaultConfig = new SlnxMermaidConfig
             {
@@ -247,27 +271,17 @@ namespace SlnxMermaidVsix
                 },
                 Naming = new NamingConfig
                 {
-                    StripPrefix = $"{Path.GetFileNameWithoutExtension(solutionPath)}_",
+                    StripPrefix =
+                        $"{Path.GetFileNameWithoutExtension(solutionPath)}_",
                     Aliases = new Dictionary<string, string>()
                 },
                 Filters = new FilterConfig
                 {
                     Exclude = new string[]
                     {
-                        "Test",
-                        "Tests",
-                        "Testing",
-                        "Mock",
-                        "Mocks",
-                        "Stub",
-                        "Stubs",
-                        "Fake",
-                        "Fakes",
-                        "Enums",
-                        "AppHost",
-                        "WebHost",
-                        "ServiceDefaults",
-                        "Dto"
+                        "Test","Tests","Testing","Mock","Mocks",
+                        "Stub","Stubs","Fake","Fakes","Enums",
+                        "AppHost","WebHost","ServiceDefaults","Dto"
                     }.ToList()
                 },
             };
@@ -280,50 +294,68 @@ namespace SlnxMermaidVsix
             cancellationToken.ThrowIfCancellationRequested();
 
             using (var stream = new FileStream(
-                    configPath,
-                    FileMode.Create,
-                    FileAccess.Write,
-                    FileShare.None,
-                    4096,
-                    useAsync: true))
+                configPath,
+                FileMode.Create,
+                FileAccess.Write,
+                FileShare.None,
+                4096,
+                useAsync: true))
+            using (var writer = new StreamWriter(stream))
             {
-                using (var writer = new StreamWriter(stream))
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    await writer.WriteAsync(yaml);
-                }
+                cancellationToken.ThrowIfCancellationRequested();
+                await writer.WriteAsync(yaml);
             }
 
-            await LogAsync(pane, $"Configuration file was missing and has been created: {configPath}");
+            await LogAsync(pane,
+                $"Configuration file was missing and has been created: {configPath}");
+
+            VsShellUtilities.OpenDocument(package, configPath);
         }
 
-        private async Task<IVsOutputWindowPane> GetOrCreateOutputPaneAsync()
+        private async Task<IVsOutputWindowPane>
+            GetOrCreateOutputPaneAsync()
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(this.package.DisposalToken);
+            await ThreadHelper.JoinableTaskFactory
+                .SwitchToMainThreadAsync(this.package.DisposalToken);
 
-            IVsOutputWindow outputWindow = await this.package.GetServiceAsync(typeof(SVsOutputWindow)) as IVsOutputWindow;
+            IVsOutputWindow outputWindow =
+                await this.package.GetServiceAsync(typeof(SVsOutputWindow))
+                as IVsOutputWindow;
+
             if (outputWindow == null)
-            {
-                throw new InvalidOperationException("Unable to acquire SVsOutputWindow service.");
-            }
+                throw new InvalidOperationException(
+                    "Unable to acquire SVsOutputWindow service.");
 
             var paneGuid = OutputPaneGuidValue;
-            outputWindow.CreatePane(ref paneGuid, OutputPaneTitle, 1, 1);
-            outputWindow.GetPane(ref paneGuid, out IVsOutputWindowPane pane);
+
+            outputWindow.CreatePane(
+                ref paneGuid,
+                OutputPaneTitle,
+                1,
+                1);
+
+            outputWindow.GetPane(
+                ref paneGuid,
+                out IVsOutputWindowPane pane);
+
             if (pane == null)
-            {
-                throw new InvalidOperationException("Unable to acquire the output pane.");
-            }
+                throw new InvalidOperationException(
+                    "Unable to acquire the output pane.");
 
             pane.Activate();
 
             return pane;
         }
 
-        private async Task LogAsync(IVsOutputWindowPane pane, string message)
+        private async Task LogAsync(
+            IVsOutputWindowPane pane,
+            string message)
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(this.package.DisposalToken);
-            pane.OutputString($"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
+            await ThreadHelper.JoinableTaskFactory
+                .SwitchToMainThreadAsync(this.package.DisposalToken);
+
+            pane.OutputString(
+                $"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
         }
     }
 }
