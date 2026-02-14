@@ -55,7 +55,8 @@ namespace SlnxMermaidVsix
             commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
 
             var menuCommandID = new CommandID(CommandSet, CommandId);
-            var menuItem = new MenuCommand(this.Execute, menuCommandID);
+            var menuItem = new OleMenuCommand(this.Execute, menuCommandID);
+            menuItem.BeforeQueryStatus += this.OnBeforeQueryStatus;
             commandService.AddCommand(menuItem);
         }
 
@@ -119,7 +120,17 @@ namespace SlnxMermaidVsix
 
                 if (string.IsNullOrWhiteSpace(solutionPath))
                 {
-                    throw new InvalidOperationException("No solution is currently loaded.");
+                    await this.LogAsync(pane, "Generation skipped because no solution is currently loaded.");
+
+                    VsShellUtilities.ShowMessageBox(
+                        this.package,
+                        "Open a solution file first, then run 'Generate Mermaid Diagram'.",
+                        "Slnx Mermaid",
+                        OLEMSGICON.OLEMSGICON_INFO,
+                        OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                        OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+
+                    return;
                 }
 
                 var solutionDirectory = Path.GetDirectoryName(solutionPath);
@@ -153,6 +164,28 @@ namespace SlnxMermaidVsix
                     OLEMSGBUTTON.OLEMSGBUTTON_OK,
                     OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
             }
+        }
+
+        private void OnBeforeQueryStatus(object sender, EventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            if (!(sender is OleMenuCommand command))
+            {
+                return;
+            }
+
+            command.Enabled = this.IsSolutionLoaded();
+        }
+
+        private bool IsSolutionLoaded()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            var dte = this.package.GetServiceAsync(typeof(DTE)).ConfigureAwait(true).GetAwaiter().GetResult() as DTE;
+            return dte?.Solution != null
+                && dte.Solution.IsOpen
+                && !string.IsNullOrWhiteSpace(dte.Solution.FullName);
         }
 
         private async Task GenerateDiagramAsync(string configPath, IVsOutputWindowPane pane, CancellationToken cancellationToken)
