@@ -1,10 +1,12 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using SlnxMermaid.Core.Filtering;
 using SlnxMermaid.Core.Graph;
 using SlnxMermaid.Core.Naming;
-using SlnxMermaid.Core.Filtering;
 
-namespace SlnxMermaid.Core.Emit;
-
+namespace SlnxMermaid.Core.Emit
+{
 public sealed class MermaidEmitter
 {
     private readonly NameTransformer _naming;
@@ -44,9 +46,10 @@ public sealed class MermaidEmitter
             }
         }
 
-        foreach (var (from, to) in edges.OrderBy(e => e.From).ThenBy(e => e.To))
-            sb.AppendLine($"    {from} --> {to}");
+        foreach (var edge in edges.OrderBy(e => e.From).ThenBy(e => e.To))
+            sb.AppendLine($"    {edge.From} --> {edge.To}");
 
         return sb.ToString();
     }
+}
 }

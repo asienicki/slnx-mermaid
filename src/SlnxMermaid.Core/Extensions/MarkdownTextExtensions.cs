@@ -1,5 +1,7 @@
-﻿namespace SlnxMermaid.Core.Extensions;
+﻿using System;
 
+namespace SlnxMermaid.Core.Extensions
+{
 public static class MarkdownTextExtensions 
 {
     public static string WrapCodeForMarkdown(this string mermaid)
@@ -14,4 +16,5 @@ public static class MarkdownTextExtensions
             $"{mermaid}{Environment.NewLine}" +
             $"```";
     }
+}
 }
