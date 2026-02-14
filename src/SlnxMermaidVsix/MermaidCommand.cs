@@ -234,6 +234,7 @@ namespace SlnxMermaidVsix
                         "AppHost",
                         "WebHost",
                         "ServiceDefaults",
+                        "Dto"
                     }.ToList()
                 },
             };
