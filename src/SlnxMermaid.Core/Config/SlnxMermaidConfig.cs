@@ -1,14 +1,15 @@
-﻿namespace SlnxMermaid.Core.Config;
-
+﻿namespace SlnxMermaid.Core.Config
+{
 public sealed class SlnxMermaidConfig
 {
-    public required string Solution { get; set; }
+    public string Solution { get; set; }
 
-    public DiagramConfig Diagram { get; init; } = new();
+    public DiagramConfig Diagram { get; set; } = new DiagramConfig();
 
-    public FilterConfig Filters { get; init; } = new();
+    public FilterConfig Filters { get; set; } = new FilterConfig();
 
-    public NamingConfig Naming { get; init; } = new();
+    public NamingConfig Naming { get; set; } = new NamingConfig();
 
-    public OutputConfig Output { get; set; } = new();
+    public OutputConfig Output { get; set; } = new OutputConfig();
+}
 }

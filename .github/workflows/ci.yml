@@ -1,16 +1,14 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - master
-      - feat/**
-      - fix/**
-
   pull_request:
     branches:
       - master
       - rc
+
+  push:
+    branches:
+      - master
 
 jobs:
   build-test:

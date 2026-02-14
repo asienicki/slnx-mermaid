@@ -21,3 +21,11 @@ exceptions:
     license: Apache-2.0
     source: https://raw.githubusercontent.com/xunit/xunit/master/license.txt
     rationale: "Package license is Apache-2.0; repository contains MIT-licensed components, which are compatible. Approved manually."
+    
+  Microsoft.NETCore.Platforms:
+    version: "1.1.0"
+    license: "MIT"
+
+  NETStandard.Library:
+    version: "2.0.3"
+    license: "MIT"
