@@ -39,6 +39,9 @@
       <Group guid="guidSlnxMermaidVsixPackageCmdSet" id="MyMenuGroup" priority="0x0600">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_SOLNNODE"/>
       </Group>
+      <Group guid="guidSlnxMermaidVsixPackageCmdSet" id="ToolsMenuGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS"/>
+      </Group>
     </Groups>
 
     <!--Buttons section. -->
@@ -74,7 +77,7 @@
 
   <CommandPlacements>
     <CommandPlacement guid="guidSlnxMermaidVsixPackageCmdSet" id="MermaidCommandId" priority="0x0100">
-      <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+      <Parent guid="guidSlnxMermaidVsixPackageCmdSet" id="ToolsMenuGroup" />
     </CommandPlacement>
   </CommandPlacements>
 
@@ -85,6 +88,7 @@
     <!-- This is the guid used to group the menu commands together -->
     <GuidSymbol name="guidSlnxMermaidVsixPackageCmdSet" value="{b3477400-4987-402f-9e32-eb89274610d6}">
       <IDSymbol name="MyMenuGroup" value="0x1020" />
+      <IDSymbol name="ToolsMenuGroup" value="0x1021" />
       <IDSymbol name="MermaidCommandId" value="0x0100" />
     </GuidSymbol>
 
