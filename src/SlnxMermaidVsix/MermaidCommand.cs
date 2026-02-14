@@ -9,8 +9,10 @@ using SlnxMermaid.Core.Filtering;
 using SlnxMermaid.Core.Graph;
 using SlnxMermaid.Core.Naming;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -208,8 +210,32 @@ namespace SlnxMermaidVsix
                 Solution = Path.GetFileName(solutionPath),
                 Output = new OutputConfig
                 {
-                    File = Path.Combine("docs", "architecture", "{date}-dependency-graph-mermaid.md")
-                }
+                    File = "dependency-graph-mermaid.md"
+                },
+                Naming = new NamingConfig
+                {
+                    StripPrefix = $"{Path.GetFileNameWithoutExtension(solutionPath)}_",
+                    Aliases = new Dictionary<string, string>()
+                },
+                Filters = new FilterConfig
+                {
+                    Exclude = new string[]
+                    {
+                        "Test",
+                        "Tests",
+                        "Testing",
+                        "Mock",
+                        "Mocks",
+                        "Stub",
+                        "Stubs",
+                        "Fake",
+                        "Fakes",
+                        "Enums",
+                        "AppHost",
+                        "WebHost",
+                        "ServiceDefaults",
+                    }.ToList()
+                },
             };
 
             var yaml = new StringBuilder()
@@ -218,8 +244,23 @@ namespace SlnxMermaidVsix
                 .ToString();
 
             cancellationToken.ThrowIfCancellationRequested();
-            await File.WriteAllTextAsync(configPath, yaml, cancellationToken);
-            await this.LogAsync(pane, $"Configuration file was missing and has been created: {configPath}");
+
+            using (var stream = new FileStream(
+                    configPath,
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.None,
+                    4096,
+                    useAsync: true))
+            {
+                using (var writer = new StreamWriter(stream))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await writer.WriteAsync(yaml);
+                }
+            }
+
+            await LogAsync(pane, $"Configuration file was missing and has been created: {configPath}");
         }
 
         private async Task<IVsOutputWindowPane> GetOrCreateOutputPaneAsync()
