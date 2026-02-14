@@ -19,10 +19,7 @@ namespace SlnxMermaidVsix.Resources
             set => resourceCulture = value;
         }
 
-        internal static string CommandSetGuid => ResourceManager.GetString(nameof(CommandSetGuid), resourceCulture);
-        internal static string OutputPaneGuid => ResourceManager.GetString(nameof(OutputPaneGuid), resourceCulture);
         internal static string OutputPaneTitle => ResourceManager.GetString(nameof(OutputPaneTitle), resourceCulture);
-        internal static string FileAndForgetOperationName => ResourceManager.GetString(nameof(FileAndForgetOperationName), resourceCulture);
         internal static string ErrorAcquireMenuCommandService => ResourceManager.GetString(nameof(ErrorAcquireMenuCommandService), resourceCulture);
         internal static string ErrorAcquireDteService => ResourceManager.GetString(nameof(ErrorAcquireDteService), resourceCulture);
         internal static string ErrorAcquireOutputWindowService => ResourceManager.GetString(nameof(ErrorAcquireOutputWindowService), resourceCulture);
@@ -53,7 +50,6 @@ namespace SlnxMermaidVsix.Resources
         internal static string LogDiagramWrittenFormat => ResourceManager.GetString(nameof(LogDiagramWrittenFormat), resourceCulture);
         internal static string LogCommandInvoked => ResourceManager.GetString(nameof(LogCommandInvoked), resourceCulture);
         internal static string ErrorDetermineSolutionDirectory => ResourceManager.GetString(nameof(ErrorDetermineSolutionDirectory), resourceCulture);
-        internal static string ConfigFileName => ResourceManager.GetString(nameof(ConfigFileName), resourceCulture);
         internal static string LogSelectedSolutionAndConfigFormat => ResourceManager.GetString(nameof(LogSelectedSolutionAndConfigFormat), resourceCulture);
         internal static string SuccessGenerationCompleted => ResourceManager.GetString(nameof(SuccessGenerationCompleted), resourceCulture);
         internal static string LogGenerationFailedFormat => ResourceManager.GetString(nameof(LogGenerationFailedFormat), resourceCulture);

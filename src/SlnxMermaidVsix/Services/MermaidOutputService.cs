@@ -13,7 +13,7 @@ namespace SlnxMermaidVsix
     internal sealed class MermaidOutputService
     {
         private static readonly Guid OutputPaneGuidValue =
-            new Guid(Strings.OutputPaneGuid);
+            new Guid(GlobalConstants.OutputPaneGuid);
 
         public static string OutputPaneTitle => Strings.OutputPaneTitle;
 

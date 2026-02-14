@@ -46,6 +46,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="MermaidCommand.cs" />
+    <Compile Include="GlobalConstants.cs" />
     <Compile Include="Services\MermaidConfigBootstrapper.cs" />
     <Compile Include="Services\MermaidDiagramGenerator.cs" />
     <Compile Include="Workflows\MermaidGenerationWorkflow.cs" />

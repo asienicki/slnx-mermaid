@@ -12,17 +12,8 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="CommandSetGuid" xml:space="preserve">
-    <value>b3477400-4987-402f-9e32-eb89274610d6</value>
-  </data>
-  <data name="OutputPaneGuid" xml:space="preserve">
-    <value>7DB87FC4-AE9B-4AAB-9E32-F893A4B23DBB</value>
-  </data>
   <data name="OutputPaneTitle" xml:space="preserve">
     <value>Slnx Mermaid</value>
-  </data>
-  <data name="FileAndForgetOperationName" xml:space="preserve">
-    <value>SlnxMermaidVsix/MermaidCommand</value>
   </data>
   <data name="ErrorAcquireMenuCommandService" xml:space="preserve">
     <value>Unable to acquire OleMenuCommandService.</value>
@@ -72,7 +63,6 @@
   <data name="LogDiagramWrittenFormat" xml:space="preserve"><value>Diagram written to: {0}</value></data>
   <data name="LogCommandInvoked" xml:space="preserve"><value>Generate Mermaid Diagram command invoked.</value></data>
   <data name="ErrorDetermineSolutionDirectory" xml:space="preserve"><value>Unable to determine the solution directory.</value></data>
-  <data name="ConfigFileName" xml:space="preserve"><value>slnx-mermaid.yml</value></data>
   <data name="LogSelectedSolutionAndConfigFormat" xml:space="preserve"><value>Selected solution: {0} {1} Invoking SlnxMermaid.Core with argument: --config "{2}"</value></data>
   <data name="SuccessGenerationCompleted" xml:space="preserve"><value>Mermaid diagram generation completed successfully.</value></data>
   <data name="LogGenerationFailedFormat" xml:space="preserve"><value>Generation failed: {0}</value></data>

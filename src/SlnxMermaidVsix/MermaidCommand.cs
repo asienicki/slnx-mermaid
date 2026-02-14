@@ -16,7 +16,7 @@ namespace SlnxMermaidVsix
         public const int CommandId = 0x0100;
 
         public static readonly Guid CommandSet =
-            new Guid(Strings.CommandSetGuid);
+            new Guid(GlobalConstants.CommandSetGuid);
 
         private readonly AsyncPackage package;
         private readonly MermaidOutputService outputService;
@@ -85,7 +85,7 @@ namespace SlnxMermaidVsix
             this.package.JoinableTaskFactory.RunAsync(async delegate
             {
                 await this.ExecuteAsync();
-            }).FileAndForget(Strings.FileAndForgetOperationName);
+            }).FileAndForget(GlobalConstants.FileAndForgetOperationName);
         }
 
         /// <summary>

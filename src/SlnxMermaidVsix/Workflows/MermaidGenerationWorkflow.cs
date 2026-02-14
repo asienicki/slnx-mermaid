@@ -81,7 +81,7 @@ namespace SlnxMermaidVsix
             if (string.IsNullOrWhiteSpace(solutionDirectory))
                 throw new InvalidOperationException(Strings.ErrorDetermineSolutionDirectory);
 
-            var configPath = Path.Combine(solutionDirectory, Strings.ConfigFileName);
+            var configPath = Path.Combine(solutionDirectory, GlobalConstants.ConfigFileName);
 
             return new MermaidGenerationContext(solutionPath, configPath);
         }
