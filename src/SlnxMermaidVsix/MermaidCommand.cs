@@ -221,7 +221,6 @@ namespace SlnxMermaidVsix
         private async Task LogAsync(IVsOutputWindowPane pane, string message)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(this.package.DisposalToken);
-            ThreadHelper.ThrowIfNotOnUIThread();
             pane.OutputString($"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
         }
     }
