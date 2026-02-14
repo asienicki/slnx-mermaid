@@ -1,0 +1,29 @@
+name: Build VSIX
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'src/SlnxMermaidVsix/**'
+      - 'SlnxMermaidVisualStudio.slnx'
+  pull_request:
+    paths:
+      - 'src/SlnxMermaidVsix/**'
+      - 'SlnxMermaidVisualStudio.slnx'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore SlnxMermaidVisualStudio.slnx
+
+      - name: Build
+        run: dotnet build SlnxMermaidVisualStudio.slnx --configuration Release
