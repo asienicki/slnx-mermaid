@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Design;
 using Task = System.Threading.Tasks.Task;
+using SlnxMermaidVsix.Resources;
 
 namespace SlnxMermaidVsix
 {
@@ -15,7 +16,7 @@ namespace SlnxMermaidVsix
         public const int CommandId = 0x0100;
 
         public static readonly Guid CommandSet =
-            new Guid("b3477400-4987-402f-9e32-eb89274610d6");
+            new Guid(Strings.CommandSetGuid);
 
         private readonly AsyncPackage package;
         private readonly MermaidOutputService outputService;
@@ -61,7 +62,7 @@ namespace SlnxMermaidVsix
 
             if (commandService == null)
                 throw new InvalidOperationException(
-                    "Unable to acquire OleMenuCommandService.");
+                    Strings.ErrorAcquireMenuCommandService);
 
             var instance = new MermaidCommand(package, commandService);
 
@@ -69,7 +70,7 @@ namespace SlnxMermaidVsix
 
             if (instance.dte == null)
                 throw new InvalidOperationException(
-                    "Unable to acquire DTE service.");
+                    Strings.ErrorAcquireDteService);
 
             Instance = instance;
         }
@@ -84,7 +85,7 @@ namespace SlnxMermaidVsix
             this.package.JoinableTaskFactory.RunAsync(async delegate
             {
                 await this.ExecuteAsync();
-            }).FileAndForget("SlnxMermaidVsix/MermaidCommand");
+            }).FileAndForget(Strings.FileAndForgetOperationName);
         }
 
         /// <summary>

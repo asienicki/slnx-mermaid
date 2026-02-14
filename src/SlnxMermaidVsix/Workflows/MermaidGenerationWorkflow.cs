@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using SlnxMermaidVsix.Resources;
 
 namespace SlnxMermaidVsix
 {
@@ -43,7 +44,7 @@ namespace SlnxMermaidVsix
         public async Task RunAsync(IVsOutputWindowPane pane, CancellationToken cancellationToken)
         {
             await outputService.LogAsync(pane,
-                "Generate Mermaid Diagram command invoked.");
+                Strings.LogCommandInvoked);
 
             try
             {
@@ -78,9 +79,9 @@ namespace SlnxMermaidVsix
             var solutionDirectory = Path.GetDirectoryName(solutionPath);
 
             if (string.IsNullOrWhiteSpace(solutionDirectory))
-                throw new InvalidOperationException("Unable to determine the solution directory.");
+                throw new InvalidOperationException(Strings.ErrorDetermineSolutionDirectory);
 
-            var configPath = Path.Combine(solutionDirectory, "slnx-mermaid.yml");
+            var configPath = Path.Combine(solutionDirectory, Strings.ConfigFileName);
 
             return new MermaidGenerationContext(solutionPath, configPath);
         }
@@ -101,7 +102,7 @@ namespace SlnxMermaidVsix
 
             await outputService.LogAsync(
                 pane,
-                $"Selected solution: {context.SolutionPath} {Environment.NewLine} Invoking SlnxMermaid.Core with argument: --config \"{context.ConfigPath}\"");
+                string.Format(Strings.LogSelectedSolutionAndConfigFormat, context.SolutionPath, Environment.NewLine, context.ConfigPath));
 
             await Task.Run(async () =>
             {
@@ -117,7 +118,7 @@ namespace SlnxMermaidVsix
         /// </summary>
         private async Task HandleSuccessAsync(IVsOutputWindowPane pane)
         {
-            const string successMessage = "Mermaid diagram generation completed successfully.";
+            var successMessage = Strings.SuccessGenerationCompleted;
 
             await outputService.LogAsync(pane, successMessage);
             await outputService.SendMessageToStatusBarAsync(successMessage);
@@ -128,12 +129,12 @@ namespace SlnxMermaidVsix
         /// </summary>
         private async Task HandleFailureAsync(IVsOutputWindowPane pane, Exception ex)
         {
-            await outputService.LogAsync(pane, $"Generation failed: {ex}");
+            await outputService.LogAsync(pane, string.Format(Strings.LogGenerationFailedFormat, ex));
 
             VsShellUtilities.ShowMessageBox(
                 package,
-                $"Mermaid diagram generation failed. See '{MermaidOutputService.OutputPaneTitle}' in the Output window for details.\n\n{ex.Message}",
-                "Slnx Mermaid",
+                string.Format(Strings.ErrorGenerationFailedDialogFormat, MermaidOutputService.OutputPaneTitle, ex.Message),
+                Strings.OutputPaneTitle,
                 OLEMSGICON.OLEMSGICON_CRITICAL,
                 OLEMSGBUTTON.OLEMSGBUTTON_OK,
                 OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
@@ -146,12 +147,12 @@ namespace SlnxMermaidVsix
         {
             await outputService.LogAsync(
                 pane,
-                "Generation skipped because no solution is currently loaded.");
+                Strings.LogGenerationSkippedNoSolution);
 
             VsShellUtilities.ShowMessageBox(
                 package,
-                "Open a solution file first, then run 'Generate Mermaid Diagram'.",
-                "Slnx Mermaid",
+                Strings.InfoOpenSolutionFirst,
+                Strings.OutputPaneTitle,
                 OLEMSGICON.OLEMSGICON_INFO,
                 OLEMSGBUTTON.OLEMSGBUTTON_OK,
                 OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);

@@ -11,6 +11,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using SlnxMermaidVsix.Resources;
 
 namespace SlnxMermaidVsix
 {
@@ -43,26 +44,26 @@ namespace SlnxMermaidVsix
             cancellationToken.ThrowIfCancellationRequested();
 
             await outputService.LogAsync(pane,
-                $"Loading config: {configPath}");
+                string.Format(Strings.LogLoadingConfigFormat, configPath));
 
             var config = YamlConfigLoader.Load(configPath)
                 .Normalize(configPath)
                 .Validate();
 
             await outputService.LogAsync(pane,
-                $"Analyzing solution graph: {config.Solution}");
+                string.Format(Strings.LogAnalyzingSolutionFormat, config.Solution));
 
             var nodes = SolutionGraphAnalyzer.Analyze(config.Solution);
 
             await outputService.LogAsync(pane,
-                $"Discovered {nodes.Count} projects.");
+                string.Format(Strings.LogDiscoveredProjectsFormat, nodes.Count));
 
             var naming = new NameTransformer(config.Naming);
             var filter = new ProjectFilter(config.Filters.Exclude);
             var emitter = new MermaidEmitter(naming, filter);
 
             await outputService.LogAsync(pane,
-                "Emitting Mermaid diagram...");
+                Strings.LogEmittingMermaid);
 
             var mermaid = emitter.Emit(nodes, config.Diagram.Direction);
             var markdownDiagram = mermaid.WrapCodeForMarkdown();
@@ -81,7 +82,7 @@ namespace SlnxMermaidVsix
             File.WriteAllText(outputFile, markdownDiagram);
 
             await outputService.LogAsync(pane,
-                $"Diagram written to: {outputFile}");
+                string.Format(Strings.LogDiagramWrittenFormat, outputFile));
 
             VsShellUtilities.OpenDocument(package, outputFile);
         }

@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Threading.Tasks;
+using SlnxMermaidVsix.Resources;
 
 namespace SlnxMermaidVsix
 {
@@ -12,9 +13,9 @@ namespace SlnxMermaidVsix
     internal sealed class MermaidOutputService
     {
         private static readonly Guid OutputPaneGuidValue =
-            new Guid("7DB87FC4-AE9B-4AAB-9E32-F893A4B23DBB");
+            new Guid(Strings.OutputPaneGuid);
 
-        public const string OutputPaneTitle = "Slnx Mermaid";
+        public static string OutputPaneTitle => Strings.OutputPaneTitle;
 
         private readonly AsyncPackage package;
 
@@ -40,7 +41,7 @@ namespace SlnxMermaidVsix
 
             if (outputWindow == null)
                 throw new InvalidOperationException(
-                    "Unable to acquire SVsOutputWindow service.");
+                    Strings.ErrorAcquireOutputWindowService);
 
             var paneGuid = OutputPaneGuidValue;
 
@@ -56,7 +57,7 @@ namespace SlnxMermaidVsix
 
             if (pane == null)
                 throw new InvalidOperationException(
-                    "Unable to acquire the output pane.");
+                    Strings.ErrorAcquireOutputPane);
 
             pane.Activate();
 
@@ -74,7 +75,7 @@ namespace SlnxMermaidVsix
                 .SwitchToMainThreadAsync(package.DisposalToken);
 
             pane.OutputString(
-                $"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
+                string.Format(Strings.OutputLogFormat, DateTime.Now, message, Environment.NewLine));
         }
 
         /// <summary>
