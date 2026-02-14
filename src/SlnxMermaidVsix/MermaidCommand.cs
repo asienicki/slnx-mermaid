@@ -3,7 +3,6 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.ComponentModel.Design;
-using System.IO;
 using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 
@@ -84,76 +83,14 @@ namespace SlnxMermaidVsix
 
             var pane = await this.outputService.GetOrCreateOutputPaneAsync();
 
-            await this.outputService.LogAsync(pane,
-                "Generate Mermaid Diagram command invoked.");
-
-            try
-            {
-                var solutionPath = this.dte?.Solution?.FullName;
-
-                if (string.IsNullOrWhiteSpace(solutionPath))
-                {
-                    await this.HandleMissingSolutionAsync(pane);
-                    return;
-                }
-
-                var solutionDirectory = Path.GetDirectoryName(solutionPath);
-
-                if (string.IsNullOrWhiteSpace(solutionDirectory))
-                    throw new InvalidOperationException("Unable to determine the solution directory.");
-
-                var configPath = Path.Combine(solutionDirectory, "slnx-mermaid.yml");
-
-                await this.configBootstrapper.EnsureConfigFileExistsAsync(
-                    configPath,
-                    solutionPath,
-                    pane,
-                    this.package.DisposalToken);
-
-                await this.outputService.LogAsync(
-                    pane,
-                    $"Selected solution: {solutionPath} {Environment.NewLine} Invoking SlnxMermaid.Core with argument: --config \"{configPath}\"");
-
-                await Task.Run(async () =>
-                {
-                    await this.diagramGenerator.GenerateAsync(
-                        configPath,
-                        pane,
-                        this.package.DisposalToken);
-                }, this.package.DisposalToken);
-
-                var successMessage = "Mermaid diagram generation completed successfully.";
-
-                await this.outputService.LogAsync(pane, successMessage);
-                await this.outputService.SendMessageToStatusBarAsync(successMessage);
-            }
-            catch (Exception ex)
-            {
-                await this.outputService.LogAsync(pane, $"Generation failed: {ex}");
-
-                VsShellUtilities.ShowMessageBox(
-                    this.package,
-                    $"Mermaid diagram generation failed. See '{MermaidOutputService.OutputPaneTitle}' in the Output window for details.\n\n{ex.Message}",
-                    "Slnx Mermaid",
-                    OLEMSGICON.OLEMSGICON_CRITICAL,
-                    OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
-            }
-        }
-
-        private async Task HandleMissingSolutionAsync(IVsOutputWindowPane pane)
-        {
-            await this.outputService.LogAsync(
-                pane,
-                "Generation skipped because no solution is currently loaded.");
-
-            VsShellUtilities.ShowMessageBox(
+            var workflow = new MermaidGenerationWorkflow(
                 this.package,
-                "Open a solution file first, then run 'Generate Mermaid Diagram'.",
-                "Slnx Mermaid",
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+                this.dte,
+                this.outputService,
+                this.configBootstrapper,
+                this.diagramGenerator);
+
+            await workflow.RunAsync(pane, this.package.DisposalToken);
         }
 
         private void OnBeforeQueryStatus(object sender, EventArgs e)
