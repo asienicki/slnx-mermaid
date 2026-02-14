@@ -7,8 +7,8 @@ using Task = System.Threading.Tasks.Task;
 namespace SlnxMermaidVsix
 {
     /// <summary>
-    /// Rejestruje i obsługuje komendę VSIX odpowiedzialną za uruchomienie generowania diagramu Mermaid.
-    /// Klasa utrzymuje wyłącznie rolę warstwy wejścia (command handler) oraz deleguje logikę wykonania do workflow.
+    /// Registers and handles the VSIX command that starts Mermaid diagram generation.
+    /// This class acts as a thin command handler and delegates execution to the workflow.
     /// </summary>
     internal sealed class MermaidCommand
     {
@@ -27,7 +27,7 @@ namespace SlnxMermaidVsix
         public static MermaidCommand Instance { get; private set; }
 
         /// <summary>
-        /// Inicjalizuje instancję komendy i podpina ją do menu Visual Studio.
+        /// Initializes the command instance and wires it into the Visual Studio menu.
         /// </summary>
         private MermaidCommand(
             AsyncPackage package,
@@ -48,7 +48,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Tworzy i rejestruje singleton komendy oraz pobiera wymagane usługi VS (DTE, MenuCommandService).
+        /// Creates and registers the command singleton and resolves required VS services.
         /// </summary>
         public static async Task InitializeAsync(AsyncPackage package)
         {
@@ -75,7 +75,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Punkt wejścia kliknięcia komendy w UI; uruchamia wykonanie asynchroniczne bez blokowania wątku UI.
+        /// UI entry point for the command click; starts async execution without blocking the UI thread.
         /// </summary>
         private void Execute(object sender, EventArgs e)
         {
@@ -88,7 +88,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Przygotowuje zależności wykonania i deleguje pełny przebieg generowania do workflow.
+        /// Prepares dependencies and delegates the generation flow to the workflow.
         /// </summary>
         private async Task ExecuteAsync()
         {
@@ -108,7 +108,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Aktualizuje stan dostępności komendy (enabled/disabled) przed wyświetleniem pozycji menu.
+        /// Updates command availability before Visual Studio renders the menu item.
         /// </summary>
         private void OnBeforeQueryStatus(object sender, EventArgs e)
         {
@@ -121,7 +121,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Sprawdza, czy w środowisku Visual Studio jest aktualnie otwarte rozwiązanie.
+        /// Determines whether a solution is currently loaded and open in Visual Studio.
         /// </summary>
         private bool IsSolutionLoaded()
         {

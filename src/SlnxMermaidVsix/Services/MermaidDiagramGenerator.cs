@@ -15,8 +15,8 @@ using System.Threading.Tasks;
 namespace SlnxMermaidVsix
 {
     /// <summary>
-    /// Realizuje pełny proces generowania diagramu Mermaid na podstawie konfiguracji:
-    /// odczyt i walidacja konfiguracji, analiza grafu rozwiązania, emisja i zapis pliku wyjściowego.
+    /// Executes the Mermaid generation pipeline from configuration loading and validation,
+    /// through solution graph analysis, to output emission and file persistence.
     /// </summary>
     internal sealed class MermaidDiagramGenerator
     {
@@ -24,7 +24,7 @@ namespace SlnxMermaidVsix
         private readonly MermaidOutputService outputService;
 
         /// <summary>
-        /// Tworzy generator diagramu dla bieżącego pakietu VSIX.
+        /// Creates a diagram generator for the current VSIX package.
         /// </summary>
         public MermaidDiagramGenerator(AsyncPackage package)
         {
@@ -33,7 +33,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Generuje diagram Mermaid i zapisuje go do ścieżki wyjściowej z konfiguracji.
+        /// Generates a Mermaid diagram and writes it to the output path defined in configuration.
         /// </summary>
         public async Task GenerateAsync(
             string configPath,

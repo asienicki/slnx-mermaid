@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 namespace SlnxMermaidVsix
 {
     /// <summary>
-    /// Dostarcza operacje związane z komunikacją z użytkownikiem w Visual Studio:
-    /// Output Window (logowanie) oraz pasek statusu.
+    /// Provides user-facing Visual Studio output operations:
+    /// output window logging and status bar updates.
     /// </summary>
     internal sealed class MermaidOutputService
     {
@@ -19,7 +19,7 @@ namespace SlnxMermaidVsix
         private readonly AsyncPackage package;
 
         /// <summary>
-        /// Tworzy serwis outputu oparty o bieżący pakiet VSIX.
+        /// Creates an output service bound to the current VSIX package.
         /// </summary>
         public MermaidOutputService(AsyncPackage package)
         {
@@ -27,7 +27,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Pobiera istniejący lub tworzy nowy panel wyjścia rozszerzenia i go aktywuje.
+        /// Gets or creates the extension output pane and activates it.
         /// </summary>
         public async Task<IVsOutputWindowPane> GetOrCreateOutputPaneAsync()
         {
@@ -64,7 +64,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Zapisuje pojedynczy wpis logu do panelu wyjścia wraz ze znacznikiem czasu.
+        /// Writes a timestamped log entry to the output pane.
         /// </summary>
         public async Task LogAsync(
             IVsOutputWindowPane pane,
@@ -78,7 +78,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Ustawia wiadomość na pasku statusu Visual Studio.
+        /// Displays a message on the Visual Studio status bar.
         /// </summary>
         public async Task SendMessageToStatusBarAsync(string message)
         {

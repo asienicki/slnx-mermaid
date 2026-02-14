@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 namespace SlnxMermaidVsix
 {
     /// <summary>
-    /// Orkiestruje przebieg generowania diagramu: walidację kontekstu rozwiązania,
-    /// przygotowanie konfiguracji, uruchomienie generatora oraz obsługę sukcesu i błędów.
+    /// Orchestrates the diagram generation flow: validates solution context,
+    /// prepares configuration, runs generation, and handles success/error user feedback.
     /// </summary>
     internal sealed class MermaidGenerationWorkflow
     {
@@ -21,7 +21,7 @@ namespace SlnxMermaidVsix
         private readonly MermaidDiagramGenerator diagramGenerator;
 
         /// <summary>
-        /// Tworzy workflow łączący usługi potrzebne do wykonania komendy generowania diagramu.
+        /// Creates a workflow that coordinates services required for diagram generation.
         /// </summary>
         public MermaidGenerationWorkflow(
             AsyncPackage package,
@@ -38,7 +38,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Uruchamia workflow generowania diagramu wraz z obsługą wyjątków i komunikatów użytkownika.
+        /// Runs the generation workflow with exception handling and user notifications.
         /// </summary>
         public async Task RunAsync(IVsOutputWindowPane pane, CancellationToken cancellationToken)
         {
@@ -65,8 +65,8 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Buduje kontekst wykonania na podstawie aktualnie otwartego rozwiązania.
-        /// Zwraca <c>null</c>, gdy rozwiązanie nie jest otwarte.
+        /// Builds execution context from the currently open solution.
+        /// Returns <c>null</c> when no solution is open.
         /// </summary>
         private MermaidGenerationContext TryBuildContext()
         {
@@ -86,7 +86,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Wykonuje właściwe generowanie: zapewnia konfigurację i uruchamia generator w tle.
+        /// Executes generation by ensuring configuration exists and invoking the generator in background.
         /// </summary>
         private async Task GenerateDiagramAsync(
             MermaidGenerationContext context,
@@ -113,7 +113,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Obsługuje scenariusz poprawnego zakończenia generowania diagramu.
+        /// Handles successful completion of diagram generation.
         /// </summary>
         private async Task HandleSuccessAsync(IVsOutputWindowPane pane)
         {
@@ -124,7 +124,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Obsługuje błąd generowania: zapisuje szczegóły do logu i pokazuje komunikat błędu.
+        /// Handles generation failure by logging details and showing an error message.
         /// </summary>
         private async Task HandleFailureAsync(IVsOutputWindowPane pane, Exception ex)
         {
@@ -140,7 +140,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Obsługuje przypadek uruchomienia komendy bez otwartego rozwiązania.
+        /// Handles command execution when no solution is currently open.
         /// </summary>
         private async Task HandleMissingSolutionAsync(IVsOutputWindowPane pane)
         {
@@ -158,12 +158,12 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Reprezentuje zebrany kontekst potrzebny do pojedynczego wykonania workflow.
+        /// Represents the context required for a single workflow execution.
         /// </summary>
         private sealed class MermaidGenerationContext
         {
             /// <summary>
-            /// Tworzy kontekst wykonania na podstawie ścieżki rozwiązania i ścieżki konfiguracji.
+            /// Creates execution context from solution and configuration paths.
             /// </summary>
             public MermaidGenerationContext(string solutionPath, string configPath)
             {
@@ -172,12 +172,12 @@ namespace SlnxMermaidVsix
             }
 
             /// <summary>
-            /// Pełna ścieżka aktualnie otwartego rozwiązania.
+            /// Full path of the currently open solution.
             /// </summary>
             public string SolutionPath { get; }
 
             /// <summary>
-            /// Pełna ścieżka pliku konfiguracji `slnx-mermaid.yml`.
+            /// Full path to the <c>slnx-mermaid.yml</c> configuration file.
             /// </summary>
             public string ConfigPath { get; }
         }

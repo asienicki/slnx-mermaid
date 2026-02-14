@@ -13,8 +13,8 @@ using System.Threading.Tasks;
 namespace SlnxMermaidVsix
 {
     /// <summary>
-    /// Odpowiada za przygotowanie domyślnej konfiguracji `slnx-mermaid.yml`
-    /// w przypadku jej braku w katalogu rozwiązania.
+    /// Ensures a default <c>slnx-mermaid.yml</c> configuration exists
+    /// when it is missing from the solution directory.
     /// </summary>
     internal sealed class MermaidConfigBootstrapper
     {
@@ -22,7 +22,7 @@ namespace SlnxMermaidVsix
         private readonly MermaidOutputService outputService;
 
         /// <summary>
-        /// Tworzy serwis bootstrapujący konfigurację.
+        /// Creates a configuration bootstrap service.
         /// </summary>
         public MermaidConfigBootstrapper(AsyncPackage package)
         {
@@ -31,7 +31,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Zapewnia istnienie pliku konfiguracyjnego; gdy go brakuje, tworzy plik z domyślną treścią.
+        /// Ensures the configuration file exists; creates it with defaults if it does not.
         /// </summary>
         public async Task EnsureConfigFileExistsAsync(
             string configPath,
@@ -71,7 +71,7 @@ namespace SlnxMermaidVsix
         }
 
         /// <summary>
-        /// Buduje domyślny obiekt konfiguracji na podstawie nazwy bieżącego rozwiązania.
+        /// Builds a default configuration object based on the current solution name.
         /// </summary>
         private SlnxMermaidConfig CreateDefaultConfig(string solutionPath)
         {
