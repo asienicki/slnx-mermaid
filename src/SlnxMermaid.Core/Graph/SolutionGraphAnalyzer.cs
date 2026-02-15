@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Build.Graph;
@@ -17,7 +18,9 @@ namespace SlnxMermaid.Core.Graph
                     n.ProjectInstance.FullPath))
                 .ToList();
 
-            var byPath = nodes.ToDictionary(n => n.Path);
+            var byPath = nodes
+                .GroupBy(n => n.Path, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
             foreach (var node in graph.ProjectNodes)
             {
@@ -26,9 +29,13 @@ namespace SlnxMermaid.Core.Graph
                 foreach (var dep in node.ProjectReferences)
                 {
                     ProjectNode to;
+
                     if (byPath.TryGetValue(dep.ProjectInstance.FullPath, out to))
                     {
-                        from.Dependencies.Add(to);
+                        if (!StringComparer.OrdinalIgnoreCase.Equals(from.Path, to.Path))
+                        {
+                            from.Dependencies.Add(to);
+                        }
                     }
                 }
             }
