@@ -56,5 +56,9 @@ namespace SlnxMermaidVsix.Resources
         internal static string ErrorGenerationFailedDialogFormat => ResourceManager.GetString(nameof(ErrorGenerationFailedDialogFormat), resourceCulture);
         internal static string LogGenerationSkippedNoSolution => ResourceManager.GetString(nameof(LogGenerationSkippedNoSolution), resourceCulture);
         internal static string InfoOpenSolutionFirst => ResourceManager.GetString(nameof(InfoOpenSolutionFirst), resourceCulture);
+        internal static string StatusGenerationStarting => ResourceManager.GetString(nameof(StatusGenerationStarting), resourceCulture);
+        internal static string StatusGenerationInProgress => ResourceManager.GetString(nameof(StatusGenerationInProgress), resourceCulture);
+        internal static string StatusGenerationFailed => ResourceManager.GetString(nameof(StatusGenerationFailed), resourceCulture);
+        internal static string StatusGenerationSkippedNoSolution => ResourceManager.GetString(nameof(StatusGenerationSkippedNoSolution), resourceCulture);
     }
 }

@@ -84,7 +84,21 @@ namespace SlnxMermaidVsix
             await outputService.LogAsync(pane,
                 string.Format(Strings.LogDiagramWrittenFormat, outputFile));
 
-            VsShellUtilities.OpenDocument(package, outputFile);
+            OpenDocumentInBackground(outputFile);
+        }
+
+        /// <summary>
+        /// Opens the generated file asynchronously so completion feedback is not delayed by editor load time.
+        /// </summary>
+        private void OpenDocumentInBackground(string outputFile)
+        {
+            package.JoinableTaskFactory.RunAsync(async delegate
+            {
+                await ThreadHelper.JoinableTaskFactory
+                    .SwitchToMainThreadAsync(package.DisposalToken);
+
+                VsShellUtilities.OpenDocument(package, outputFile);
+            }).FileAndForget(GlobalConstants.OpenDocumentOperationName);
         }
     }
 }

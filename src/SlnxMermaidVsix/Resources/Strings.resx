@@ -71,4 +71,8 @@
 {1}</value></data>
   <data name="LogGenerationSkippedNoSolution" xml:space="preserve"><value>Generation skipped because no solution is currently loaded.</value></data>
   <data name="InfoOpenSolutionFirst" xml:space="preserve"><value>Open a solution file first, then run 'Generate Mermaid Diagram'.</value></data>
+  <data name="StatusGenerationStarting" xml:space="preserve"><value>Starting Mermaid diagram generation...</value></data>
+  <data name="StatusGenerationInProgress" xml:space="preserve"><value>Generating Mermaid diagram...</value></data>
+  <data name="StatusGenerationFailed" xml:space="preserve"><value>Mermaid diagram generation failed.</value></data>
+  <data name="StatusGenerationSkippedNoSolution" xml:space="preserve"><value>No solution loaded. Generation skipped.</value></data>
 </root>

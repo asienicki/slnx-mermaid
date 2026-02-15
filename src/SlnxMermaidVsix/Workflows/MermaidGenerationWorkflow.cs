@@ -45,6 +45,7 @@ namespace SlnxMermaidVsix
         {
             await outputService.LogAsync(pane,
                 Strings.LogCommandInvoked);
+            await outputService.SendMessageToStatusBarAsync(Strings.StatusGenerationStarting);
 
             try
             {
@@ -56,6 +57,7 @@ namespace SlnxMermaidVsix
                     return;
                 }
 
+                await outputService.SendMessageToStatusBarAsync(Strings.StatusGenerationInProgress);
                 await GenerateDiagramAsync(context, pane, cancellationToken);
                 await HandleSuccessAsync(pane);
             }
@@ -131,6 +133,8 @@ namespace SlnxMermaidVsix
         {
             await outputService.LogAsync(pane, string.Format(Strings.LogGenerationFailedFormat, ex));
 
+            await outputService.SendMessageToStatusBarAsync(Strings.StatusGenerationFailed);
+
             VsShellUtilities.ShowMessageBox(
                 package,
                 string.Format(Strings.ErrorGenerationFailedDialogFormat, MermaidOutputService.OutputPaneTitle, ex.Message),
@@ -148,6 +152,8 @@ namespace SlnxMermaidVsix
             await outputService.LogAsync(
                 pane,
                 Strings.LogGenerationSkippedNoSolution);
+
+            await outputService.SendMessageToStatusBarAsync(Strings.StatusGenerationSkippedNoSolution);
 
             VsShellUtilities.ShowMessageBox(
                 package,

@@ -9,5 +9,7 @@
         public const string ConfigFileName = "slnx-mermaid.yml";
 
         public const string FileAndForgetOperationName = "SlnxMermaidVsix/MermaidCommand";
+
+        public const string OpenDocumentOperationName = "SlnxMermaidVsix/OpenDocument";
     }
 }
