@@ -25,7 +25,7 @@ public sealed class NameTransformer
             name = name.Substring(_stripPrefix.Length);
         }
 
-        return _aliases.TryGetValue(name, out var alias)
+        return _aliases != null && _aliases.TryGetValue(name, out var alias)
             ? alias
             : name;
     }
