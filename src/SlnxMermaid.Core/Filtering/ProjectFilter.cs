@@ -10,15 +10,19 @@ public sealed class ProjectFilter
 
     public ProjectFilter(IEnumerable<string> excluded)
     {
-        _excluded = excluded
+        _excluded = excluded?
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .ToArray();
     }
 
     public bool IsAllowed(string projectId)
     {
-        return _excluded.All(x =>
-            projectId.IndexOf(x, StringComparison.OrdinalIgnoreCase) < 0);
+        if (_excluded == null)
+        {
+            return true;
+        }
+
+        return  _excluded.All(x => projectId.IndexOf(x, StringComparison.OrdinalIgnoreCase) < 0);
     }
 }
 }
