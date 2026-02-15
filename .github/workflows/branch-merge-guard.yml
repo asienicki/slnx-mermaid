@@ -19,6 +19,8 @@ jobs:
           REPO: ${{ github.repository }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -e
+
           fail() {
             local message="$1"
 
@@ -32,52 +34,32 @@ jobs:
 
           echo "PR from '$HEAD' to '$BASE'"
 
-          #
-          # BASE: master
-          #
-          if [[ "$BASE" == "master" ]]; then
-            # manual dev flow
-            if [[ "$HEAD" =~ ^feat/.* || "$HEAD" =~ ^fix/.* ]]; then
+          case "$BASE" in
+
+            master)
+              if [[ "$HEAD" =~ ^feat/.* || "$HEAD" =~ ^fix/.* || "$HEAD" =~ ^codex/.* || "$HEAD" == "rc" ]]; then
+                exit 0
+              fi
+              fail "Into **master** allowed only from **feat/***, **fix/***, **codex/*** or **rc**."
+              ;;
+
+            rc)
+              if [[ "$HEAD" == "master" || "$HEAD" == "release" ]]; then
+                exit 0
+              fi
+              fail "Into **rc** allowed only from **master** or **release**."
+              ;;
+
+            release)
+              if [[ "$HEAD" == "rc" ]]; then
+                exit 0
+              fi
+              fail "Into **release** allowed only from **rc**."
+              ;;
+
+            *)
+              # All other branches (feat/*, fix/*, codex/* etc.)
               exit 0
-            fi
+              ;;
 
-            # automatic sync
-            if [[ "$HEAD" == "rc" ]]; then
-              exit 0
-            fi
-
-            fail "Into **master** allowed only from **feat/***, **fix/*** or **rc**."
-          fi
-
-          #
-          # BASE: rc
-          #
-          if [[ "$BASE" == "rc" ]]; then
-            # manual promotion
-            if [[ "$HEAD" == "master" ]]; then
-              exit 0
-            fi
-
-            # automatic sync
-            if [[ "$HEAD" == "release" ]]; then
-              exit 0
-            fi
-
-            fail "Into **rc** allowed only from **master** or **release**."
-          fi
-
-          #
-          # BASE: release
-          #
-          if [[ "$BASE" == "release" ]]; then
-            if [[ "$HEAD" == "rc" ]]; then
-              exit 0
-            fi
-
-            fail "Into **release** allowed only from **rc**."
-          fi
-
-          #
-          # Anything else
-          #
-          fail "Merging into **$BASE** is not allowed by branch policy."
+          esac

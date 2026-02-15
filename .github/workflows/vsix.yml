@@ -1,0 +1,28 @@
+name: Build VSIX
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'src/SlnxMermaidVsix/**'
+      - 'SlnxMermaidVisualStudio.slnx'
+  pull_request:
+    paths:
+      - 'src/SlnxMermaidVsix/**'
+      - 'SlnxMermaidVisualStudio.slnx'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore
+        run: msbuild SlnxMermaidVisualStudio.slnx /t:Restore
+
+      - name: Build VSIX
+        run: msbuild SlnxMermaidVisualStudio.slnx /p:Configuration=Release

@@ -1,6 +1,7 @@
-﻿namespace SlnxMermaid.Core.Config;
-
+﻿namespace SlnxMermaid.Core.Config
+{
 public sealed class OutputConfig
 {
-    public string? File { get; set; }
+    public string File { get; set; }
+}
 }

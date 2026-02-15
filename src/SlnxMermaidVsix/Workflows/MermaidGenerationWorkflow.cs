@@ -1,0 +1,299 @@
+﻿using EnvDTE;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using SlnxMermaid.CLI.Exceptions;
+using System;
+using System.IO;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using SlnxMermaidVsix.Resources;
+
+namespace SlnxMermaidVsix
+{
+    /// <summary>
+    /// Orchestrates the diagram generation flow: validates solution context,
+    /// prepares configuration, runs generation, and handles success/error user feedback.
+    /// </summary>
+    internal sealed class MermaidGenerationWorkflow
+    {
+        private readonly AsyncPackage package;
+        private readonly DTE dte;
+        private readonly MermaidOutputService outputService;
+        private readonly MermaidConfigBootstrapper configBootstrapper;
+        private readonly MermaidDiagramGenerator diagramGenerator;
+
+        /// <summary>
+        /// Creates a workflow that coordinates services required for diagram generation.
+        /// </summary>
+        public MermaidGenerationWorkflow(
+            AsyncPackage package,
+            DTE dte,
+            MermaidOutputService outputService,
+            MermaidConfigBootstrapper configBootstrapper,
+            MermaidDiagramGenerator diagramGenerator)
+        {
+            this.package = package ?? throw new ArgumentNullException(nameof(package));
+            this.dte = dte ?? throw new ArgumentNullException(nameof(dte));
+            this.outputService = outputService ?? throw new ArgumentNullException(nameof(outputService));
+            this.configBootstrapper = configBootstrapper ?? throw new ArgumentNullException(nameof(configBootstrapper));
+            this.diagramGenerator = diagramGenerator ?? throw new ArgumentNullException(nameof(diagramGenerator));
+        }
+
+        /// <summary>
+        /// Runs the generation workflow with exception handling and user notifications.
+        /// </summary>
+        public async Task RunAsync(IVsOutputWindowPane pane, CancellationToken cancellationToken)
+        {
+            await outputService.LogAsync(pane,
+                Strings.LogCommandInvoked);
+            await outputService.SendMessageToStatusBarAsync(Strings.StatusGenerationStarting);
+
+            try
+            {
+                await ThreadHelper.JoinableTaskFactory
+                    .SwitchToMainThreadAsync(cancellationToken);
+
+                var context = TryBuildContext();
+
+                if (context == null)
+                {
+                    await HandleMissingSolutionAsync(pane);
+                    return;
+                }
+
+                await outputService.SendMessageToStatusBarAsync(Strings.StatusGenerationInProgress);
+                await GenerateDiagramAsync(context, pane, cancellationToken);
+                await HandleSuccessAsync(pane);
+            }
+            catch (YamlDeserializeException ex)
+            {
+                await HandleYamlDeserializeFailureAsync(pane, ex);
+            }
+            catch (IOException ex)
+            {
+                await HandleIoFailureAsync(pane, ex);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                await HandleUnauthorizedAccessFailureAsync(pane, ex);
+            }
+            catch (Exception ex)
+            {
+                await HandleUnexpectedFailureAsync(pane, ex);
+            }
+        }
+
+        /// <summary>
+        /// Builds execution context from the currently open solution.
+        /// Returns <c>null</c> when no solution is open.
+        /// </summary>
+        private MermaidGenerationContext TryBuildContext()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            var solutionPath = dte.Solution?.FullName;
+
+            if (string.IsNullOrWhiteSpace(solutionPath))
+                return null;
+
+            var solutionDirectory = Path.GetDirectoryName(solutionPath);
+
+            if (string.IsNullOrWhiteSpace(solutionDirectory))
+                throw new InvalidOperationException(Strings.ErrorDetermineSolutionDirectory);
+
+            var configPath = Path.Combine(solutionDirectory, GlobalConstants.ConfigFileName);
+
+            return new MermaidGenerationContext(solutionPath, configPath);
+        }
+
+        /// <summary>
+        /// Executes generation by ensuring configuration exists and invoking the generator in background.
+        /// </summary>
+        private async Task GenerateDiagramAsync(
+            MermaidGenerationContext context,
+            IVsOutputWindowPane pane,
+            CancellationToken cancellationToken)
+        {
+            await configBootstrapper.EnsureConfigFileExistsAsync(
+                context.ConfigPath,
+                context.SolutionPath,
+                pane,
+                cancellationToken);
+
+            await outputService.LogAsync(
+                pane,
+                string.Format(Strings.LogSelectedSolutionAndConfigFormat, context.SolutionPath, Environment.NewLine, context.ConfigPath));
+
+            await Task.Run(
+                () => diagramGenerator.GenerateAsync(
+                    context.ConfigPath,
+                    pane,
+                    cancellationToken),
+                cancellationToken);
+        }
+
+        /// <summary>
+        /// Handles successful completion of diagram generation.
+        /// </summary>
+        private async Task HandleSuccessAsync(IVsOutputWindowPane pane)
+        {
+            var successMessage = Strings.SuccessGenerationCompleted;
+
+            await outputService.LogAsync(pane, successMessage);
+            await outputService.SendMessageToStatusBarAsync(successMessage);
+        }
+
+        /// <summary>
+        /// Handles generation failure by logging details and showing an error message.
+        /// </summary>
+        private async Task HandleYamlDeserializeFailureAsync(IVsOutputWindowPane pane, YamlDeserializeException ex)
+        {
+            await outputService.LogAsync(pane, string.Format(Strings.LogGenerationFailedFormat, ex));
+
+            var location = TryExtractLineAndColumn(ex);
+            var statusMessage = string.IsNullOrWhiteSpace(location)
+                ? Strings.StatusYamlInvalid
+                : string.Format(Strings.StatusYamlInvalidWithLocationFormat, location);
+            var dialogMessage = string.IsNullOrWhiteSpace(location)
+                ? Strings.DialogYamlInvalid
+                : string.Format(Strings.DialogYamlInvalidWithLocationFormat, location);
+
+            await outputService.SendMessageToStatusBarAsync(statusMessage);
+
+            await ThreadHelper.JoinableTaskFactory
+                .SwitchToMainThreadAsync(CancellationToken.None);
+
+            VsShellUtilities.ShowMessageBox(
+                package,
+                dialogMessage,
+                Strings.OutputPaneTitle,
+                OLEMSGICON.OLEMSGICON_WARNING,
+                OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        }
+
+        private async Task HandleIoFailureAsync(IVsOutputWindowPane pane, IOException ex)
+        {
+            await outputService.LogAsync(pane, string.Format(Strings.LogGenerationFailedFormat, ex));
+
+            var message = ex is FileNotFoundException || ex is DirectoryNotFoundException
+                ? Strings.StatusConfigFileNotFound
+                : Strings.StatusConfigReadFailed;
+
+            await outputService.SendMessageToStatusBarAsync(message);
+
+            await ThreadHelper.JoinableTaskFactory
+                .SwitchToMainThreadAsync(CancellationToken.None);
+
+            VsShellUtilities.ShowMessageBox(
+                package,
+                string.Format(Strings.DialogConfigReadFailedFormat, message),
+                Strings.OutputPaneTitle,
+                OLEMSGICON.OLEMSGICON_WARNING,
+                OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        }
+
+        private async Task HandleUnauthorizedAccessFailureAsync(IVsOutputWindowPane pane, UnauthorizedAccessException ex)
+        {
+            await outputService.LogAsync(pane, string.Format(Strings.LogGenerationFailedFormat, ex));
+
+            var accessDeniedMessage = Strings.StatusConfigAccessDenied;
+
+            await outputService.SendMessageToStatusBarAsync(accessDeniedMessage);
+
+            await ThreadHelper.JoinableTaskFactory
+                .SwitchToMainThreadAsync(CancellationToken.None);
+
+            VsShellUtilities.ShowMessageBox(
+                package,
+                Strings.DialogConfigAccessDenied,
+                Strings.OutputPaneTitle,
+                OLEMSGICON.OLEMSGICON_WARNING,
+                OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        }
+
+        private async Task HandleUnexpectedFailureAsync(IVsOutputWindowPane pane, Exception ex)
+        {
+            await outputService.LogAsync(pane, string.Format(Strings.LogGenerationFailedFormat, ex));
+
+            await outputService.SendMessageToStatusBarAsync(Strings.StatusGenerationFailed);
+
+            await ThreadHelper.JoinableTaskFactory
+                .SwitchToMainThreadAsync(CancellationToken.None);
+
+            VsShellUtilities.ShowMessageBox(
+                package,
+                Strings.DialogUnexpectedGenerationError,
+                Strings.OutputPaneTitle,
+                OLEMSGICON.OLEMSGICON_CRITICAL,
+                OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        }
+
+        private static string TryExtractLineAndColumn(Exception ex)
+        {
+            var text = ex.ToString();
+            var lineMatch = Regex.Match(text, @"line\s*(?<line>\d+)", RegexOptions.IgnoreCase);
+            var columnMatch = Regex.Match(text, @"(?:column|col)\s*[:=]?\s*(?<column>\d+)", RegexOptions.IgnoreCase);
+
+            if (!lineMatch.Success && !columnMatch.Success)
+                return string.Empty;
+
+            if (lineMatch.Success && columnMatch.Success)
+                return string.Format(Strings.LocationLineColumnFormat, lineMatch.Groups["line"].Value, columnMatch.Groups["column"].Value);
+
+            if (lineMatch.Success)
+                return string.Format(Strings.LocationLineFormat, lineMatch.Groups["line"].Value);
+
+            return string.Format(Strings.LocationColumnFormat, columnMatch.Groups["column"].Value);
+        }
+
+        /// <summary>
+        /// Handles command execution when no solution is currently open.
+        /// </summary>
+        private async Task HandleMissingSolutionAsync(IVsOutputWindowPane pane)
+        {
+            await outputService.LogAsync(
+                pane,
+                Strings.LogGenerationSkippedNoSolution);
+
+            await outputService.SendMessageToStatusBarAsync(Strings.StatusGenerationSkippedNoSolution);
+
+            VsShellUtilities.ShowMessageBox(
+                package,
+                Strings.InfoOpenSolutionFirst,
+                Strings.OutputPaneTitle,
+                OLEMSGICON.OLEMSGICON_INFO,
+                OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        }
+
+        /// <summary>
+        /// Represents the context required for a single workflow execution.
+        /// </summary>
+        private sealed class MermaidGenerationContext
+        {
+            /// <summary>
+            /// Creates execution context from solution and configuration paths.
+            /// </summary>
+            public MermaidGenerationContext(string solutionPath, string configPath)
+            {
+                SolutionPath = solutionPath;
+                ConfigPath = configPath;
+            }
+
+            /// <summary>
+            /// Full path of the currently open solution.
+            /// </summary>
+            public string SolutionPath { get; }
+
+            /// <summary>
+            /// Full path to the <c>slnx-mermaid.yml</c> configuration file.
+            /// </summary>
+            public string ConfigPath { get; }
+        }
+    }
+}
