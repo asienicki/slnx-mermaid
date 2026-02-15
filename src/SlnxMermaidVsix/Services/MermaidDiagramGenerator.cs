@@ -59,7 +59,7 @@ namespace SlnxMermaidVsix
                 string.Format(Strings.LogDiscoveredProjectsFormat, nodes.Count));
 
             var naming = new NameTransformer(config.Naming);
-            var filter = new ProjectFilter(config.Filters.Exclude);
+            var filter = new ProjectFilter(config.Filters?.Exclude);
             var emitter = new MermaidEmitter(naming, filter);
 
             await outputService.LogAsync(pane,
