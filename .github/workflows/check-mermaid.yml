@@ -1,0 +1,32 @@
+name: Check Mermaid Diagram
+
+on:
+  pull_request:
+  push:
+    branches: [ master ]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install slnx-mermaid
+        run: dotnet tool install slnx-mermaid --tool-path ./.tools
+
+      - name: Generate diagram
+        run: |
+          ./.tools/slnx-mermaid \
+            --solution SlnxMermaid.slnx \
+            --output docs/architecture/dependency-graph-mermaid.md
+
+      - name: Check for changes
+        run: |
+          git diff --exit-code docs/architecture/dependency-graph-mermaid.md

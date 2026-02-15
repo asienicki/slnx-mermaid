@@ -1,6 +1,7 @@
 # slnx-mermaid.yml example file
 
-solution: ../slnx-mermaid/SlnxMermaid.slnx
+solution: SlnxMermaid.slnx
+#solution: ../slnx-mermaid/SlnxMermaid.slnx
 
 diagram:
   direction: TD   # TD (top-down) | LR (left-right)
@@ -21,4 +22,5 @@ naming:
     CLI: CommandLineInterface
 
 output:
-  file: docs\architecture\{date}-dependency-graph-mermaid.md
+  file: docs\architecture\dependency-graph-mermaid.md
+  #file: docs\architecture\{date}-dependency-graph-mermaid.md
