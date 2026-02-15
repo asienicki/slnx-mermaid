@@ -27,6 +27,16 @@ jobs:
             --solution SlnxMermaid.slnx \
             --output docs/architecture/dependency-graph-mermaid.md
 
+      - name: Show generated file
+        run: |
+          echo "----- GENERATED -----"
+          cat docs/architecture/dependency-graph-mermaid.md
+          
       - name: Check for changes
         run: |
-          git diff --exit-code docs/architecture/dependency-graph-mermaid.md
+          if ! git diff --quiet docs/architecture/dependency-graph-mermaid.md; then
+            echo "Mermaid diagram is outdated."
+            git diff
+            exit 1
+          fi
+
