@@ -17,6 +17,7 @@ namespace SlnxMermaid.Core.Config
                     .Build();
 
                 var result = deserializer.Deserialize<SlnxMermaidConfig>(reader);
+
                 if (result == null)
                     throw new YamlDeserializeException(path);
 
