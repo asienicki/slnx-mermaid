@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% if page.title %}{{ page.title }} | {% endif %}{{ site.title }}</title>
+    <meta name="description" content="{{ page.description | default: site.description }}" />
+    <link rel="stylesheet" href="{{ '/assets/css/site.css' | relative_url }}" />
+  </head>
+  <body>
+    <header class="top-nav">
+      <div class="top-nav__inner">
+        <a class="brand" href="{{ '/' | relative_url }}">{{ site.title }}</a>
+        <nav class="top-links" aria-label="Top navigation">
+          <a href="{{ '/' | relative_url }}">Overview</a>
+          <a href="{{ '/cli/' | relative_url }}">CLI</a>
+          <a href="{{ '/configuration/' | relative_url }}">Configuration</a>
+          <a href="{{ '/vsix/' | relative_url }}">VSIX</a>
+          <a href="{{ '/github-pages/' | relative_url }}">GitHub Pages</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="doc-shell">
+      <aside class="sidebar" aria-label="Documentation sections">
+        <p class="sidebar__heading">Documentation</p>
+        <nav>
+          <ul>
+            <li><a href="{{ '/' | relative_url }}">Introduction</a></li>
+            <li><a href="{{ '/cli/' | relative_url }}">CLI Guide</a></li>
+            <li><a href="{{ '/configuration/' | relative_url }}">Configuration Reference</a></li>
+            <li><a href="{{ '/vsix/' | relative_url }}">VSIX Guide</a></li>
+            <li><a href="{{ '/github-pages/' | relative_url }}">GitHub Pages Setup</a></li>
+          </ul>
+        </nav>
+      </aside>
+
+      <main class="content" id="main-content">
+        {{ content }}
+      </main>
+    </div>
+  </body>
+</html>

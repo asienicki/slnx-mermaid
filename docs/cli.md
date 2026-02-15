@@ -1,3 +1,8 @@
+---
+layout: default
+title: CLI Guide
+---
+
 # CLI Guide
 
 The CLI endpoint is distributed as a .NET global tool.

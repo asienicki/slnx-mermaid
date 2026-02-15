@@ -1,3 +1,8 @@
+---
+layout: default
+title: VSIX Guide
+---
+
 # VSIX Guide (Visual Studio Extension)
 
 The VSIX endpoint lets you generate Mermaid diagrams directly from Visual Studio.
@@ -24,10 +29,10 @@ The extension uses the same project configuration approach as the CLI workflow (
 
 ## VSIX packaging note
 
-The folder [`docs/vsix`](./vsix/) contains VSIX metadata source files in `.txt` format (`GETTING_STARTED.txt`, `CHANGELOG.txt`) because VSIX manifest metadata does not support Markdown for those fields.
+The folder [`docs/vsix`]({{ '/vsix/README.md' | relative_url }}) contains VSIX metadata source files in `.txt` format (`GETTING_STARTED.txt`, `CHANGELOG.txt`) because VSIX manifest metadata does not support Markdown for those fields.
 
-- Source details: [`docs/vsix/README.md`](./vsix/README.md)
-- Getting started metadata: [`docs/vsix/GETTING_STARTED.txt`](./vsix/GETTING_STARTED.txt)
-- Changelog metadata: [`docs/vsix/CHANGELOG.txt`](./vsix/CHANGELOG.txt)
+- Source details: [`docs/vsix/README.md`]({{ '/vsix/README.md' | relative_url }})
+- Getting started metadata: [`docs/vsix/GETTING_STARTED.txt`]({{ '/vsix/GETTING_STARTED.txt' | relative_url }})
+- Changelog metadata: [`docs/vsix/CHANGELOG.txt`]({{ '/vsix/CHANGELOG.txt' | relative_url }})
 
 Do not convert those metadata files to Markdown.
