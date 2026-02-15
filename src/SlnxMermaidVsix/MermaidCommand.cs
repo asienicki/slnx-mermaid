@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Design;
+using System.Threading;
 using Task = System.Threading.Tasks.Task;
 using SlnxMermaidVsix.Resources;
 
@@ -22,10 +23,13 @@ namespace SlnxMermaidVsix
         private readonly MermaidOutputService outputService;
         private readonly MermaidConfigBootstrapper configBootstrapper;
         private readonly MermaidDiagramGenerator diagramGenerator;
+        private readonly SemaphoreSlim executionGate = new SemaphoreSlim(1, 1);
+        private readonly OleMenuCommand menuItem;
+
+        private const string CommandAlreadyRunningMessage =
+            "Diagram generation is already running. Wait for completion before starting again.";
 
         private DTE dte;
-
-        public static MermaidCommand Instance { get; private set; }
 
         /// <summary>
         /// Initializes the command instance and wires it into the Visual Studio menu.
@@ -42,14 +46,14 @@ namespace SlnxMermaidVsix
             commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
 
             var menuCommandID = new CommandID(CommandSet, CommandId);
-            var menuItem = new OleMenuCommand(this.Execute, menuCommandID);
+            menuItem = new OleMenuCommand(this.Execute, menuCommandID);
             menuItem.BeforeQueryStatus += this.OnBeforeQueryStatus;
 
             commandService.AddCommand(menuItem);
         }
 
         /// <summary>
-        /// Creates and registers the command singleton and resolves required VS services.
+        /// Creates and registers the command and resolves required VS services.
         /// </summary>
         public static async Task InitializeAsync(AsyncPackage package)
         {
@@ -72,7 +76,6 @@ namespace SlnxMermaidVsix
                 throw new InvalidOperationException(
                     Strings.ErrorAcquireDteService);
 
-            Instance = instance;
         }
 
         /// <summary>
@@ -93,10 +96,19 @@ namespace SlnxMermaidVsix
         /// </summary>
         private async Task ExecuteAsync()
         {
+            var pane = await this.outputService.GetOrCreateOutputPaneAsync();
+
+            if (!await this.executionGate.WaitAsync(0, this.package.DisposalToken))
+            {
+                await this.outputService.LogAsync(pane, CommandAlreadyRunningMessage);
+                await this.outputService.SendMessageToStatusBarAsync(CommandAlreadyRunningMessage);
+                return;
+            }
+
             await ThreadHelper.JoinableTaskFactory
                 .SwitchToMainThreadAsync(this.package.DisposalToken);
 
-            var pane = await this.outputService.GetOrCreateOutputPaneAsync();
+            this.menuItem.Enabled = false;
 
             var workflow = new MermaidGenerationWorkflow(
                 this.package,
@@ -105,7 +117,19 @@ namespace SlnxMermaidVsix
                 this.configBootstrapper,
                 this.diagramGenerator);
 
-            await workflow.RunAsync(pane, this.package.DisposalToken);
+            try
+            {
+                await workflow.RunAsync(pane, this.package.DisposalToken);
+            }
+            finally
+            {
+                this.executionGate.Release();
+
+                await ThreadHelper.JoinableTaskFactory
+                    .SwitchToMainThreadAsync(CancellationToken.None);
+
+                this.menuItem.Enabled = this.IsSolutionLoaded();
+            }
         }
 
         /// <summary>
@@ -117,7 +141,8 @@ namespace SlnxMermaidVsix
 
             if (sender is OleMenuCommand command)
             {
-                command.Enabled = this.IsSolutionLoaded();
+                command.Enabled = this.executionGate.CurrentCount > 0
+                    && this.IsSolutionLoaded();
             }
         }
 

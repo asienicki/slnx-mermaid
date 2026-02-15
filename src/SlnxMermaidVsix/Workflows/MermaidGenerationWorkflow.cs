@@ -106,13 +106,12 @@ namespace SlnxMermaidVsix
                 pane,
                 string.Format(Strings.LogSelectedSolutionAndConfigFormat, context.SolutionPath, Environment.NewLine, context.ConfigPath));
 
-            await Task.Run(async () =>
-            {
-                await diagramGenerator.GenerateAsync(
+            await Task.Run(
+                () => diagramGenerator.GenerateAsync(
                     context.ConfigPath,
                     pane,
-                    cancellationToken);
-            }, cancellationToken);
+                    cancellationToken),
+                cancellationToken).Unwrap();
         }
 
         /// <summary>
