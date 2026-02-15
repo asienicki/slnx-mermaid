@@ -2,12 +2,9 @@ version: 2
 
 updates:
   - package-ecosystem: "nuget"
-    directory: "/"
+    directory: "/src/Core"
     schedule:
       interval: "weekly"
-      day: "monday"
-      time: "06:00"
-      timezone: "Europe/Warsaw"
 
     open-pull-requests-limit: 5
 
@@ -21,6 +18,19 @@ updates:
 
     rebase-strategy: "auto"
 
-    allow:
-      - dependency-type: "direct"
-      - dependency-type: "indirect"
+  - package-ecosystem: "nuget"
+    directory: "/src/CLI"
+    schedule:
+      interval: "weekly"
+
+    open-pull-requests-limit: 5
+
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+    labels:
+      - "dependencies"
+      - "security"
+
+    rebase-strategy: "auto"
