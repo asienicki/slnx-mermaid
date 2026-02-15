@@ -4,6 +4,8 @@
 ![PRs](https://img.shields.io/github/issues-pr/asienicki/slnx-mermaid)
 [![NuGet](https://img.shields.io/nuget/v/slnx-mermaid.svg)](https://www.nuget.org/packages/slnx-mermaid/)
 [![Version](https://img.shields.io/visual-studio-marketplace/v/SharpCode.slnxmermaid?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SharpCode.slnxmermaid)
+[![architecture](https://img.shields.io/github/actions/workflow/status/asienicki/slnx-mermaid/check-mermaid.yml?branch=master&label=architecture&style=flat-square)](https://github.com/asienicki/slnx-mermaid/actions/workflows/check-mermaid.yml)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/asienicki/slnx-mermaid/codeql.yml?label=codeql&style=flat-square)](https://github.com/asienicki/slnx-mermaid/actions/workflows/codeql.yml)
 
 
 # 🧜 slnx-mermaid
