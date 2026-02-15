@@ -75,4 +75,5 @@
   <data name="StatusGenerationInProgress" xml:space="preserve"><value>Generating Mermaid diagram...</value></data>
   <data name="StatusGenerationFailed" xml:space="preserve"><value>Mermaid diagram generation failed.</value></data>
   <data name="StatusGenerationSkippedNoSolution" xml:space="preserve"><value>No solution loaded. Generation skipped.</value></data>
+  <data name="CommandAlreadyRunningMessage" xml:space="preserve"><value>Diagram generation is already running. Wait for completion before starting again.</value></data>
 </root>

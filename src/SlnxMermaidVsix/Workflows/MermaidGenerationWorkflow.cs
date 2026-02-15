@@ -49,6 +49,9 @@ namespace SlnxMermaidVsix
 
             try
             {
+                await ThreadHelper.JoinableTaskFactory
+                    .SwitchToMainThreadAsync(cancellationToken);
+
                 var context = TryBuildContext();
 
                 if (context == null)
@@ -73,6 +76,8 @@ namespace SlnxMermaidVsix
         /// </summary>
         private MermaidGenerationContext TryBuildContext()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             var solutionPath = dte.Solution?.FullName;
 
             if (string.IsNullOrWhiteSpace(solutionPath))
@@ -111,7 +116,7 @@ namespace SlnxMermaidVsix
                     context.ConfigPath,
                     pane,
                     cancellationToken),
-                cancellationToken).Unwrap();
+                cancellationToken);
         }
 
         /// <summary>

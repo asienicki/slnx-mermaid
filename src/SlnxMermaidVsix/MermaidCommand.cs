@@ -26,9 +26,6 @@ namespace SlnxMermaidVsix
         private readonly SemaphoreSlim executionGate = new SemaphoreSlim(1, 1);
         private readonly OleMenuCommand menuItem;
 
-        private const string CommandAlreadyRunningMessage =
-            "Diagram generation is already running. Wait for completion before starting again.";
-
         private DTE dte;
 
         /// <summary>
@@ -100,8 +97,8 @@ namespace SlnxMermaidVsix
 
             if (!await this.executionGate.WaitAsync(0, this.package.DisposalToken))
             {
-                await this.outputService.LogAsync(pane, CommandAlreadyRunningMessage);
-                await this.outputService.SendMessageToStatusBarAsync(CommandAlreadyRunningMessage);
+                await this.outputService.LogAsync(pane, Strings.CommandAlreadyRunningMessage);
+                await this.outputService.SendMessageToStatusBarAsync(Strings.CommandAlreadyRunningMessage);
                 return;
             }
 

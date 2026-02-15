@@ -60,5 +60,6 @@ namespace SlnxMermaidVsix.Resources
         internal static string StatusGenerationInProgress => ResourceManager.GetString(nameof(StatusGenerationInProgress), resourceCulture);
         internal static string StatusGenerationFailed => ResourceManager.GetString(nameof(StatusGenerationFailed), resourceCulture);
         internal static string StatusGenerationSkippedNoSolution => ResourceManager.GetString(nameof(StatusGenerationSkippedNoSolution), resourceCulture);
+        internal static string CommandAlreadyRunningMessage => ResourceManager.GetString(nameof(CommandAlreadyRunningMessage), resourceCulture);
     }
 }
