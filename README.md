@@ -3,6 +3,8 @@
 ![Last Commit](https://img.shields.io/github/last-commit/asienicki/slnx-mermaid)
 ![PRs](https://img.shields.io/github/issues-pr/asienicki/slnx-mermaid)
 [![NuGet](https://img.shields.io/nuget/v/slnx-mermaid.svg)](https://www.nuget.org/packages/slnx-mermaid/)
+[![Version](https://img.shields.io/visual-studio-marketplace/v/SharpCode.slnxmermaid?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SharpCode.slnxmermaid)
+
 
 # 🧜 slnx-mermaid
 
