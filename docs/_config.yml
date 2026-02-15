@@ -1,0 +1,4 @@
+title: SLNX Mermaid Documentation
+description: CLI and VSIX documentation for generating Mermaid architecture diagrams
+theme: minima
+markdown: kramdown
