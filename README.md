@@ -36,18 +36,6 @@ slnx-mermaid --config slnx-mermaid.yml
 3. Right-click the solution node in Solution Explorer.
 4. Run the **SLNX Mermaid** command.
 
-## Why the docs were split
-
-The project documentation has been reorganized into `/docs` so it is easier to read in GitHub and ready for **GitHub Pages** publishing.
-
-The root README now serves as a compact project overview, while detailed topics live in dedicated pages.
-
-## GitHub Pages
-
-Documentation publishing is automated via GitHub Actions.
-
-See setup instructions: [`docs/github-pages.md`](docs/github-pages.md).
-
 ## License
 
 See [`LICENSE.txt`](LICENSE.txt).
