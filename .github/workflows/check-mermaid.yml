@@ -5,9 +5,22 @@ on:
   push:
     branches: [ master ]
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: mermaid-check
+  cancel-in-progress: true
+
 jobs:
-  check:
+  generate:
+    name: Generate Diagram
     runs-on: ubuntu-latest
+
+    outputs:
+      outdated: ${{ steps.mermaid_check.outputs.outdated }}
 
     steps:
       - name: Checkout
@@ -26,40 +39,51 @@ jobs:
           ./.tools/slnx-mermaid \
             --solution SlnxMermaid.slnx
 
-      - name: Show generated file
-        run: |
-          echo "----- GENERATED -----"
-          cat docs/architecture/dependency-graph-mermaid.md
-
       - name: Check for changes
         id: mermaid_check
         run: |
-            if git diff --quiet docs/architecture/dependency-graph-mermaid.md; then
+          if git diff --quiet docs/architecture/dependency-graph-mermaid.md; then
             echo "outdated=false" >> $GITHUB_OUTPUT
-            else
+          else
             echo "outdated=true" >> $GITHUB_OUTPUT
-            fi
+          fi
 
+      - name: Add summary
+        run: |
+          echo "## Mermaid Diagram Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.mermaid_check.outputs.outdated }}" = "true" ]; then
+            echo "❌ Diagram is outdated" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Diagram is up to date" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  report:
+    name: Report & Validate
+    needs: generate
+    runs-on: ubuntu-latest
+    environment:
+      name: mermaid-check
+
+    steps:
       - name: Comment on PR
-        if: steps.mermaid_check.outputs.outdated == 'true' && github.event_name == 'pull_request'
+        if: needs.generate.outputs.outdated == 'true' && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
-            script: |
-                github.rest.issues.createComment({
-                    issue_number: context.issue.number,
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    body: "⚠️ Mermaid diagram is outdated. Run `slnx-mermaid` and commit the updated file."
-                })
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: "⚠️ Mermaid diagram is outdated. Run `slnx-mermaid` and commit the updated file."
+            })
 
       - name: Fail if outdated
-        if: steps.mermaid_check.outputs.outdated == 'true'
+        if: needs.generate.outputs.outdated == 'true'
         run: |
-            echo "::error title=Mermaid diagram outdated::Run slnx-mermaid and commit the updated file."
-            exit 1
+          echo "::error title=Mermaid diagram outdated::Run slnx-mermaid and commit the updated file."
+          exit 1
 
-
-
-
-
-
+      - name: Success marker
+        if: needs.generate.outputs.outdated == 'false'
+        run: echo "Diagram validation passed."
