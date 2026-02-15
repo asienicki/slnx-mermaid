@@ -1,0 +1,14 @@
+title: SLNX Mermaid Documentation
+description: CLI and VSIX documentation for generating Mermaid architecture diagrams
+url: "https://asienicki.github.io"
+baseurl: "/slnx-mermaid"
+markdown: kramdown
+permalink: pretty
+
+defaults:
+  -
+    scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: default

@@ -1,11 +1,13 @@
-﻿using SlnxMermaid.Core.Config;
+﻿using System;
+using System.Collections.Generic;
+using SlnxMermaid.Core.Config;
 
-namespace SlnxMermaid.Core.Naming;
-
+namespace SlnxMermaid.Core.Naming
+{
 public sealed class NameTransformer
 {
-    private readonly string? _stripPrefix;
-    private readonly IReadOnlyDictionary<string, string> _aliases;
+    private readonly string _stripPrefix;
+    private readonly Dictionary<string, string> _aliases;
 
     public NameTransformer(NamingConfig namingConfig)
     {
@@ -20,11 +22,12 @@ public sealed class NameTransformer
         if (!string.IsNullOrEmpty(_stripPrefix) &&
             name.StartsWith(_stripPrefix, StringComparison.Ordinal))
         {
-            name = name[_stripPrefix.Length..];
+            name = name.Substring(_stripPrefix.Length);
         }
 
-        return _aliases.TryGetValue(name, out var alias)
+        return _aliases != null && _aliases.TryGetValue(name, out var alias)
             ? alias
             : name;
     }
+}
 }

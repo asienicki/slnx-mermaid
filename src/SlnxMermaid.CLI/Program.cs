@@ -3,20 +3,21 @@ using SlnxMermaid.Cli;
 using SlnxMermaid.CLI.Exceptions;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using System.Configuration;
 
 namespace SlnxMermaid.CLI
 {
-    internal class Program
+    internal static class Program
     {
-        static async Task<int> Main(string[] args)
+        private static readonly string[] ConfigExampleArguments = ["--config", "slnx-mermaid.yml"];
+
+        private static async Task<int> Main(string[] args)
         {
             MSBuildLocator.RegisterDefaults();
 
             return await RunAsync(args);
         }
 
-        static async Task<int> RunAsync(string[] args)
+        private static async Task<int> RunAsync(string[] args)
         {
             SpectraConsoleHelper.PrintHeader();
 
@@ -28,8 +29,8 @@ namespace SlnxMermaid.CLI
 
                 config.ValidateExamples();
 
-                config.AddExample(Array.Empty<string>());
-                config.AddExample(new[] { "--config", "slnx-mermaid.yml" });
+                config.AddExample();
+                config.AddExample(ConfigExampleArguments);
 
                 config.SetExceptionHandler((ex, resolver) =>
                 {

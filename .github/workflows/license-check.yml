@@ -1,9 +1,9 @@
 name: License compliance check
 
 on:
-  push:
-    branches: [ "main", "feat/**" ]
   pull_request:
+  push:
+    branches: [ "master" ]
   workflow_dispatch:
 
 permissions:
@@ -30,11 +30,11 @@ jobs:
           sudo apt-get install -y jq unzip curl
 
       - name: 4. Restore
-        run: dotnet restore
+        run: dotnet restore SlnxMermaid.slnx
 
       - name: 5. Export dependency list
         run: |
-          dotnet list package \
+          dotnet list SlnxMermaid.slnx package \
             --include-transitive \
             --format json > packages.json
 

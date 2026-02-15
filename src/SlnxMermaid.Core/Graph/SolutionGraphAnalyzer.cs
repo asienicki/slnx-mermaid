@@ -1,37 +1,53 @@
-﻿using Microsoft.Build.Graph;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Microsoft.Build.Graph;
 
-namespace SlnxMermaid.Core.Graph;
-
-public sealed class SolutionGraphAnalyzer
+namespace SlnxMermaid.Core.Graph
 {
-    public IReadOnlyCollection<ProjectNode> Analyze(string solutionPath)
+    public static class SolutionGraphAnalyzer
     {
-        var graph = new ProjectGraph(solutionPath);
-
-        var nodes = graph.ProjectNodes
-            .Select(n => new ProjectNode(
-                ToId(n.ProjectInstance.FullPath),
-                n.ProjectInstance.FullPath))
-            .ToList();
-
-        var byPath = nodes.ToDictionary(n => n.Path);
-
-        foreach (var node in graph.ProjectNodes)
+        public static IReadOnlyCollection<ProjectNode> Analyze(string solutionPath)
         {
-            var from = byPath[node.ProjectInstance.FullPath];
+            var graph = new ProjectGraph(solutionPath);
 
-            foreach (var dep in node.ProjectReferences)
+            var nodes = graph.ProjectNodes
+                .Select(n => new ProjectNode(
+                    ToId(n.ProjectInstance.FullPath),
+                    n.ProjectInstance.FullPath))
+                .ToList();
+
+            var byPath = nodes
+                .GroupBy(n => n.Path, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+            foreach (var node in graph.ProjectNodes)
             {
-                if (byPath.TryGetValue(dep.ProjectInstance.FullPath, out var to))
-                    from.Dependencies.Add(to);
+                var from = byPath[node.ProjectInstance.FullPath];
+
+                foreach (var dep in node.ProjectReferences)
+                {
+                    ProjectNode to;
+
+                    if (byPath.TryGetValue(dep.ProjectInstance.FullPath, out to))
+                    {
+                        if (!StringComparer.OrdinalIgnoreCase.Equals(from.Path, to.Path))
+                        {
+                            from.Dependencies.Add(to);
+                        }
+                    }
+                }
             }
+
+            return nodes;
         }
 
-        return nodes;
+        private static string ToId(string projectPath)
+        {
+            return Path.GetFileNameWithoutExtension(projectPath)
+                .Replace('.', '_')
+                .Replace('-', '_');
+        }
     }
-
-    private static string ToId(string projectPath) =>
-        Path.GetFileNameWithoutExtension(projectPath)
-            .Replace('.', '_')
-            .Replace('-', '_');
 }
