@@ -22,5 +22,6 @@ naming:
     CLI: CommandLineInterface
 
 output:
-  file: docs\architecture\dependency-graph-mermaid.md
+  file: docs/architecture/dependency-graph-mermaid.md
+  #file: docs\architecture\dependency-graph-mermaid.md
   #file: docs\architecture\{date}-dependency-graph-mermaid.md

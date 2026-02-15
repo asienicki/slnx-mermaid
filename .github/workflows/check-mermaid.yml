@@ -24,14 +24,13 @@ jobs:
       - name: Generate diagram
         run: |
           ./.tools/slnx-mermaid \
-            --solution SlnxMermaid.slnx \
-            --output docs/architecture/dependency-graph-mermaid.md
+            --solution SlnxMermaid.slnx
 
       - name: Show generated file
         run: |
           echo "----- GENERATED -----"
           cat docs/architecture/dependency-graph-mermaid.md
-          
+
       - name: Check for changes
         run: |
           if ! git diff --quiet docs/architecture/dependency-graph-mermaid.md; then
