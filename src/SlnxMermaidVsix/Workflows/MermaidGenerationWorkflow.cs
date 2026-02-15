@@ -1,8 +1,10 @@
 ﻿using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using SlnxMermaid.CLI.Exceptions;
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using SlnxMermaidVsix.Resources;
@@ -64,9 +66,21 @@ namespace SlnxMermaidVsix
                 await GenerateDiagramAsync(context, pane, cancellationToken);
                 await HandleSuccessAsync(pane);
             }
+            catch (YamlDeserializeException ex)
+            {
+                await HandleYamlDeserializeFailureAsync(pane, ex);
+            }
+            catch (IOException ex)
+            {
+                await HandleIoFailureAsync(pane, ex);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                await HandleUnauthorizedAccessFailureAsync(pane, ex);
+            }
             catch (Exception ex)
             {
-                await HandleFailureAsync(pane, ex);
+                await HandleUnexpectedFailureAsync(pane, ex);
             }
         }
 
@@ -133,19 +147,108 @@ namespace SlnxMermaidVsix
         /// <summary>
         /// Handles generation failure by logging details and showing an error message.
         /// </summary>
-        private async Task HandleFailureAsync(IVsOutputWindowPane pane, Exception ex)
+        private async Task HandleYamlDeserializeFailureAsync(IVsOutputWindowPane pane, YamlDeserializeException ex)
+        {
+            await outputService.LogAsync(pane, string.Format(Strings.LogGenerationFailedFormat, ex));
+
+            var location = TryExtractLineAndColumn(ex);
+            var statusMessage = string.IsNullOrWhiteSpace(location)
+                ? Strings.StatusYamlInvalid
+                : string.Format(Strings.StatusYamlInvalidWithLocationFormat, location);
+            var dialogMessage = string.IsNullOrWhiteSpace(location)
+                ? Strings.DialogYamlInvalid
+                : string.Format(Strings.DialogYamlInvalidWithLocationFormat, location);
+
+            await outputService.SendMessageToStatusBarAsync(statusMessage);
+
+            await ThreadHelper.JoinableTaskFactory
+                .SwitchToMainThreadAsync(CancellationToken.None);
+
+            VsShellUtilities.ShowMessageBox(
+                package,
+                dialogMessage,
+                Strings.OutputPaneTitle,
+                OLEMSGICON.OLEMSGICON_WARNING,
+                OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        }
+
+        private async Task HandleIoFailureAsync(IVsOutputWindowPane pane, IOException ex)
+        {
+            await outputService.LogAsync(pane, string.Format(Strings.LogGenerationFailedFormat, ex));
+
+            var message = ex is FileNotFoundException || ex is DirectoryNotFoundException
+                ? Strings.StatusConfigFileNotFound
+                : Strings.StatusConfigReadFailed;
+
+            await outputService.SendMessageToStatusBarAsync(message);
+
+            await ThreadHelper.JoinableTaskFactory
+                .SwitchToMainThreadAsync(CancellationToken.None);
+
+            VsShellUtilities.ShowMessageBox(
+                package,
+                string.Format(Strings.DialogConfigReadFailedFormat, message),
+                Strings.OutputPaneTitle,
+                OLEMSGICON.OLEMSGICON_WARNING,
+                OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        }
+
+        private async Task HandleUnauthorizedAccessFailureAsync(IVsOutputWindowPane pane, UnauthorizedAccessException ex)
+        {
+            await outputService.LogAsync(pane, string.Format(Strings.LogGenerationFailedFormat, ex));
+
+            var accessDeniedMessage = Strings.StatusConfigAccessDenied;
+
+            await outputService.SendMessageToStatusBarAsync(accessDeniedMessage);
+
+            await ThreadHelper.JoinableTaskFactory
+                .SwitchToMainThreadAsync(CancellationToken.None);
+
+            VsShellUtilities.ShowMessageBox(
+                package,
+                Strings.DialogConfigAccessDenied,
+                Strings.OutputPaneTitle,
+                OLEMSGICON.OLEMSGICON_WARNING,
+                OLEMSGBUTTON.OLEMSGBUTTON_OK,
+                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        }
+
+        private async Task HandleUnexpectedFailureAsync(IVsOutputWindowPane pane, Exception ex)
         {
             await outputService.LogAsync(pane, string.Format(Strings.LogGenerationFailedFormat, ex));
 
             await outputService.SendMessageToStatusBarAsync(Strings.StatusGenerationFailed);
 
+            await ThreadHelper.JoinableTaskFactory
+                .SwitchToMainThreadAsync(CancellationToken.None);
+
             VsShellUtilities.ShowMessageBox(
                 package,
-                string.Format(Strings.ErrorGenerationFailedDialogFormat, MermaidOutputService.OutputPaneTitle, ex.Message),
+                Strings.DialogUnexpectedGenerationError,
                 Strings.OutputPaneTitle,
                 OLEMSGICON.OLEMSGICON_CRITICAL,
                 OLEMSGBUTTON.OLEMSGBUTTON_OK,
                 OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        }
+
+        private static string TryExtractLineAndColumn(Exception ex)
+        {
+            var text = ex.ToString();
+            var lineMatch = Regex.Match(text, @"line\s*(?<line>\d+)", RegexOptions.IgnoreCase);
+            var columnMatch = Regex.Match(text, @"(?:column|col)\s*[:=]?\s*(?<column>\d+)", RegexOptions.IgnoreCase);
+
+            if (!lineMatch.Success && !columnMatch.Success)
+                return string.Empty;
+
+            if (lineMatch.Success && columnMatch.Success)
+                return string.Format(Strings.LocationLineColumnFormat, lineMatch.Groups["line"].Value, columnMatch.Groups["column"].Value);
+
+            if (lineMatch.Success)
+                return string.Format(Strings.LocationLineFormat, lineMatch.Groups["line"].Value);
+
+            return string.Format(Strings.LocationColumnFormat, columnMatch.Groups["column"].Value);
         }
 
         /// <summary>
