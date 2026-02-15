@@ -1,12 +1,17 @@
+---
+layout: default
+title: GitHub Pages Setup
+---
+
 # GitHub Pages Setup
 
 This repository is prepared to publish documentation from `docs/`.
 
 ## What is already configured
 
-- Jekyll config in [`docs/_config.yml`](./_config.yml)
-- Docs entry page in [`docs/index.md`](./index.md)
-- Deployment workflow in [`.github/workflows/docs-pages.yml`](../.github/workflows/docs-pages.yml)
+- Jekyll config in [`docs/_config.yml`]({{ '/_config.yml' | relative_url }})
+- Docs entry page in [`docs/index.md`]({{ '/' | relative_url }})
+- Deployment workflow in [`.github/workflows/docs-pages.yml`](https://github.com/asienicki/slnx-mermaid/blob/master/.github/workflows/docs-pages.yml)
 
 ## Enable GitHub Pages (one-time)
 
@@ -14,7 +19,7 @@ This repository is prepared to publish documentation from `docs/`.
 2. In **Build and deployment**, set **Source** to **GitHub Actions**.
 3. Save.
 
-After that, every push to `main` that changes `docs/**` automatically deploys docs.
+After that, every push to `master` that changes `docs/**` automatically deploys docs.
 
 ## Expected URL
 

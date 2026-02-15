@@ -1,3 +1,8 @@
+---
+layout: default
+title: Configuration Reference
+---
+
 # Configuration Reference
 
 SLNX Mermaid uses YAML configuration.
@@ -52,9 +57,9 @@ Target output path for generated Mermaid markdown.
 
 ## Placeholder support
 
-| Placeholder | Description                                                                    |
-| ----------- | ------------------------------------------------------------------------------ |
-| `{date}`    | Current timestamp (format: `yyyy-MM-dd HH_mm_ss`)                              |
+| Placeholder | Description                                       |
+| ----------- | ------------------------------------------------- |
+| `{date}`    | Current timestamp (format: `yyyy-MM-dd HH_mm_ss`) |
 
 ## Path resolution
 
