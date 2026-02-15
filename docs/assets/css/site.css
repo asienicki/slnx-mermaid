@@ -1,13 +1,11 @@
 :root {
-  color-scheme: dark;
-  --bg: #0b1220;
-  --surface: #111a2e;
-  --surface-elevated: #16233d;
-  --line: #243552;
-  --text: #e5edf9;
-  --muted: #9fb1cc;
-  --brand: #4da3ff;
-  --brand-dark: #77b8ff;
+  --bg: #ffffff;
+  --surface: #f8fafc;
+  --line: #dbe3ee;
+  --text: #1f2937;
+  --muted: #4b5563;
+  --brand: #0067b8;
+  --brand-dark: #004a86;
 }
 
 * {
@@ -23,8 +21,8 @@ body {
 }
 
 .top-nav {
-  background: #060b16;
-  border-bottom: 1px solid var(--line);
+  background: #0f172a;
+  border-bottom: 1px solid #1e293b;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -41,7 +39,7 @@ body {
 }
 
 .brand {
-  color: #f8fbff;
+  color: #f8fafc;
   text-decoration: none;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -54,7 +52,7 @@ body {
 }
 
 .top-links a {
-  color: #b8c8e2;
+  color: #cbd5e1;
   text-decoration: none;
   font-size: 0.95rem;
 }
@@ -83,7 +81,7 @@ body {
   font-size: 0.82rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #90a4c2;
+  color: #64748b;
   font-weight: 700;
 }
 
@@ -107,8 +105,8 @@ body {
 
 .sidebar a:hover,
 .sidebar a:focus-visible {
-  background: #1f3150;
-  color: #dbe9ff;
+  background: #e8f3fb;
+  color: var(--brand-dark);
 }
 
 .content {
@@ -120,7 +118,7 @@ body {
   padding: 1.35rem 1.5rem;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: linear-gradient(130deg, #13233e, #0f1a31);
+  background: linear-gradient(120deg, #eff6ff, #f8fafc);
   margin-bottom: 1.4rem;
 }
 
@@ -153,7 +151,7 @@ body {
 
 .btn--primary {
   background: var(--brand);
-  color: #061021;
+  color: #fff;
 }
 
 .btn--primary:hover,
@@ -162,9 +160,9 @@ body {
 }
 
 .btn--secondary {
-  border-color: #35507a;
-  color: #d7e5ff;
-  background: #182741;
+  border-color: #b6c9dc;
+  color: #0f3e66;
+  background: #fff;
 }
 
 .card-grid {
@@ -178,7 +176,7 @@ body {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0.9rem;
-  background: var(--surface-elevated);
+  background: #fff;
 }
 
 .card h3 {
@@ -214,7 +212,7 @@ td {
 }
 
 th {
-  background: #1a2a46;
+  background: #f1f5f9;
 }
 
 code,
@@ -222,18 +220,12 @@ pre {
   font-family: Consolas, Menlo, Monaco, monospace;
 }
 
-code {
-  background: #16243d;
-  padding: 0.1rem 0.28rem;
-  border-radius: 4px;
-}
-
 pre {
   padding: 0.85rem;
   border: 1px solid var(--line);
   border-radius: 6px;
   overflow-x: auto;
-  background: #0d182d;
+  background: #f8fafc;
 }
 
 @media (max-width: 980px) {
