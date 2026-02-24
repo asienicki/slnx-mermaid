@@ -1,8 +1,8 @@
 ﻿using System.Reflection;
-using SlnxMermaid.Cli;
-using SlnxMermaid.CLI.Exceptions;
+using SlnxMermaid.CLI.Commands;
+using SlnxMermaid.Core.Exceptions;
 
-namespace SlnxMermaid.Core.Tests.Commands;
+namespace SlnxMermaid.UnitTests.Commands;
 
 public class GenerateCommandEnsureThereIsConfigTests
 {

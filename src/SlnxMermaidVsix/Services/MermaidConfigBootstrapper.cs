@@ -85,8 +85,7 @@ namespace SlnxMermaidVsix
                 },
                 Naming = new NamingConfig
                 {
-                    StripPrefix =
-                        string.Format(Strings.StripPrefixFormat, Path.GetFileNameWithoutExtension(solutionPath)),
+                    StripPrefix = Path.GetFileNameWithoutExtension(solutionPath).PrepareToDisplayOnMermaidDiagram(),
                     Aliases = new Dictionary<string, string>()
                 },
                 Filters = new FilterConfig

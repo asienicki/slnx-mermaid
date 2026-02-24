@@ -1,7 +1,7 @@
 using Microsoft.Build.Locator;
 using SlnxMermaid.Core.Graph;
 
-namespace SlnxMermaid.Core.Tests.Graph;
+namespace SlnxMermaid.UnitTests.Graph;
 
 public class SolutionGraphAnalyzerAnalyzeTests
 {
