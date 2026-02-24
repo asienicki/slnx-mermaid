@@ -76,6 +76,9 @@ namespace SlnxMermaidVsix
         /// </summary>
         private SlnxMermaidConfig CreateDefaultConfig(string solutionPath)
         {
+            var normalizedSolutionName =
+                Path.GetFileNameWithoutExtension(solutionPath).PrepareToDisplayOnMermaidDiagram();
+
             return new SlnxMermaidConfig
             {
                 Solution = Path.GetFileName(solutionPath),
@@ -85,7 +88,9 @@ namespace SlnxMermaidVsix
                 },
                 Naming = new NamingConfig
                 {
-                    StripPrefix = Path.GetFileNameWithoutExtension(solutionPath).PrepareToDisplayOnMermaidDiagram(),
+                    StripPrefix = string.IsNullOrEmpty(normalizedSolutionName)
+                        ? string.Empty
+                        : $"{normalizedSolutionName}_",
                     Aliases = new Dictionary<string, string>()
                 },
                 Filters = new FilterConfig
