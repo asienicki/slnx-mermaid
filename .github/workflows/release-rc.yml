@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - rc
+      - master
     paths:
       - 'src/SlnxMermaidVsix/**'
       - 'SlnxMermaidVisualStudio.slnx'
