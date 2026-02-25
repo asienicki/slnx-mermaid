@@ -144,12 +144,22 @@ jobs:
           if (-not $env:VS_MARKETPLACE_TOKEN) { throw "Missing secret VS_MARKETPLACE_TOKEN" }
 
           $vsixPath = (Get-ChildItem -Path "src/SlnxMermaidVsix/bin/Release" -Filter "SlnxMermaidVsix*.vsix" | Select-Object -First 1).FullName
-          if (-not $vsixPath) { throw "VSIX package not found in src/SlnxMermaidVsix/bin/Release" }
+          if (-not $vsixPath) {
+            throw "VSIX package not found in src/SlnxMermaidVsix/bin/Release"
+          }
 
           $publisherPath = "${{ steps.vsixpublisher.outputs.path }}"
-          $publishManifestPath = "${{ steps.publishmanifest.outputs.path }}"
+          $publishHelp = (& $publisherPath publish -? 2>&1 | Out-String)
 
-          & $publisherPath publish `
-            -payload $vsixPath `
-            -publishManifest $publishManifestPath `
-            -personalAccessToken $env:VS_MARKETPLACE_TOKEN
+          if ($publishHelp -match '(?m)^\s*-flags\\b') {
+            & $publisherPath publish `
+              -payload $vsixPath `
+              -personalAccessToken $env:VS_MARKETPLACE_TOKEN `
+              -flags Preview
+          }
+          else {
+            Write-Warning "VsixPublisher on this runner does not support '-flags'. Publishing RC without Preview flag."
+            & $publisherPath publish `
+              -payload $vsixPath `
+              -personalAccessToken $env:VS_MARKETPLACE_TOKEN
+          }
