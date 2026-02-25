@@ -1,3 +1,5 @@
+# .github/workflows/rc_vsix.yml
+
 name: RC VSIX
 
 on:
@@ -136,14 +138,11 @@ jobs:
 
           $obj = @{
             categories = @("Coding","Documentation")
-            tags = @(
-              "mermaid",
-              "diagram",
-              "solution",
-              "dependency",
-              "architecture",
-              "visualization"
-            )
+
+            # UWAGA: na części runnerów VsixPublisher błędnie traktuje tablicę jako 1 tag,
+            # więc dajemy string z przecinkami.
+            tags = "mermaid,diagram,solution,dependency,architecture,visualization"
+
             identity = @{
               publisher     = $publisherName
               internalName  = $internalName
@@ -170,7 +169,6 @@ jobs:
         run: |
           if (-not $env:VS_MARKETPLACE_TOKEN) { throw "Missing secret VS_MARKETPLACE_TOKEN" }
 
-          # weź najnowszy VSIX (Debug/Release)
           $vsixPath = (Get-ChildItem -Path "src/SlnxMermaidVsix/bin" -Recurse -Filter "*.vsix" |
             Sort-Object LastWriteTime -Descending |
             Select-Object -First 1).FullName
