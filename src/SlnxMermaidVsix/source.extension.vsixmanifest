@@ -10,7 +10,7 @@
         <ReleaseNotes>CHANGELOG.txt</ReleaseNotes>
         <Icon>Resources\logo.png</Icon>
         <PreviewImage>Resources\logo.png</PreviewImage>
-        <Tags>mermaid,diagram,solution,dependency,architecture,visualization</Tags>
+        <Tags>mermaid</Tags>
     </Metadata>
     <Installation>
         <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0,)">
