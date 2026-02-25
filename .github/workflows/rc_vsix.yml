@@ -22,22 +22,39 @@ jobs:
       VSIX_BASE_VERSION: 17.1.0
 
     steps:
+      - name: Calculate RC VSIX version
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:VSIX_BASE_VERSION -notmatch '^\d+\.\d+\.\d+$') {
+            throw "VSIX_BASE_VERSION must have format Major.Minor.Build (numeric). Got: $env:VSIX_BASE_VERSION"
+          }
+
+          $baseParts = $env:VSIX_BASE_VERSION.Split('.') | ForEach-Object { [int]$_ }
+          foreach ($part in $baseParts) {
+            if ($part -lt 0 -or $part -gt 65535) {
+              throw "VSIX_BASE_VERSION segment out of range (0-65535): $part"
+            }
+          }
+
+          $dayOfYear = (Get-Date).DayOfYear
+          $run2 = [int]$env:GITHUB_RUN_NUMBER % 100
+          $revision = ($dayOfYear * 100) + $run2
+          if ($revision -gt 65535) {
+            throw "Calculated revision out of range (0-65535): $revision"
+          }
+
+          $version = "$env:VSIX_BASE_VERSION.$revision"
+          [void][version]$version
+
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Using RC VSIX version: $version"
+
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
-
-      - name: Calculate RC VSIX version
-        id: version
-        shell: pwsh
-        run: |
-          $datePart = Get-Date -Format "yyDDD"
-          $runPart = "{0:D2}" -f ($env:GITHUB_RUN_NUMBER % 100)
-          $version = "$env:VSIX_BASE_VERSION.$datePart$runPart"
-
-          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "Using RC VSIX version: $version"
 
       - name: Update VSIX manifest version
         shell: pwsh
@@ -88,12 +105,23 @@ jobs:
             throw "Missing secret VS_MARKETPLACE_TOKEN"
           }
 
-          $vsixPath = (Get-ChildItem -Path "src/SlnxMermaidVsix/bin/Release" -Filter *.vsix | Select-Object -First 1).FullName
+          $vsixPath = (Get-ChildItem -Path "src/SlnxMermaidVsix/bin/Release" -Filter "SlnxMermaidVsix*.vsix" | Select-Object -First 1).FullName
           if (-not $vsixPath) {
             throw "VSIX package not found in src/SlnxMermaidVsix/bin/Release"
           }
 
-          & "${{ steps.vsixpublisher.outputs.path }}" publish `
-            -payload $vsixPath `
-            -personalAccessToken $env:VS_MARKETPLACE_TOKEN `
-            -flags Preview
+          $publisherPath = "${{ steps.vsixpublisher.outputs.path }}"
+          $publishHelp = (& $publisherPath publish -? 2>&1 | Out-String)
+
+          if ($publishHelp -match '(?m)^\s*-flags\\b') {
+            & $publisherPath publish `
+              -payload $vsixPath `
+              -personalAccessToken $env:VS_MARKETPLACE_TOKEN `
+              -flags Preview
+          }
+          else {
+            Write-Warning "VsixPublisher on this runner does not support '-flags'. Publishing RC without Preview flag."
+            & $publisherPath publish `
+              -payload $vsixPath `
+              -personalAccessToken $env:VS_MARKETPLACE_TOKEN
+          }
