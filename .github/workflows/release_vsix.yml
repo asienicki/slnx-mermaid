@@ -42,10 +42,10 @@ jobs:
           $now = Get-Date
           $yy  = $now.Year % 100
           $doy = $now.DayOfYear
-          $run2 = [int]$env:GITHUB_RUN_NUMBER % 100
+          $run = [int]$env:GITHUB_RUN_NUMBER
 
-          # Keep monotonic, Marketplace-friendly numbering (e.g. 2604601)
-          $revision = ($yy * 100000) + ($doy * 100) + $run2
+          $run3 = $run % 1000
+          $revision = ($yy * 1000000) + ($doy * 1000) + $run3
 
           $version = "$env:VSIX_BASE_VERSION.$revision"
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
@@ -156,6 +156,7 @@ jobs:
               internalName = $env:VS_MARKETPLACE_INTERNAL_NAME
             }
 
+            overview      = "docs/vsix/GETTING_STARTED.txt"
             priceCategory = "free"
             publisher     = $env:VS_MARKETPLACE_PUBLISHER_ID
           }
