@@ -32,9 +32,44 @@ jobs:
         id: version
         shell: pwsh
         run: |
-          $datePart = Get-Date -Format "yyDDD"
-          $runPart = "{0:D2}" -f ($env:GITHUB_RUN_NUMBER % 100)
-          $version = "$env:VSIX_BASE_VERSION.$datePart$runPart"
+          if ($env:VSIX_BASE_VERSION -notmatch '^\d+\.\d+\.\d+$') {
+            throw "VSIX_BASE_VERSION must have format Major.Minor.Build (numeric). Got: $env:VSIX_BASE_VERSION"
+          }
+
+          $baseParts = $env:VSIX_BASE_VERSION.Split('.') | ForEach-Object { [int]$_ }
+          foreach ($part in $baseParts) {
+            if ($part -lt 0 -or $part -gt 65535) {
+              throw "VSIX_BASE_VERSION segment out of range (0-65535): $part"
+            }
+          }
+
+          $dayOfYear = (Get-Date).DayOfYear
+          $run2 = [int]$env:GITHUB_RUN_NUMBER % 100
+          $revision = ($dayOfYear * 100) + $run2
+          if ($revision -gt 65535) {
+            throw "Calculated revision out of range (0-65535): $revision"
+          }
+
+          $versionFromTag = $null
+          if ($env:GITHUB_REF_TYPE -eq "tag" -and $env:GITHUB_REF_NAME) {
+            $tagVersion = $env:GITHUB_REF_NAME.TrimStart('v')
+            if ($tagVersion -match '^\d+\.\d+\.\d+\.\d+$') {
+              $versionFromTag = $tagVersion
+            }
+            elseif ($tagVersion -match '^\d+\.\d+\.\d+$') {
+              $versionFromTag = "$tagVersion.$revision"
+            }
+          }
+
+          $version = if ($versionFromTag) { $versionFromTag } else { "$env:VSIX_BASE_VERSION.$revision" }
+          [void][version]$version
+
+          $segments = $version.Split('.') | ForEach-Object { [int]$_ }
+          foreach ($segment in $segments) {
+            if ($segment -lt 0 -or $segment -gt 65535) {
+              throw "Version segment out of range (0-65535): $segment"
+            }
+          }
 
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "Using release VSIX version: $version"
@@ -88,7 +123,7 @@ jobs:
             throw "Missing secret VS_MARKETPLACE_TOKEN"
           }
 
-          $vsixPath = (Get-ChildItem -Path "src/SlnxMermaidVsix/bin/Release" -Filter *.vsix | Select-Object -First 1).FullName
+          $vsixPath = (Get-ChildItem -Path "src/SlnxMermaidVsix/bin/Release" -Filter "SlnxMermaidVsix*.vsix" | Select-Object -First 1).FullName
           if (-not $vsixPath) {
             throw "VSIX package not found in src/SlnxMermaidVsix/bin/Release"
           }
