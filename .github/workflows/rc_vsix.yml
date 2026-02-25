@@ -56,7 +56,7 @@ jobs:
           Write-Host "Using RC VSIX version: $version"
 
       # =========================
-      # Checkout & Build tooling
+      # Checkout & Tooling
       # =========================
       - name: Sources - Checkout
         uses: actions/checkout@v4
@@ -65,9 +65,9 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       # =========================
-      # Prepare manifests
+      # Prepare VSIX Manifest
       # =========================
-      - name: Manifests - Update VSIX manifest version (and optional RC Id)
+      - name: Manifests - Update VSIX manifest version
         shell: pwsh
         run: |
           $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
@@ -80,61 +80,7 @@ jobs:
           if (-not $identity) { throw "Cannot find <Identity> in VSIX manifest." }
 
           $identity.SetAttribute("Version", "${{ steps.version.outputs.version }}")
-
-          if ($env:RC_EXTENSION_ID_SUFFIX) {
-            $currentId = $identity.GetAttribute("Id")
-            if (-not $currentId) { throw "Identity Id missing in manifest." }
-            if (-not $currentId.EndsWith($env:RC_EXTENSION_ID_SUFFIX)) {
-              $identity.SetAttribute("Id", "$currentId$($env:RC_EXTENSION_ID_SUFFIX)")
-            }
-          }
-
           $xml.Save($manifestPath)
-
-      - name: Publishing - Create publish manifest (json)
-        id: publishmanifest
-        shell: pwsh
-        run: |
-          $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
-          [xml]$xml = Get-Content -Path $manifestPath
-          $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
-          $ns.AddNamespace("vsix", "http://schemas.microsoft.com/developer/vsx-schema/2011")
-
-          $identity = $xml.SelectSingleNode("//vsix:Identity", $ns)
-          if (-not $identity) { throw "Cannot find <Identity> in VSIX manifest." }
-
-          $publisherName = $identity.GetAttribute("Publisher")
-          $identityId    = $identity.GetAttribute("Id")
-          if (-not $publisherName) { throw "Identity Publisher missing in manifest." }
-          if (-not $identityId)    { throw "Identity Id missing in manifest." }
-
-          # IMPORTANT: extensionName musi być dokładnym Id z vsixmanifest (bez ucinania po kropce)
-          $extensionName = $identityId
-
-          $publishManifestPath = Join-Path $env:GITHUB_WORKSPACE "publishManifest.json"
-
-          $obj = @{
-            categories = @("Coding", "Documentation")
-            tags = @(
-              "mermaid",
-              "diagram",
-              "solution",
-              "dependency",
-              "architecture",
-              "visualization"
-            )
-            identity = @{
-              publisher     = $publisherName
-              extensionName = $extensionName
-            }
-            overview      = "README.md"
-            priceCategory = "free"
-            publisher     = $publisherName
-          }
-
-          ($obj | ConvertTo-Json -Depth 10) | Set-Content -Path $publishManifestPath -Encoding utf8
-          "path=$publishManifestPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          Write-Host "publishManifest.json created at $publishManifestPath"
 
       # =========================
       # Restore & Build
@@ -146,7 +92,7 @@ jobs:
         run: msbuild SlnxMermaidVisualStudio.slnx /t:Build /p:Configuration=Release /p:DeployExtension=false
 
       # =========================
-      # Publisher tool
+      # Locate VsixPublisher
       # =========================
       - name: Tooling - Locate VsixPublisher
         id: vsixpublisher
@@ -162,6 +108,59 @@ jobs:
           "path=$publisherPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       # =========================
+      # Create publish manifest (REQUIRED by VsixPublisher)
+      # =========================
+      - name: Publishing - Create publish manifest (json)
+        id: publishmanifest
+        shell: pwsh
+        run: |
+          $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
+
+          [xml]$xml = Get-Content -Path $manifestPath
+          $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+          $ns.AddNamespace("vsix", "http://schemas.microsoft.com/developer/vsx-schema/2011")
+
+          $identity = $xml.SelectSingleNode("//vsix:Identity", $ns)
+          if (-not $identity) { throw "Cannot find <Identity> in VSIX manifest." }
+
+          $publisherName = $identity.GetAttribute("Publisher")
+          $identityId    = $identity.GetAttribute("Id")
+
+          if (-not $publisherName) { throw "Identity Publisher missing in manifest." }
+          if (-not $identityId)    { throw "Identity Id missing in manifest." }
+
+          # VsixPublisher wymaga internalName (bez kropek)
+          $internalName = ($identityId -replace '[^A-Za-z0-9_-]', '-')
+
+          $publishManifestPath = Join-Path $env:GITHUB_WORKSPACE "publishManifest.json"
+
+          $obj = @{
+            categories = @("Coding","Documentation")
+            tags = @(
+              "mermaid",
+              "diagram",
+              "solution",
+              "dependency",
+              "architecture",
+              "visualization"
+            )
+            identity = @{
+              publisher     = $publisherName
+              internalName  = $internalName
+              extensionName = $internalName
+            }
+            overview      = "README.md"
+            priceCategory = "free"
+            publisher     = $publisherName
+          }
+
+          ($obj | ConvertTo-Json -Depth 10) | Set-Content -Path $publishManifestPath -Encoding utf8
+          "path=$publishManifestPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+          Write-Host "publishManifest.json created at $publishManifestPath"
+          Write-Host "internalName: $internalName"
+
+      # =========================
       # Publish
       # =========================
       - name: Publish - RC to Visual Studio Marketplace
@@ -171,7 +170,7 @@ jobs:
         run: |
           if (-not $env:VS_MARKETPLACE_TOKEN) { throw "Missing secret VS_MARKETPLACE_TOKEN" }
 
-          # Publish newest VSIX from Debug/Release (avoid guessing configuration output)
+          # weź najnowszy VSIX (Debug/Release)
           $vsixPath = (Get-ChildItem -Path "src/SlnxMermaidVsix/bin" -Recurse -Filter "*.vsix" |
             Sort-Object LastWriteTime -Descending |
             Select-Object -First 1).FullName
