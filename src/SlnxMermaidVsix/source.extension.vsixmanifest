@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="SlnxMermaidVsix.f4bb179b-2263-421c-8790-65a3108cbca7" Version="17.1.0.2604601" Language="en-US" Publisher="SharpCode" />
+        <Identity Id="SlnxMermaidVsix.f4bb179b-2263-421c-8790-65a3108cbca7" Version="17.1.0.2604601" Language="en-US" Publisher="Sharp Code" />
         <DisplayName>Slnx Mermaid</DisplayName>
         <Description xml:space="preserve">Create up-to-date Mermaid architecture diagrams from your Visual Studio solution. Automatically map projects and dependencies into clear, readable graphs.</Description>
         <MoreInfo>https://github.com/asienicki/slnx-mermaid</MoreInfo>

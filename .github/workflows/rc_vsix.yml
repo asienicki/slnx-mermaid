@@ -83,6 +83,35 @@ jobs:
           $xml.Save($manifestPath)
 
       # =========================
+      # Set Preview VSIX Manifest
+      # =========================
+      - name: Manifests - Set Preview=true for RC
+        shell: pwsh
+        run: |
+          $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
+
+          [xml]$xml = Get-Content -Path $manifestPath
+          $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+          $ns.AddNamespace("vsix", "http://schemas.microsoft.com/developer/vsx-schema/2011")
+
+          $metadata = $xml.SelectSingleNode("//vsix:Metadata", $ns)
+          if (-not $metadata) { throw "Cannot find <Metadata> in VSIX manifest." }
+
+          $preview = $xml.SelectSingleNode("//vsix:Metadata/vsix:Preview", $ns)
+
+          if (-not $preview) {
+            $preview = $xml.CreateElement("Preview", $ns.LookupNamespace("vsix"))
+            $preview.InnerText = "true"
+            [void]$metadata.AppendChild($preview)
+          }
+          else {
+            $preview.InnerText = "true"
+          }
+
+          $xml.Save($manifestPath)
+          Write-Host "Set <Preview>true</Preview> in $manifestPath"
+
+      # =========================
       # Restore & Build
       # =========================
       - name: Build - Restore (Release)
@@ -122,8 +151,8 @@ jobs:
 
           $identity = $xml.SelectSingleNode("//vsix:Identity", $ns)
           if (-not $identity) { throw "Cannot find <Identity> in VSIX manifest." }
-
-          $publisherName = $identity.GetAttribute("Publisher")
+        
+          $publisherName = "SharpCode"
           $identityId    = $identity.GetAttribute("Id")
 
           if (-not $publisherName) { throw "Identity Publisher missing in manifest." }
