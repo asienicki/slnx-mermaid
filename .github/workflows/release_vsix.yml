@@ -22,22 +22,57 @@ jobs:
       VSIX_BASE_VERSION: 17.1.0
 
     steps:
+      - name: Calculate release VSIX version
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:VSIX_BASE_VERSION -notmatch '^\d+\.\d+\.\d+$') {
+            throw "VSIX_BASE_VERSION must have format Major.Minor.Build (numeric). Got: $env:VSIX_BASE_VERSION"
+          }
+
+          $baseParts = $env:VSIX_BASE_VERSION.Split('.') | ForEach-Object { [int]$_ }
+          foreach ($part in $baseParts) {
+            if ($part -lt 0 -or $part -gt 65535) {
+              throw "VSIX_BASE_VERSION segment out of range (0-65535): $part"
+            }
+          }
+
+          $dayOfYear = (Get-Date).DayOfYear
+          $run2 = [int]$env:GITHUB_RUN_NUMBER % 100
+          $revision = ($dayOfYear * 100) + $run2
+          if ($revision -gt 65535) {
+            throw "Calculated revision out of range (0-65535): $revision"
+          }
+
+          $versionFromTag = $null
+          if ($env:GITHUB_REF_TYPE -eq "tag" -and $env:GITHUB_REF_NAME) {
+            $tagVersion = $env:GITHUB_REF_NAME.TrimStart('v')
+            if ($tagVersion -match '^\d+\.\d+\.\d+\.\d+$') {
+              $versionFromTag = $tagVersion
+            }
+            elseif ($tagVersion -match '^\d+\.\d+\.\d+$') {
+              $versionFromTag = "$tagVersion.$revision"
+            }
+          }
+
+          $version = if ($versionFromTag) { $versionFromTag } else { "$env:VSIX_BASE_VERSION.$revision" }
+          [void][version]$version
+
+          $segments = $version.Split('.') | ForEach-Object { [int]$_ }
+          foreach ($segment in $segments) {
+            if ($segment -lt 0 -or $segment -gt 65535) {
+              throw "Version segment out of range (0-65535): $segment"
+            }
+          }
+
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Using release VSIX version: $version"
+
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
-
-      - name: Calculate release VSIX version
-        id: version
-        shell: pwsh
-        run: |
-          $datePart = Get-Date -Format "yyDDD"
-          $runPart = "{0:D2}" -f ($env:GITHUB_RUN_NUMBER % 100)
-          $version = "$env:VSIX_BASE_VERSION.$datePart$runPart"
-
-          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "Using release VSIX version: $version"
 
       - name: Update VSIX manifest version
         shell: pwsh
@@ -79,6 +114,41 @@ jobs:
 
           "path=$publisherPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
+      - name: Create publish manifest (json)
+        id: publishmanifest
+        shell: pwsh
+        run: |
+          $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
+          [xml]$xml = Get-Content -Path $manifestPath
+          $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+          $ns.AddNamespace("vsix", "http://schemas.microsoft.com/developer/vsx-schema/2011")
+
+          $identity = $xml.SelectSingleNode("//vsix:Identity", $ns)
+          if (-not $identity) { throw "Cannot find <Identity> in VSIX manifest." }
+
+          $publisherName = $identity.GetAttribute("Publisher")
+          $identityId = $identity.GetAttribute("Id")
+          if (-not $publisherName) { throw "Identity Publisher missing in manifest." }
+          if (-not $identityId) { throw "Identity Id missing in manifest." }
+
+          $extensionName = ($identityId -split '\.')[0]
+          $publishManifestPath = Join-Path $env:GITHUB_WORKSPACE "publishManifest.json"
+
+          $obj = @{
+            categories = @()
+            identity = @{
+              publisher = $publisherName
+              extensionName = $extensionName
+            }
+            overview = "README.md"
+            priceCategory = "free"
+            publisher = $publisherName
+          }
+
+          ($obj | ConvertTo-Json -Depth 10) | Set-Content -Path $publishManifestPath -Encoding utf8
+          "path=$publishManifestPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "publishManifest.json created at $publishManifestPath"
+
       - name: Publish release to Visual Studio Marketplace
         shell: pwsh
         env:
@@ -88,11 +158,15 @@ jobs:
             throw "Missing secret VS_MARKETPLACE_TOKEN"
           }
 
-          $vsixPath = (Get-ChildItem -Path "src/SlnxMermaidVsix/bin/Release" -Filter *.vsix | Select-Object -First 1).FullName
+          $vsixPath = (Get-ChildItem -Path "src/SlnxMermaidVsix/bin/Release" -Filter "SlnxMermaidVsix*.vsix" | Select-Object -First 1).FullName
           if (-not $vsixPath) {
             throw "VSIX package not found in src/SlnxMermaidVsix/bin/Release"
           }
 
-          & "${{ steps.vsixpublisher.outputs.path }}" publish `
+          $publisherPath = "${{ steps.vsixpublisher.outputs.path }}"
+          $publishManifestPath = "${{ steps.publishmanifest.outputs.path }}"
+
+          & $publisherPath publish `
             -payload $vsixPath `
+            -publishManifest $publishManifestPath `
             -personalAccessToken $env:VS_MARKETPLACE_TOKEN
