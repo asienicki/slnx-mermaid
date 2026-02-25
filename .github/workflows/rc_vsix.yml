@@ -94,7 +94,7 @@ jobs:
           }
 
           $identity.SetAttribute("Id",$env:VSIX_ID_RC)
-          $identity.SetAttribute("Publisher",$env:VS_MARKETPLACE_PUBLISHER_ID)
+          $identity.SetAttribute("Publisher",$env:VS_MARKETPLACE_AUTHOR_DISPLAY_NAME)
           $identity.SetAttribute("Version","${{ needs.versioning.outputs.version }}")
 
           # Optional: different name in Extensions UI
