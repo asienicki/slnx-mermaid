@@ -22,6 +22,11 @@ jobs:
 
     env:
       VSIX_BASE_VERSION: 17.1.0
+      # Marketplace publisherId (slug) from https://marketplace.visualstudio.com/publishers/SharpCode
+      VS_MARKETPLACE_PUBLISHER: SharpCode
+      # Marketplace itemName: https://marketplace.visualstudio.com/items?itemName=SharpCode.slnxmermaid
+      VS_MARKETPLACE_INTERNAL_NAME: slnxmermaid
+      VS_MARKETPLACE_AUTHOR_DISPLAY_NAME: "Sharp Code"
 
     steps:
       # =========================
@@ -65,9 +70,9 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       # =========================
-      # Prepare VSIX Manifest
+      # Prepare VSIX Manifest (Version + Publisher/Author + Preview)
       # =========================
-      - name: Manifests - Update VSIX manifest version
+      - name: Manifests - Patch VSIX manifest for RC (Version/Publisher/Author/Preview)
         shell: pwsh
         run: |
           $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
@@ -79,37 +84,45 @@ jobs:
           $identity = $xml.SelectSingleNode("//vsix:Identity", $ns)
           if (-not $identity) { throw "Cannot find <Identity> in VSIX manifest." }
 
-          $identity.SetAttribute("Version", "${{ steps.version.outputs.version }}")
-          $xml.Save($manifestPath)
-
-      # =========================
-      # Set Preview VSIX Manifest
-      # =========================
-      - name: Manifests - Set Preview=true for RC
-        shell: pwsh
-        run: |
-          $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
-
-          [xml]$xml = Get-Content -Path $manifestPath
-          $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
-          $ns.AddNamespace("vsix", "http://schemas.microsoft.com/developer/vsx-schema/2011")
-
           $metadata = $xml.SelectSingleNode("//vsix:Metadata", $ns)
           if (-not $metadata) { throw "Cannot find <Metadata> in VSIX manifest." }
 
-          $preview = $xml.SelectSingleNode("//vsix:Metadata/vsix:Preview", $ns)
+          # Ensure correct publisherId (slug) for Marketplace
+          if ($env:VS_MARKETPLACE_PUBLISHER -notmatch '^[A-Za-z0-9][A-Za-z0-9-]*$') {
+            throw "VS_MARKETPLACE_PUBLISHER invalid: '$env:VS_MARKETPLACE_PUBLISHER'"
+          }
+          $identity.SetAttribute("Publisher", $env:VS_MARKETPLACE_PUBLISHER)
 
+          # Set version
+          $identity.SetAttribute("Version", "${{ steps.version.outputs.version }}")
+
+          # Ensure Author matches Marketplace display name exactly
+          $author = $xml.SelectSingleNode("//vsix:Metadata/vsix:Author", $ns)
+          if (-not $author) {
+            $author = $xml.CreateElement("Author", $ns.LookupNamespace("vsix"))
+            $author.InnerText = $env:VS_MARKETPLACE_AUTHOR_DISPLAY_NAME
+            [void]$metadata.AppendChild($author)
+          } else {
+            $author.InnerText = $env:VS_MARKETPLACE_AUTHOR_DISPLAY_NAME
+          }
+
+          # Ensure Preview=true
+          $preview = $xml.SelectSingleNode("//vsix:Metadata/vsix:Preview", $ns)
           if (-not $preview) {
             $preview = $xml.CreateElement("Preview", $ns.LookupNamespace("vsix"))
             $preview.InnerText = "true"
             [void]$metadata.AppendChild($preview)
-          }
-          else {
+          } else {
             $preview.InnerText = "true"
           }
 
           $xml.Save($manifestPath)
-          Write-Host "Set <Preview>true</Preview> in $manifestPath"
+
+          Write-Host "Publisher(Id): $($identity.GetAttribute('Publisher'))"
+          Write-Host "Id: $($identity.GetAttribute('Id'))"
+          Write-Host "Version: $($identity.GetAttribute('Version'))"
+          Write-Host "Author: $($author.InnerText)"
+          Write-Host "Preview: $($preview.InnerText)"
 
       # =========================
       # Restore & Build
@@ -138,55 +151,46 @@ jobs:
 
       # =========================
       # Create publish manifest (REQUIRED by VsixPublisher)
+      # IMPORTANT: internalName MUST match existing Marketplace itemName (SharpCode.slnxmermaid)
       # =========================
       - name: Publishing - Create publish manifest (json)
         id: publishmanifest
         shell: pwsh
         run: |
-          $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
+          if (-not $env:VS_MARKETPLACE_PUBLISHER) { throw "Missing env VS_MARKETPLACE_PUBLISHER" }
+          if (-not $env:VS_MARKETPLACE_INTERNAL_NAME) { throw "Missing env VS_MARKETPLACE_INTERNAL_NAME" }
 
-          [xml]$xml = Get-Content -Path $manifestPath
-          $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
-          $ns.AddNamespace("vsix", "http://schemas.microsoft.com/developer/vsx-schema/2011")
-
-          $identity = $xml.SelectSingleNode("//vsix:Identity", $ns)
-          if (-not $identity) { throw "Cannot find <Identity> in VSIX manifest." }
-        
-          $publisherName = "SharpCode"
-          $identityId    = $identity.GetAttribute("Id")
-
-          if (-not $publisherName) { throw "Identity Publisher missing in manifest." }
-          if (-not $identityId)    { throw "Identity Id missing in manifest." }
-
-          # Wymagane przez VsixPublisher: identity.internalName
-          # Dajemy stabilny, "slug" bez kropek/spacji.
-          $internalName = ($identityId -replace '[^A-Za-z0-9_-]', '-')
+          if ($env:VS_MARKETPLACE_PUBLISHER -notmatch '^[A-Za-z0-9][A-Za-z0-9-]*$') {
+            throw "VS_MARKETPLACE_PUBLISHER invalid: '$env:VS_MARKETPLACE_PUBLISHER'"
+          }
+          if ($env:VS_MARKETPLACE_INTERNAL_NAME -notmatch '^[A-Za-z0-9][A-Za-z0-9-]*$') {
+            throw "VS_MARKETPLACE_INTERNAL_NAME invalid: '$env:VS_MARKETPLACE_INTERNAL_NAME'"
+          }
 
           $publishManifestPath = Join-Path $env:GITHUB_WORKSPACE "publishManifest.json"
 
           $obj = @{
-            '$schema'      = "http://json.schemastore.org/vsix-publish"
-            categories     = @("Coding","Documentation")
+            '$schema'     = "http://json.schemastore.org/vsix-publish"
+            categories    = @("Coding","Documentation")
 
-            # Najstabilniej: 1 krótki tag (bo część wersji VsixPublisher skleja tagi w jeden wpis)
-            tags           = @("mermaid")
+            # BUGGY on some runners: arrays become single space-joined tag. Keep ONE short tag.
+            tags          = @("mermaid")
 
-            # Dla VSIX: identity ma zawierać tylko internalName (reszta bierze się z vsixmanifest)
-            identity       = @{
-              internalName = $internalName
+            identity      = @{
+              internalName = $env:VS_MARKETPLACE_INTERNAL_NAME
             }
 
-            overview       = "README.md"
-            priceCategory  = "free"
-            publisher      = $publisherName
+            overview      = "README.md"
+            priceCategory = "free"
+            publisher     = $env:VS_MARKETPLACE_PUBLISHER
           }
 
           ($obj | ConvertTo-Json -Depth 10) | Set-Content -Path $publishManifestPath -Encoding utf8
           "path=$publishManifestPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
           Write-Host "publishManifest.json created at $publishManifestPath"
-          Write-Host "internalName: $internalName"
-          Write-Host "publisher: $publisherName"
+          Write-Host "publisher: $env:VS_MARKETPLACE_PUBLISHER"
+          Write-Host "internalName: $env:VS_MARKETPLACE_INTERNAL_NAME"
 
       # =========================
       # Publish
