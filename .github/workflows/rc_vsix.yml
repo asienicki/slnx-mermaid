@@ -61,7 +61,7 @@ jobs:
       VS_MARKETPLACE_AUTHOR_DISPLAY_NAME: "Sharp Code"
 
       # RC must be a separate VSIX identity (so it doesn't overwrite prod locally)
-      VSIX_ID_RC: "1f7cdd6e-e9f7-4562-826f-24843b73f471"
+      VSIX_ID_RC: "{1f7cdd6e-e9f7-4562-826f-24843b73f471}"
 
       # Optional: visible name in VS UI
       VSIX_DISPLAY_NAME_RC: "Slnx Mermaid (RC)"
