@@ -17,13 +17,17 @@ concurrency:
 
 jobs:
   publish:
+    name: Publish RC VSIX
     runs-on: windows-latest
 
     env:
       VSIX_BASE_VERSION: 17.1.0
-      
+
     steps:
-      - name: Calculate RC VSIX version
+      # =========================
+      # Versioning
+      # =========================
+      - name: Versioning - Calculate RC VSIX version
         id: version
         shell: pwsh
         run: |
@@ -51,13 +55,19 @@ jobs:
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           Write-Host "Using RC VSIX version: $version"
 
-      - name: Checkout
+      # =========================
+      # Checkout & Build tooling
+      # =========================
+      - name: Sources - Checkout
         uses: actions/checkout@v4
 
-      - name: Setup MSBuild
+      - name: Tooling - Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Update VSIX manifest version (and optional RC Id)
+      # =========================
+      # Prepare manifests
+      # =========================
+      - name: Manifests - Update VSIX manifest version (and optional RC Id)
         shell: pwsh
         run: |
           $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
@@ -81,26 +91,7 @@ jobs:
 
           $xml.Save($manifestPath)
 
-      - name: Restore
-        run: msbuild SlnxMermaidVisualStudio.slnx /t:Restore
-
-      - name: Build VSIX
-        run: msbuild SlnxMermaidVisualStudio.slnx /p:Configuration=Release
-
-      - name: Locate VsixPublisher
-        id: vsixpublisher
-        shell: pwsh
-        run: |
-          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-          $installationPath = & $vswhere -latest -products * -property installationPath
-          if (-not $installationPath) { throw "Unable to locate Visual Studio installation path." }
-
-          $publisherPath = Join-Path $installationPath "VSSDK\VisualStudioIntegration\Tools\Bin\VsixPublisher.exe"
-          if (-not (Test-Path $publisherPath)) { throw "VsixPublisher.exe not found at $publisherPath" }
-
-          "path=$publisherPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-
-      - name: Create publish manifest (json)
+      - name: Publishing - Create publish manifest (json)
         id: publishmanifest
         shell: pwsh
         run: |
@@ -145,17 +136,51 @@ jobs:
           "path=$publishManifestPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           Write-Host "publishManifest.json created at $publishManifestPath"
 
-      - name: Publish RC to Visual Studio Marketplace
+      # =========================
+      # Restore & Build
+      # =========================
+      - name: Build - Restore (Release)
+        run: msbuild SlnxMermaidVisualStudio.slnx /t:Restore /p:Configuration=Release
+
+      - name: Build - Build VSIX (Release)
+        run: msbuild SlnxMermaidVisualStudio.slnx /t:Build /p:Configuration=Release /p:DeployExtension=false
+
+      # =========================
+      # Publisher tool
+      # =========================
+      - name: Tooling - Locate VsixPublisher
+        id: vsixpublisher
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installationPath = & $vswhere -latest -products * -property installationPath
+          if (-not $installationPath) { throw "Unable to locate Visual Studio installation path." }
+
+          $publisherPath = Join-Path $installationPath "VSSDK\VisualStudioIntegration\Tools\Bin\VsixPublisher.exe"
+          if (-not (Test-Path $publisherPath)) { throw "VsixPublisher.exe not found at $publisherPath" }
+
+          "path=$publisherPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      # =========================
+      # Publish
+      # =========================
+      - name: Publish - RC to Visual Studio Marketplace
         shell: pwsh
         env:
           VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN }}
         run: |
           if (-not $env:VS_MARKETPLACE_TOKEN) { throw "Missing secret VS_MARKETPLACE_TOKEN" }
 
-          $vsixPath = (Get-ChildItem -Path "src/SlnxMermaidVsix/bin/Release" -Filter "SlnxMermaidVsix*.vsix" | Select-Object -First 1).FullName
+          # Publish newest VSIX from Debug/Release (avoid guessing configuration output)
+          $vsixPath = (Get-ChildItem -Path "src/SlnxMermaidVsix/bin" -Recurse -Filter "*.vsix" |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1).FullName
+
           if (-not $vsixPath) {
-            throw "VSIX package not found in src/SlnxMermaidVsix/bin/Release"
+            throw "VSIX package not found under src/SlnxMermaidVsix/bin"
           }
+
+          Write-Host "Publishing VSIX: $vsixPath"
 
           $publisherPath       = "${{ steps.vsixpublisher.outputs.path }}"
           $publishManifestPath = "${{ steps.publishmanifest.outputs.path }}"
