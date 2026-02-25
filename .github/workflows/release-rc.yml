@@ -1,7 +1,6 @@
 name: RC VSIX
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - master
@@ -137,7 +136,7 @@ jobs:
 
           $obj = @{
             '$schema'       = "http://json.schemastore.org/vsix-publish"
-            categories      = @()
+            categories      = @("Coding","Documentation")
             identity        = @{
               internalName = $internalName
             }
