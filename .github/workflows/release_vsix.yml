@@ -22,12 +22,6 @@ jobs:
       VSIX_BASE_VERSION: 17.1.0
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
-
       - name: Calculate release VSIX version
         id: version
         shell: pwsh
@@ -72,7 +66,13 @@ jobs:
           }
 
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "Using release VSIX version: $version"
+          Write-Host "Using release VSIX version: $version"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
 
       - name: Update VSIX manifest version
         shell: pwsh

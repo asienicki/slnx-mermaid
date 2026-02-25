@@ -22,12 +22,6 @@ jobs:
       VSIX_BASE_VERSION: 17.1.0
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
-
       - name: Calculate RC VSIX version
         id: version
         shell: pwsh
@@ -54,7 +48,13 @@ jobs:
           [void][version]$version
 
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "Using RC VSIX version: $version"
+          Write-Host "Using RC VSIX version: $version"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
 
       - name: Update VSIX manifest version
         shell: pwsh
@@ -110,7 +110,18 @@ jobs:
             throw "VSIX package not found in src/SlnxMermaidVsix/bin/Release"
           }
 
-          & "${{ steps.vsixpublisher.outputs.path }}" publish `
-            -payload $vsixPath `
-            -personalAccessToken $env:VS_MARKETPLACE_TOKEN `
-            -flags Preview
+          $publisherPath = "${{ steps.vsixpublisher.outputs.path }}"
+          $publishHelp = (& $publisherPath publish -? 2>&1 | Out-String)
+
+          if ($publishHelp -match '(?m)^\s*-flags\\b') {
+            & $publisherPath publish `
+              -payload $vsixPath `
+              -personalAccessToken $env:VS_MARKETPLACE_TOKEN `
+              -flags Preview
+          }
+          else {
+            Write-Warning "VsixPublisher on this runner does not support '-flags'. Publishing RC without Preview flag."
+            & $publisherPath publish `
+              -payload $vsixPath `
+              -personalAccessToken $env:VS_MARKETPLACE_TOKEN
+          }
