@@ -1,5 +1,3 @@
-# .github/workflows/rc_vsix.yml
-
 name: RC VSIX
 
 on:
@@ -131,26 +129,27 @@ jobs:
           if (-not $publisherName) { throw "Identity Publisher missing in manifest." }
           if (-not $identityId)    { throw "Identity Id missing in manifest." }
 
-          # VsixPublisher wymaga internalName (bez kropek)
+          # Wymagane przez VsixPublisher: identity.internalName
+          # Dajemy stabilny, "slug" bez kropek/spacji.
           $internalName = ($identityId -replace '[^A-Za-z0-9_-]', '-')
 
           $publishManifestPath = Join-Path $env:GITHUB_WORKSPACE "publishManifest.json"
 
           $obj = @{
-            categories = @("Coding","Documentation")
+            '$schema'      = "http://json.schemastore.org/vsix-publish"
+            categories     = @("Coding","Documentation")
 
-            # UWAGA: na części runnerów VsixPublisher błędnie traktuje tablicę jako 1 tag,
-            # więc dajemy string z przecinkami.
-            tags = "mermaid,diagram,solution,dependency,architecture,visualization"
+            # Najstabilniej: 1 krótki tag (bo część wersji VsixPublisher skleja tagi w jeden wpis)
+            tags           = @("mermaid")
 
-            identity = @{
-              publisher     = $publisherName
-              internalName  = $internalName
-              extensionName = $internalName
+            # Dla VSIX: identity ma zawierać tylko internalName (reszta bierze się z vsixmanifest)
+            identity       = @{
+              internalName = $internalName
             }
-            overview      = "README.md"
-            priceCategory = "free"
-            publisher     = $publisherName
+
+            overview       = "README.md"
+            priceCategory  = "free"
+            publisher      = $publisherName
           }
 
           ($obj | ConvertTo-Json -Depth 10) | Set-Content -Path $publishManifestPath -Encoding utf8
@@ -158,6 +157,7 @@ jobs:
 
           Write-Host "publishManifest.json created at $publishManifestPath"
           Write-Host "internalName: $internalName"
+          Write-Host "publisher: $publisherName"
 
       # =========================
       # Publish
