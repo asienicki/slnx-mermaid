@@ -97,6 +97,51 @@ namespace SlnxMermaidVsix.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Access to the configuration file was denied. Check file permissions and try again..
+        /// </summary>
+        internal static string DialogConfigAccessDenied {
+            get {
+                return ResourceManager.GetString("DialogConfigAccessDenied", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} Please verify the file path and try again..
+        /// </summary>
+        internal static string DialogConfigReadFailedFormat {
+            get {
+                return ResourceManager.GetString("DialogConfigReadFailedFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An unexpected error occurred while generating the diagram. See the Output window for details..
+        /// </summary>
+        internal static string DialogUnexpectedGenerationError {
+            get {
+                return ResourceManager.GetString("DialogUnexpectedGenerationError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The configuration file contains invalid YAML. Please fix it and try again..
+        /// </summary>
+        internal static string DialogYamlInvalid {
+            get {
+                return ResourceManager.GetString("DialogYamlInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The configuration file contains invalid YAML at {0}. Please fix it and try again..
+        /// </summary>
+        internal static string DialogYamlInvalidWithLocationFormat {
+            get {
+                return ResourceManager.GetString("DialogYamlInvalidWithLocationFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unable to acquire DTE service..
         /// </summary>
         internal static string ErrorAcquireDteService {
@@ -288,6 +333,33 @@ namespace SlnxMermaidVsix.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to column {0}.
+        /// </summary>
+        internal static string LocationColumnFormat {
+            get {
+                return ResourceManager.GetString("LocationColumnFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to line {0}, column {1}.
+        /// </summary>
+        internal static string LocationLineColumnFormat {
+            get {
+                return ResourceManager.GetString("LocationLineColumnFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to line {0}.
+        /// </summary>
+        internal static string LocationLineFormat {
+            get {
+                return ResourceManager.GetString("LocationLineFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Analyzing solution graph: {0}.
         /// </summary>
         internal static string LogAnalyzingSolutionFormat {
@@ -387,6 +459,33 @@ namespace SlnxMermaidVsix.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Access to the configuration file was denied..
+        /// </summary>
+        internal static string StatusConfigAccessDenied {
+            get {
+                return ResourceManager.GetString("StatusConfigAccessDenied", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Configuration file was not found..
+        /// </summary>
+        internal static string StatusConfigFileNotFound {
+            get {
+                return ResourceManager.GetString("StatusConfigFileNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Could not read the configuration file..
+        /// </summary>
+        internal static string StatusConfigReadFailed {
+            get {
+                return ResourceManager.GetString("StatusConfigReadFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Mermaid diagram generation failed..
         /// </summary>
         internal static string StatusGenerationFailed {
@@ -423,105 +522,6 @@ namespace SlnxMermaidVsix.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Access to the configuration file was denied. Check file permissions and try again..
-        /// </summary>
-        internal static string DialogConfigAccessDenied {
-            get {
-                return ResourceManager.GetString("DialogConfigAccessDenied", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to {0} Please verify the file path and try again..
-        /// </summary>
-        internal static string DialogConfigReadFailedFormat {
-            get {
-                return ResourceManager.GetString("DialogConfigReadFailedFormat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to An unexpected error occurred while generating the diagram. See the Output window for details..
-        /// </summary>
-        internal static string DialogUnexpectedGenerationError {
-            get {
-                return ResourceManager.GetString("DialogUnexpectedGenerationError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The configuration file contains invalid YAML. Please fix it and try again..
-        /// </summary>
-        internal static string DialogYamlInvalid {
-            get {
-                return ResourceManager.GetString("DialogYamlInvalid", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The configuration file contains invalid YAML at {0}. Please fix it and try again..
-        /// </summary>
-        internal static string DialogYamlInvalidWithLocationFormat {
-            get {
-                return ResourceManager.GetString("DialogYamlInvalidWithLocationFormat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to column {0}.
-        /// </summary>
-        internal static string LocationColumnFormat {
-            get {
-                return ResourceManager.GetString("LocationColumnFormat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to line {0}, column {1}.
-        /// </summary>
-        internal static string LocationLineColumnFormat {
-            get {
-                return ResourceManager.GetString("LocationLineColumnFormat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to line {0}.
-        /// </summary>
-        internal static string LocationLineFormat {
-            get {
-                return ResourceManager.GetString("LocationLineFormat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Access to the configuration file was denied..
-        /// </summary>
-        internal static string StatusConfigAccessDenied {
-            get {
-                return ResourceManager.GetString("StatusConfigAccessDenied", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Configuration file was not found..
-        /// </summary>
-        internal static string StatusConfigFileNotFound {
-            get {
-                return ResourceManager.GetString("StatusConfigFileNotFound", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Could not read the configuration file..
-        /// </summary>
-        internal static string StatusConfigReadFailed {
-            get {
-                return ResourceManager.GetString("StatusConfigReadFailed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Configuration file has invalid YAML..
         /// </summary>
         internal static string StatusYamlInvalid {
@@ -536,15 +536,6 @@ namespace SlnxMermaidVsix.Resources {
         internal static string StatusYamlInvalidWithLocationFormat {
             get {
                 return ResourceManager.GetString("StatusYamlInvalidWithLocationFormat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to {0}_.
-        /// </summary>
-        internal static string StripPrefixFormat {
-            get {
-                return ResourceManager.GetString("StripPrefixFormat", resourceCulture);
             }
         }
         

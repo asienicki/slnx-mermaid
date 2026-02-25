@@ -1,8 +1,8 @@
-﻿using SlnxMermaid.CLI.Exceptions;
-using SlnxMermaid.Core.Config;
+﻿using SlnxMermaid.Core.Config;
+using SlnxMermaid.Core.Exceptions;
 using SlnxMermaid.Core.Extensions;
 
-namespace SlnxMermaid.Core.Tests.Extensions;
+namespace SlnxMermaid.UnitTests.Extensions;
 
 public class SlnxMermaidConfigExtensionsValidateTests
 {

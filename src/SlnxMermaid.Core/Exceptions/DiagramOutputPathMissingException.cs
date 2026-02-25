@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SlnxMermaid.CLI.Exceptions
+namespace SlnxMermaid.Core.Exceptions
 {
     public sealed class DiagramOutputPathMissingException : Exception
     {
