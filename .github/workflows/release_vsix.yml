@@ -135,7 +135,15 @@ jobs:
           $publishManifestPath = Join-Path $env:GITHUB_WORKSPACE "publishManifest.json"
 
           $obj = @{
-            categories = @()
+            categories = @("Coding","Documentation")
+            tags            = @(
+              "mermaid",
+              "diagram",
+              "solution",
+              "dependency",
+              "architecture",
+              "visualization"
+            )
             identity = @{
               publisher = $publisherName
               extensionName = $extensionName

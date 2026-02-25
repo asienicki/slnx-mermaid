@@ -1,186 +1,166 @@
-name: RC VSIX
+name: Release RC
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - master
-    paths:
-      - 'src/SlnxMermaidVsix/**'
-      - 'SlnxMermaidVisualStudio.slnx'
-      - '.github/workflows/rc_vsix.yml'
-      - '.github/workflows/release_vsix.yml'
+    branches: [rc]
+    paths-ignore:
+      - '.github/**'
+    tags-ignore:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
 
 concurrency:
-  group: rc-vsix-publish
-  cancel-in-progress: true
+  group: nuget-rc
+  cancel-in-progress: false
 
 jobs:
-  publish:
-    runs-on: windows-latest
-
-    env:
-      VSIX_BASE_VERSION: 17.1.0
-      # Optional: separate RC listing in Marketplace
-      # RC_EXTENSION_ID_SUFFIX: ".rc"
+  release-rc:
+    if: "!contains(github.event.head_commit.message, 'chore(version)')"
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
 
-      - name: Calculate RC VSIX version
+      - name: Detect code changes
+        id: changes
+        run: |
+          set -euo pipefail
+
+          BEFORE="${{ github.event.before }}"
+          SHA="${{ github.sha }}"
+
+          echo "Diff base:"
+          echo "  BEFORE=$BEFORE"
+          echo "  SHA=$SHA"
+
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "Using fallback diff: HEAD^..HEAD"
+            git fetch --prune --unshallow || true
+            git diff --name-only HEAD^ HEAD > changes.txt || true
+          else
+            echo "Using diff: $BEFORE..$SHA"
+            git diff --name-only "$BEFORE" "$SHA" > changes.txt || true
+          fi
+
+          echo "Changed files:"
+          cat changes.txt || true
+
+          if grep -E '(\.cs$|\.csproj$|Directory\.Build\.props|global\.json)' changes.txt; then
+            echo "Code changes detected"
+            echo "code_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No code changes detected"
+            echo "code_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stop if no code changes
+        if: steps.changes.outputs.code_changed != 'true'
+        run: |
+          echo "Stopping workflow – no code changes"
+          exit 0
+
+      - name: Calculate RC version
         id: version
-        shell: pwsh
         run: |
-          if ($env:VSIX_BASE_VERSION -notmatch '^\d+\.\d+\.\d+$') {
-            throw "VSIX_BASE_VERSION must have format Major.Minor.Build (numeric). Got: $env:VSIX_BASE_VERSION"
-          }
+          set -euo pipefail
 
-          $baseParts = $env:VSIX_BASE_VERSION.Split('.') | ForEach-Object { [int]$_ }
-          foreach ($part in $baseParts) {
-            if ($part -lt 0 -or $part -gt 65535) {
-              throw "VSIX_BASE_VERSION segment out of range (0-65535): $part"
-            }
-          }
+          echo "Listing all v1.* tags:"
+          ALL_TAGS=$(git tag --list 'v1.*' --sort=-v:refname)
+          echo "$ALL_TAGS"
 
-          $dayOfYear = (Get-Date).DayOfYear
-          $run2 = [int]$env:GITHUB_RUN_NUMBER % 100
-          $revision = ($dayOfYear * 100) + $run2
-          if ($revision -gt 65535) {
-            throw "Calculated revision out of range (0-65535): $revision"
-          }
+          STABLE_TAG=$(echo "$ALL_TAGS" | grep -Ev '\-rc\.' | head -n 1)
 
-          $version = "$env:VSIX_BASE_VERSION.$revision"
-          [void][version]$version
+          if [ -z "$STABLE_TAG" ]; then
+            echo "ERROR: No stable v1 tag found (expected e.g. v1.0.1)"
+            exit 1
+          fi
 
-          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          Write-Host "Using RC VSIX version: $version"
+          echo "Selected stable tag: $STABLE_TAG"
 
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+          VERSION="${STABLE_TAG#v}"
+          IFS='.' read MAJOR MINOR PATCH <<< "$VERSION"
 
-      - name: Update VSIX manifest version (and optional RC Id)
-        shell: pwsh
+          echo "Parsed version:"
+          echo "  MAJOR=$MAJOR"
+          echo "  MINOR=$MINOR"
+          echo "  PATCH=$PATCH"
+
+          NEXT_PATCH=$((PATCH + 1))
+          echo "Next PATCH: $NEXT_PATCH"
+
+          LAST_RC=$(git tag --list "v$MAJOR.$MINOR.$NEXT_PATCH-rc.*" --sort=-v:refname | head -n 1)
+
+          if [ -z "$LAST_RC" ]; then
+            RC=1
+            echo "No previous RC found → starting rc.1"
+          else
+            echo "Last RC found: $LAST_RC"
+            RC="${LAST_RC##*.}"
+            RC=$((RC + 1))
+          fi
+
+          NEXT_VERSION="$MAJOR.$MINOR.$NEXT_PATCH-rc.$RC"
+          echo "Calculated RC version: $NEXT_VERSION"
+
+          echo "version=$NEXT_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build & Test
         run: |
-          $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
+          echo "Building with version: ${{ steps.version.outputs.version }}"
+          dotnet build SlnxMermaid.slnx -c Release /p:Version=${{ steps.version.outputs.version }}
 
-          [xml]$xml = Get-Content -Path $manifestPath
-          $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
-          $ns.AddNamespace("vsix", "http://schemas.microsoft.com/developer/vsx-schema/2011")
+          echo "Testing with version: ${{ steps.version.outputs.version }}"
+          dotnet test SlnxMermaid.slnx -c Release /p:Version=${{ steps.version.outputs.version }}
 
-          $identity = $xml.SelectSingleNode("//vsix:Identity", $ns)
-          if (-not $identity) { throw "Cannot find <Identity> in VSIX manifest." }
-
-          $identity.SetAttribute("Version", "${{ steps.version.outputs.version }}")
-
-          if ($env:RC_EXTENSION_ID_SUFFIX) {
-            $currentId = $identity.GetAttribute("Id")
-            if (-not $currentId) { throw "Identity Id missing in manifest." }
-            if (-not $currentId.EndsWith($env:RC_EXTENSION_ID_SUFFIX)) {
-              $identity.SetAttribute("Id", "$currentId$($env:RC_EXTENSION_ID_SUFFIX)")
-            }
-          }
-
-          $xml.Save($manifestPath)
-
-      - name: Restore
-        shell: pwsh
-        run: msbuild SlnxMermaidVisualStudio.slnx /t:Restore
-
-      - name: Build VSIX
-        shell: pwsh
-        run: msbuild SlnxMermaidVisualStudio.slnx /p:Configuration=Release
-
-      - name: Locate VsixPublisher
-        id: vsixpublisher
-        shell: pwsh
+      - name: Pack CLI only
         run: |
-          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-          $installationPath = & $vswhere -latest -products * -property installationPath
-          if (-not $installationPath) { throw "Unable to locate Visual Studio installation path." }
+          echo "Packing CLI only - version: ${{ steps.version.outputs.version }}"
 
-          $publisherPath = Join-Path $installationPath "VSSDK\VisualStudioIntegration\Tools\Bin\VsixPublisher.exe"
-          if (-not (Test-Path $publisherPath)) { throw "VsixPublisher.exe not found at $publisherPath" }
+          dotnet pack src/SlnxMermaid.CLI/SlnxMermaid.CLI.csproj \
+            -c Release \
+            /p:Version=${{ steps.version.outputs.version }} \
+            -o ./nupkg
 
-          "path=$publisherPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          echo "Generated packages:"
+          ls -la ./nupkg
 
-      - name: Create publish manifest (json)
-        id: publishmanifest
-        shell: pwsh
-        run: |
-          $vsixManifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
-
-          [xml]$xml = Get-Content -Path $vsixManifestPath
-          $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
-          $ns.AddNamespace("vsix", "http://schemas.microsoft.com/developer/vsx-schema/2011")
-
-          $identity = $xml.SelectSingleNode("//vsix:Identity", $ns)
-          if (-not $identity) { throw "Cannot find <Identity> in VSIX manifest." }
-
-          $publisher = $identity.GetAttribute("Publisher")
-          $id = $identity.GetAttribute("Id")
-          if (-not $publisher) { throw "Identity Publisher missing in manifest." }
-          if (-not $id) { throw "Identity Id missing in manifest." }
-
-          # VsixPublisher manifest expects "internalName" = extension internal name (usually Id without publisher prefix)
-          # If your Id is like "Publisher.Extension", internalName should be "Extension"
-          $internalName = $id
-          if ($internalName -like "*.*") { $internalName = ($internalName.Split('.') | Select-Object -Last 1) }
-
-          $publishManifestPath = Join-Path $env:GITHUB_WORKSPACE "publishManifest.json"
-
-          # ensure overview exists
-          $overviewPath = "README.md"
-          if (-not (Test-Path (Join-Path $env:GITHUB_WORKSPACE $overviewPath))) {
-            throw "Overview file not found: $overviewPath (adjust overview in publishManifest.json step)"
-          }
-
-          $obj = @{
-            '$schema'       = "http://json.schemastore.org/vsix-publish"
-            categories      = @("Coding","Documentation")
-            identity        = @{
-              internalName = $internalName
-            }
-            overview        = $overviewPath
-            priceCategory   = "free"
-            publisher       = $publisher
-            private         = $false
-            qna             = $false
-          }
-
-          ($obj | ConvertTo-Json -Depth 10) | Set-Content -Path $publishManifestPath -Encoding utf8
-          "path=$publishManifestPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          Write-Host "publishManifest.json created at $publishManifestPath"
-          Write-Host "Publisher=$publisher, Id=$id, internalName=$internalName"
-
-      - name: Publish RC to Visual Studio Marketplace
-        shell: pwsh
+      - name: Publish RC to NuGet
         env:
-          VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: |
-          if (-not $env:VS_MARKETPLACE_TOKEN) { throw "Missing secret VS_MARKETPLACE_TOKEN" }
+          echo "Publishing packages to NuGet:"
+          for pkg in ./nupkg/*.nupkg; do
+            echo "  $pkg"
+          done
 
-          $vsixPath = (Get-ChildItem -Path "src/SlnxMermaidVsix/bin/Release" -Filter "SlnxMermaidVsix*.vsix" | Select-Object -First 1).FullName
-          if (-not $vsixPath) { throw "VSIX package not found in src/SlnxMermaidVsix/bin/Release" }
+          dotnet nuget push ./nupkg/*.nupkg \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
 
-          $publisherPath = "${{ steps.vsixpublisher.outputs.path }}"
-          $publishManifestPath = "${{ steps.publishmanifest.outputs.path }}"
-          if (-not (Test-Path $publishManifestPath)) { throw "publishManifest.json not found at $publishManifestPath" }
+      - name: Tag RC
+        run: |
+          set -euo pipefail
 
-          $publishHelp = (& $publisherPath publish -? 2>&1 | Out-String)
+          TAG="v${{ steps.version.outputs.version }}"
+          echo "Creating and pushing tag: $TAG"
 
-          $commonArgs = @(
-            "publish",
-            "-payload", $vsixPath,
-            "-publishManifest", $publishManifestPath,
-            "-personalAccessToken", $env:VS_MARKETPLACE_TOKEN
-          )
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
 
-          # FIX: regex, previously you had \\b
-          if ($publishHelp -match '(?m)^\s*-flags\b') {
-            & $publisherPath @commonArgs -flags Preview
-          }
-          else {
-            Write-Warning "VsixPublisher on this runner does not support '-flags'. Publishing without Preview flag."
-            & $publisherPath @commonArgs
-          }
+          git tag "$TAG"
+          git push origin "$TAG"
+
+          echo "Tag pushed: $TAG"
