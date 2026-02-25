@@ -6,8 +6,6 @@
         <Description xml:space="preserve">Create up-to-date Mermaid architecture diagrams from your Visual Studio solution. Automatically map projects and dependencies into clear, readable graphs.</Description>
         <MoreInfo>https://github.com/asienicki/slnx-mermaid</MoreInfo>
         <License>LICENSE.txt</License>
-        <GettingStartedGuide>GETTING_STARTED.txt</GettingStartedGuide>
-        <ReleaseNotes>CHANGELOG.txt</ReleaseNotes>
         <Icon>Resources\logo.png</Icon>
         <PreviewImage>Resources\logo.png</PreviewImage>
         <Tags>mermaid</Tags>

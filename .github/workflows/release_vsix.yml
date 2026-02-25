@@ -148,17 +148,14 @@ jobs:
           $obj = @{
             '$schema'     = "http://json.schemastore.org/vsix-publish"
             categories    = @("Coding","Documentation")
-
-            # Keep ONE short tag to avoid runner/tool bug (space-joined tag length > 50)
-            tags          = @("mermaid")
-
+            tags          = @("mermaid", "diagram")
             identity      = @{
               internalName = $env:VS_MARKETPLACE_INTERNAL_NAME
             }
-
-            overview      = "docs/vsix/GETTING_STARTED.txt"
+            overview      = "docs/vsix/GETTING_STARTED.md"
             priceCategory = "free"
             publisher     = $env:VS_MARKETPLACE_PUBLISHER_ID
+            repo          = "https://github.com/asienicki/slnx-mermaid"
           }
 
           ($obj | ConvertTo-Json -Depth 10) | Set-Content -Path $publishManifestPath -Encoding utf8
