@@ -32,9 +32,11 @@ jobs:
         id: version
         shell: pwsh
         run: |
-          $datePart = Get-Date -Format "yyDDD"
-          $runPart = "{0:D2}" -f ($env:GITHUB_RUN_NUMBER % 100)
-          $version = "$env:VSIX_BASE_VERSION.$datePart$runPart"
+          $dayOfYear = [int](Get-Date -Format "DDD")
+          $run2 = [int]($env:GITHUB_RUN_NUMBER % 100)
+          $revision = ($dayOfYear * 100) + $run2
+
+          $version = "$env:VSIX_BASE_VERSION.$revision"
 
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "Using RC VSIX version: $version"
@@ -88,7 +90,7 @@ jobs:
             throw "Missing secret VS_MARKETPLACE_TOKEN"
           }
 
-          $vsixPath = (Get-ChildItem -Path "src/SlnxMermaidVsix/bin/Release" -Filter *.vsix | Select-Object -First 1).FullName
+          $vsixPath = (Get-ChildItem -Path "src/SlnxMermaidVsix/bin/Release" -Filter "SlnxMermaidVsix*.vsix" | Select-Object -First 1).FullName
           if (-not $vsixPath) {
             throw "VSIX package not found in src/SlnxMermaidVsix/bin/Release"
           }
