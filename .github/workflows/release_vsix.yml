@@ -114,6 +114,41 @@ jobs:
 
           "path=$publisherPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
+      - name: Create publish manifest (json)
+        id: publishmanifest
+        shell: pwsh
+        run: |
+          $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
+          [xml]$xml = Get-Content -Path $manifestPath
+          $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+          $ns.AddNamespace("vsix", "http://schemas.microsoft.com/developer/vsx-schema/2011")
+
+          $identity = $xml.SelectSingleNode("//vsix:Identity", $ns)
+          if (-not $identity) { throw "Cannot find <Identity> in VSIX manifest." }
+
+          $publisherName = $identity.GetAttribute("Publisher")
+          $identityId = $identity.GetAttribute("Id")
+          if (-not $publisherName) { throw "Identity Publisher missing in manifest." }
+          if (-not $identityId) { throw "Identity Id missing in manifest." }
+
+          $extensionName = ($identityId -split '\.')[0]
+          $publishManifestPath = Join-Path $env:GITHUB_WORKSPACE "publishManifest.json"
+
+          $obj = @{
+            categories = @()
+            identity = @{
+              publisher = $publisherName
+              extensionName = $extensionName
+            }
+            overview = "README.md"
+            priceCategory = "free"
+            publisher = $publisherName
+          }
+
+          ($obj | ConvertTo-Json -Depth 10) | Set-Content -Path $publishManifestPath -Encoding utf8
+          "path=$publishManifestPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "publishManifest.json created at $publishManifestPath"
+
       - name: Publish release to Visual Studio Marketplace
         shell: pwsh
         env:
@@ -128,6 +163,10 @@ jobs:
             throw "VSIX package not found in src/SlnxMermaidVsix/bin/Release"
           }
 
-          & "${{ steps.vsixpublisher.outputs.path }}" publish `
+          $publisherPath = "${{ steps.vsixpublisher.outputs.path }}"
+          $publishManifestPath = "${{ steps.publishmanifest.outputs.path }}"
+
+          & $publisherPath publish `
             -payload $vsixPath `
+            -publishManifest $publishManifestPath `
             -personalAccessToken $env:VS_MARKETPLACE_TOKEN
