@@ -22,9 +22,7 @@ jobs:
 
     env:
       VSIX_BASE_VERSION: 17.1.0
-      # Marketplace publisherId (slug) from https://marketplace.visualstudio.com/publishers/SharpCode
-      VS_MARKETPLACE_PUBLISHER: SharpCode
-      # Marketplace itemName: https://marketplace.visualstudio.com/items?itemName=SharpCode.slnxmermaid
+      VS_MARKETPLACE_PUBLISHER_ID: SharpCode
       VS_MARKETPLACE_INTERNAL_NAME: slnxmermaid
       VS_MARKETPLACE_AUTHOR_DISPLAY_NAME: "Sharp Code"
 
@@ -40,25 +38,19 @@ jobs:
             throw "VSIX_BASE_VERSION must have format Major.Minor.Build (numeric). Got: $env:VSIX_BASE_VERSION"
           }
 
-          $baseParts = $env:VSIX_BASE_VERSION.Split('.') | ForEach-Object { [int]$_ }
-          foreach ($part in $baseParts) {
-            if ($part -lt 0 -or $part -gt 65535) {
-              throw "VSIX_BASE_VERSION segment out of range (0-65535): $part"
-            }
-          }
-
-          $dayOfYear = (Get-Date).DayOfYear
+          $now = Get-Date
+          $yy  = $now.Year % 100
+          $doy = $now.DayOfYear
           $run2 = [int]$env:GITHUB_RUN_NUMBER % 100
-          $revision = ($dayOfYear * 100) + $run2
-          if ($revision -gt 65535) {
-            throw "Calculated revision out of range (0-65535): $revision"
-          }
+
+          # Match your existing Marketplace style: 26 046 01 => 2604601
+          $revision = ($yy * 100000) + ($doy * 100) + $run2
 
           $version = "$env:VSIX_BASE_VERSION.$revision"
-          [void][version]$version
-
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
           Write-Host "Using RC VSIX version: $version"
+          Write-Host "yy=$yy doy=$doy run2=$run2 revision=$revision"
 
       # =========================
       # Checkout & Tooling
@@ -70,7 +62,7 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       # =========================
-      # Prepare VSIX Manifest (Version + Publisher/Author + Preview)
+      # Patch VSIX manifest (Version + PublisherId + Author + Preview)
       # =========================
       - name: Manifests - Patch VSIX manifest for RC (Version/Publisher/Author/Preview)
         shell: pwsh
@@ -87,16 +79,13 @@ jobs:
           $metadata = $xml.SelectSingleNode("//vsix:Metadata", $ns)
           if (-not $metadata) { throw "Cannot find <Metadata> in VSIX manifest." }
 
-          # Ensure correct publisherId (slug) for Marketplace
-          if ($env:VS_MARKETPLACE_PUBLISHER -notmatch '^[A-Za-z0-9][A-Za-z0-9-]*$') {
-            throw "VS_MARKETPLACE_PUBLISHER invalid: '$env:VS_MARKETPLACE_PUBLISHER'"
-          }
-          $identity.SetAttribute("Publisher", $env:VS_MARKETPLACE_PUBLISHER)
+          # Publisher in VSIX must be publisherId (no spaces) for CLI publishing
+          $identity.SetAttribute("Publisher", $env:VS_MARKETPLACE_PUBLISHER_ID)
 
-          # Set version
+          # Version must be monotonic; match Marketplace numbering scheme
           $identity.SetAttribute("Version", "${{ steps.version.outputs.version }}")
 
-          # Ensure Author matches Marketplace display name exactly
+          # Author must match Marketplace publisher DISPLAY NAME exactly
           $author = $xml.SelectSingleNode("//vsix:Metadata/vsix:Author", $ns)
           if (-not $author) {
             $author = $xml.CreateElement("Author", $ns.LookupNamespace("vsix"))
@@ -118,8 +107,8 @@ jobs:
 
           $xml.Save($manifestPath)
 
-          Write-Host "Publisher(Id): $($identity.GetAttribute('Publisher'))"
           Write-Host "Id: $($identity.GetAttribute('Id'))"
+          Write-Host "Publisher: $($identity.GetAttribute('Publisher'))"
           Write-Host "Version: $($identity.GetAttribute('Version'))"
           Write-Host "Author: $($author.InnerText)"
           Write-Host "Preview: $($preview.InnerText)"
@@ -151,29 +140,19 @@ jobs:
 
       # =========================
       # Create publish manifest (REQUIRED by VsixPublisher)
-      # IMPORTANT: internalName MUST match existing Marketplace itemName (SharpCode.slnxmermaid)
+      # MUST match existing listing: SharpCode.slnxmermaid
       # =========================
       - name: Publishing - Create publish manifest (json)
         id: publishmanifest
         shell: pwsh
         run: |
-          if (-not $env:VS_MARKETPLACE_PUBLISHER) { throw "Missing env VS_MARKETPLACE_PUBLISHER" }
-          if (-not $env:VS_MARKETPLACE_INTERNAL_NAME) { throw "Missing env VS_MARKETPLACE_INTERNAL_NAME" }
-
-          if ($env:VS_MARKETPLACE_PUBLISHER -notmatch '^[A-Za-z0-9][A-Za-z0-9-]*$') {
-            throw "VS_MARKETPLACE_PUBLISHER invalid: '$env:VS_MARKETPLACE_PUBLISHER'"
-          }
-          if ($env:VS_MARKETPLACE_INTERNAL_NAME -notmatch '^[A-Za-z0-9][A-Za-z0-9-]*$') {
-            throw "VS_MARKETPLACE_INTERNAL_NAME invalid: '$env:VS_MARKETPLACE_INTERNAL_NAME'"
-          }
-
           $publishManifestPath = Join-Path $env:GITHUB_WORKSPACE "publishManifest.json"
 
           $obj = @{
             '$schema'     = "http://json.schemastore.org/vsix-publish"
             categories    = @("Coding","Documentation")
 
-            # BUGGY on some runners: arrays become single space-joined tag. Keep ONE short tag.
+            # Keep ONE short tag to avoid runner/tool bug (space-joined tag length > 50)
             tags          = @("mermaid")
 
             identity      = @{
@@ -182,14 +161,14 @@ jobs:
 
             overview      = "README.md"
             priceCategory = "free"
-            publisher     = $env:VS_MARKETPLACE_PUBLISHER
+            publisher     = $env:VS_MARKETPLACE_PUBLISHER_ID
           }
 
           ($obj | ConvertTo-Json -Depth 10) | Set-Content -Path $publishManifestPath -Encoding utf8
           "path=$publishManifestPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
           Write-Host "publishManifest.json created at $publishManifestPath"
-          Write-Host "publisher: $env:VS_MARKETPLACE_PUBLISHER"
+          Write-Host "publisher: $env:VS_MARKETPLACE_PUBLISHER_ID"
           Write-Host "internalName: $env:VS_MARKETPLACE_INTERNAL_NAME"
 
       # =========================
@@ -214,9 +193,6 @@ jobs:
 
           $publisherPath       = "${{ steps.vsixpublisher.outputs.path }}"
           $publishManifestPath = "${{ steps.publishmanifest.outputs.path }}"
-
-          if (-not (Test-Path $publisherPath)) { throw "VsixPublisher.exe not found at $publisherPath" }
-          if (-not (Test-Path $publishManifestPath)) { throw "publishManifest.json not found at $publishManifestPath" }
 
           $publishHelp = (& $publisherPath publish -? 2>&1 | Out-String)
 
