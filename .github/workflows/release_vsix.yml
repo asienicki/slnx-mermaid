@@ -130,14 +130,21 @@ jobs:
           $installationPath = & $vswhere -latest -products * -property installationPath
           $publisherPath = Join-Path $installationPath "VSSDK\VisualStudioIntegration\Tools\Bin\VsixPublisher.exe"
           "path=$publisherPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-
       - name: Create publish manifest
         id: publishmanifest
         shell: pwsh
         run: |
-          $publishManifestPath = Join-Path $env:GITHUB_WORKSPACE "publishManifest.json"
+          $ErrorActionPreference = 'Stop'
 
-          $obj = @{
+          $workspace = $env:GITHUB_WORKSPACE
+          if ([string]::IsNullOrWhiteSpace($workspace)) {
+            $workspace = (Get-Location).Path
+            Write-Host "GITHUB_WORKSPACE is empty. Fallback to: $workspace"
+          }
+
+          $publishManifestPath = Join-Path -Path $workspace -ChildPath "publishManifest.json"
+
+          $obj = [ordered]@{
             '$schema'     = "http://json.schemastore.org/vsix-publish"
             categories    = @("Coding","Documentation")
             tags          = @("mermaid","diagram")
@@ -145,13 +152,15 @@ jobs:
             priceCategory = "free"
             publisher     = $env:VS_MARKETPLACE_PUBLISHER_ID
             repo          = "https://github.com/asienicki/slnx-mermaid"
-            qna           = true
-            private       = false
+            qna           = $true
+            private       = $false
             overview      = "docs/vsix/GETTING_STARTED.md"
           }
 
-          ($obj | ConvertTo-Json -Depth 10) | Set-Content $publishManifestPath -Encoding utf8
+          ($obj | ConvertTo-Json -Depth 10) | Set-Content -Path $publishManifestPath -Encoding utf8
           "path=$publishManifestPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+          Write-Host "publishManifest.json created at: $publishManifestPath"
 
       - name: Publish to VS Marketplace
         shell: pwsh
