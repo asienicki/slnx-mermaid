@@ -145,6 +145,9 @@ jobs:
             priceCategory = "free"
             publisher     = $env:VS_MARKETPLACE_PUBLISHER_ID
             repo          = "https://github.com/asienicki/slnx-mermaid"
+            qna           = true
+            private       = false
+            overview      = "docs/vsix/GETTING_STARTED.md"
           }
 
           ($obj | ConvertTo-Json -Depth 10) | Set-Content $publishManifestPath -Encoding utf8
