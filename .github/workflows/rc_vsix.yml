@@ -60,25 +60,50 @@ jobs:
       VS_MARKETPLACE_PUBLISHER_ID: SharpCode
       VS_MARKETPLACE_AUTHOR_DISPLAY_NAME: "Sharp Code"
 
+      # RC must be a separate VSIX identity (so it doesn't overwrite prod locally)
+      VSIX_ID_RC: "1f7cdd6e-e9f7-4562-826f-24843b73f471"
+
+      # Optional: visible name in VS UI
+      VSIX_DISPLAY_NAME_RC: "Slnx Mermaid (RC)"
+
     steps:
       - uses: actions/checkout@v4
       - uses: microsoft/setup-msbuild@v2
 
-      - name: Patch VSIX manifest
+      - name: Patch VSIX manifest (RC)
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+
           $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
+          if (-not (Test-Path $manifestPath)) { throw "Missing: $manifestPath" }
 
           [xml]$xml = Get-Content $manifestPath
           $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
           $ns.AddNamespace("vsix","http://schemas.microsoft.com/developer/vsx-schema/2011")
 
           $identity = $xml.SelectSingleNode("//vsix:Identity",$ns)
-          $metadata = $xml.SelectSingleNode("//vsix:Metadata",$ns)
+          if (-not $identity) { throw "Cannot find vsix:Identity node" }
 
+          $metadata = $xml.SelectSingleNode("//vsix:Metadata",$ns)
+          if (-not $metadata) { throw "Cannot find vsix:Metadata node" }
+
+          # Ensure separate VSIX Id for RC (prevents RC/prod overwrites on the same machine)
+          if ($env:VSIX_ID_RC -notmatch '^\{[0-9a-fA-F-]{36}\}$') {
+            throw "VSIX_ID_RC must be a GUID in braces, e.g. {11111111-2222-3333-4444-555555555555}"
+          }
+
+          $identity.SetAttribute("Id",$env:VSIX_ID_RC)
           $identity.SetAttribute("Publisher",$env:VS_MARKETPLACE_PUBLISHER_ID)
           $identity.SetAttribute("Version","${{ needs.versioning.outputs.version }}")
 
+          # Optional: different name in Extensions UI
+          $displayName = $xml.SelectSingleNode("//vsix:Metadata/vsix:DisplayName",$ns)
+          if ($displayName -and -not [string]::IsNullOrWhiteSpace($env:VSIX_DISPLAY_NAME_RC)) {
+            $displayName.InnerText = $env:VSIX_DISPLAY_NAME_RC
+          }
+
+          # Author (cosmetic)
           $author = $xml.SelectSingleNode("//vsix:Metadata/vsix:Author",$ns)
           if (-not $author) {
             $author = $xml.CreateElement("Author",$ns.LookupNamespace("vsix"))
@@ -125,12 +150,20 @@ jobs:
         id: vsixpublisher
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path $vswhere)) { throw "vswhere not found: $vswhere" }
+
           $installationPath = & $vswhere -latest -products * -property installationPath
+          if ([string]::IsNullOrWhiteSpace($installationPath)) { throw "Visual Studio installation not found by vswhere" }
+
           $publisherPath = Join-Path $installationPath "VSSDK\VisualStudioIntegration\Tools\Bin\VsixPublisher.exe"
+          if (-not (Test-Path $publisherPath)) { throw "VsixPublisher.exe not found: $publisherPath" }
+
           "path=$publisherPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
-      - name: Create publish manifest
+      - name: Create publish manifest (RC)
         id: publishmanifest
         shell: pwsh
         run: |
@@ -139,7 +172,6 @@ jobs:
           $workspace = $env:GITHUB_WORKSPACE
           if ([string]::IsNullOrWhiteSpace($workspace)) {
             $workspace = (Get-Location).Path
-            Write-Host "GITHUB_WORKSPACE is empty. Fallback to: $workspace"
           }
 
           $publishManifestPath = Join-Path -Path $workspace -ChildPath "publishManifest.json"
@@ -147,7 +179,7 @@ jobs:
           $obj = [ordered]@{
             '$schema'     = "http://json.schemastore.org/vsix-publish"
             categories    = @("Coding","Documentation")
-            tags          = @("mermaid","diagram")
+            tags          = @("mermaid","diagram","rc")
             identity      = @{ internalName = $env:VS_MARKETPLACE_INTERNAL_NAME }
             priceCategory = "free"
             publisher     = $env:VS_MARKETPLACE_PUBLISHER_ID
@@ -167,7 +199,14 @@ jobs:
         env:
           VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN }}
         run: |
+          $ErrorActionPreference = 'Stop'
+
+          if ([string]::IsNullOrWhiteSpace($env:VS_MARKETPLACE_TOKEN)) {
+            throw "Missing VS_MARKETPLACE_TOKEN secret"
+          }
+
           $vsixPath = (Get-ChildItem vsix -Filter *.vsix -Recurse | Select-Object -First 1).FullName
+          if ([string]::IsNullOrWhiteSpace($vsixPath)) { throw "VSIX not found under ./vsix" }
 
           & "${{ steps.vsixpublisher.outputs.path }}" publish `
             -payload $vsixPath `
