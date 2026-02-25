@@ -1,13 +1,13 @@
 ﻿using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
-using SlnxMermaid.CLI.Exceptions;
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using SlnxMermaidVsix.Resources;
+using SlnxMermaid.Core.Exceptions;
 
 namespace SlnxMermaidVsix
 {

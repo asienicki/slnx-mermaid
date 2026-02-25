@@ -1,5 +1,4 @@
-﻿using SlnxMermaid.CLI.Exceptions;
-using SlnxMermaid.Core.Config;
+﻿using SlnxMermaid.Core.Config;
 using SlnxMermaid.Core.Emit;
 using SlnxMermaid.Core.Extensions;
 using SlnxMermaid.Core.Filtering;
@@ -8,8 +7,9 @@ using SlnxMermaid.Core.Naming;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
+using SlnxMermaid.Core.Exceptions;
 
-namespace SlnxMermaid.Cli;
+namespace SlnxMermaid.CLI.Commands;
 
 public sealed class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 {

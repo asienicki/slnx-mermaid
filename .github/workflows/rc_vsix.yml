@@ -1,0 +1,99 @@
+name: RC VSIX
+
+on:
+  push:
+    branches:
+      - rc
+    paths:
+      - 'src/SlnxMermaidVsix/**'
+      - 'SlnxMermaidVisualStudio.slnx'
+      - '.github/workflows/rc_vsix.yml'
+      - '.github/workflows/release_vsix.yml'
+
+concurrency:
+  group: rc-vsix-publish
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    env:
+      VSIX_BASE_VERSION: 17.1.0
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Calculate RC VSIX version
+        id: version
+        shell: pwsh
+        run: |
+          $datePart = Get-Date -Format "yyDDD"
+          $runPart = "{0:D2}" -f ($env:GITHUB_RUN_NUMBER % 100)
+          $version = "$env:VSIX_BASE_VERSION.$datePart$runPart"
+
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "Using RC VSIX version: $version"
+
+      - name: Update VSIX manifest version
+        shell: pwsh
+        run: |
+          $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
+
+          [xml]$xml = Get-Content -Path $manifestPath
+          $namespaceManager = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+          $namespaceManager.AddNamespace("vsix", "http://schemas.microsoft.com/developer/vsx-schema/2011")
+
+          $identity = $xml.SelectSingleNode("//vsix:Identity", $namespaceManager)
+          if (-not $identity) {
+            throw "Cannot find <Identity> in VSIX manifest."
+          }
+
+          $identity.SetAttribute("Version", "${{ steps.version.outputs.version }}")
+          $xml.Save($manifestPath)
+
+      - name: Restore
+        run: msbuild SlnxMermaidVisualStudio.slnx /t:Restore
+
+      - name: Build VSIX
+        run: msbuild SlnxMermaidVisualStudio.slnx /p:Configuration=Release
+
+      - name: Locate VsixPublisher
+        id: vsixpublisher
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installationPath = & $vswhere -latest -products * -property installationPath
+          if (-not $installationPath) {
+            throw "Unable to locate Visual Studio installation path."
+          }
+
+          $publisherPath = Join-Path $installationPath "VSSDK\VisualStudioIntegration\Tools\Bin\VsixPublisher.exe"
+          if (-not (Test-Path $publisherPath)) {
+            throw "VsixPublisher.exe not found at $publisherPath"
+          }
+
+          "path=$publisherPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Publish RC (Preview) to Visual Studio Marketplace
+        shell: pwsh
+        env:
+          VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+        run: |
+          if (-not $env:VS_MARKETPLACE_TOKEN) {
+            throw "Missing secret VS_MARKETPLACE_TOKEN"
+          }
+
+          $vsixPath = (Get-ChildItem -Path "src/SlnxMermaidVsix/bin/Release" -Filter *.vsix | Select-Object -First 1).FullName
+          if (-not $vsixPath) {
+            throw "VSIX package not found in src/SlnxMermaidVsix/bin/Release"
+          }
+
+          & "${{ steps.vsixpublisher.outputs.path }}" publish `
+            -payload $vsixPath `
+            -personalAccessToken $env:VS_MARKETPLACE_TOKEN `
+            -flags Preview

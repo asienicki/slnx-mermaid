@@ -4,7 +4,7 @@ using SlnxMermaid.Core.Filtering;
 using SlnxMermaid.Core.Graph;
 using SlnxMermaid.Core.Naming;
 
-namespace SlnxMermaid.Core.Tests.Emit;
+namespace SlnxMermaid.UnitTests.Emit;
 
 public class MermaidEmitterEmitTests
 {

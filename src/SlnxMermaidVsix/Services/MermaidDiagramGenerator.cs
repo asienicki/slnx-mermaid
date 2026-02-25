@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
-using SlnxMermaid.CLI.Exceptions;
 using SlnxMermaid.Core.Config;
 using SlnxMermaid.Core.Emit;
 using SlnxMermaid.Core.Extensions;
@@ -11,6 +10,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using SlnxMermaid.Core.Exceptions;
 using SlnxMermaidVsix.Resources;
 
 namespace SlnxMermaidVsix

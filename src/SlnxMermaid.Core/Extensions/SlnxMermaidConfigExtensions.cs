@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
-using SlnxMermaid.CLI.Exceptions;
 using SlnxMermaid.Core.Config;
+using SlnxMermaid.Core.Exceptions;
 
 namespace SlnxMermaid.Core.Extensions
 {

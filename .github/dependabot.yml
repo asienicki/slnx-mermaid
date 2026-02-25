@@ -1,0 +1,36 @@
+version: 2
+
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/src/Core"
+    schedule:
+      interval: "weekly"
+
+    open-pull-requests-limit: 5
+
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+    labels:
+      - "dependencies"
+      - "security"
+
+    rebase-strategy: "auto"
+
+  - package-ecosystem: "nuget"
+    directory: "/src/CLI"
+    schedule:
+      interval: "weekly"
+
+    open-pull-requests-limit: 5
+
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+    labels:
+      - "dependencies"
+      - "security"
+
+    rebase-strategy: "auto"

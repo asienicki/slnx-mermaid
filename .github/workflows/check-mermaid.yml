@@ -1,0 +1,89 @@
+name: Check Mermaid Diagram
+
+on:
+  pull_request:
+  push:
+    branches: [ master ]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: mermaid-check
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    name: Generate Diagram
+    runs-on: ubuntu-latest
+
+    outputs:
+      outdated: ${{ steps.mermaid_check.outputs.outdated }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install slnx-mermaid
+        run: dotnet tool install slnx-mermaid --tool-path ./.tools
+
+      - name: Generate diagram
+        run: |
+          ./.tools/slnx-mermaid \
+            --solution SlnxMermaid.slnx
+
+      - name: Check for changes
+        id: mermaid_check
+        run: |
+          if git diff --quiet docs/architecture/dependency-graph-mermaid.md; then
+            echo "outdated=false" >> $GITHUB_OUTPUT
+          else
+            echo "outdated=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Add summary
+        run: |
+          echo "## Mermaid Diagram Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.mermaid_check.outputs.outdated }}" = "true" ]; then
+            echo "❌ Diagram is outdated" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Diagram is up to date" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  report:
+    name: Report & Validate
+    needs: generate
+    runs-on: ubuntu-latest
+    environment:
+      name: mermaid-check
+
+    steps:
+      - name: Comment on PR
+        if: needs.generate.outputs.outdated == 'true' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: "⚠️ Mermaid diagram is outdated. Run `slnx-mermaid` and commit the updated file."
+            })
+
+      - name: Fail if outdated
+        if: needs.generate.outputs.outdated == 'true'
+        run: |
+          echo "::error title=Mermaid diagram outdated::Run slnx-mermaid and commit the updated file."
+          exit 1
+
+      - name: Success marker
+        if: needs.generate.outputs.outdated == 'false'
+        run: echo "Diagram validation passed."
