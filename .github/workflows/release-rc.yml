@@ -1,6 +1,7 @@
 name: RC VSIX
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - rc
