@@ -6,10 +6,10 @@ on:
     branches:
       - rc
     paths:
-      - 'src/SlnxMermaidVsix/**'
-      - 'SlnxMermaidVisualStudio.slnx'
-      - '.github/workflows/rc_vsix.yml'
-      - '.github/workflows/release_vsix.yml'
+      - "src/SlnxMermaidVsix/**"
+      - "SlnxMermaidVisualStudio.slnx"
+      - ".github/workflows/rc_vsix.yml"
+      - ".github/workflows/release_vsix.yml"
 
 concurrency:
   group: rc-vsix-publish
@@ -21,9 +21,7 @@ jobs:
 
     env:
       VSIX_BASE_VERSION: 17.1.0
-      # Optional: separate RC listing in Marketplace
-      # RC_EXTENSION_ID_SUFFIX: ".rc"
-
+      
     steps:
       - name: Calculate RC VSIX version
         id: version
@@ -115,16 +113,18 @@ jobs:
           if (-not $identity) { throw "Cannot find <Identity> in VSIX manifest." }
 
           $publisherName = $identity.GetAttribute("Publisher")
-          $identityId = $identity.GetAttribute("Id")
+          $identityId    = $identity.GetAttribute("Id")
           if (-not $publisherName) { throw "Identity Publisher missing in manifest." }
-          if (-not $identityId) { throw "Identity Id missing in manifest." }
+          if (-not $identityId)    { throw "Identity Id missing in manifest." }
 
-          $extensionName = ($identityId -split '\.')[0]
+          # IMPORTANT: extensionName musi być dokładnym Id z vsixmanifest (bez ucinania po kropce)
+          $extensionName = $identityId
+
           $publishManifestPath = Join-Path $env:GITHUB_WORKSPACE "publishManifest.json"
 
           $obj = @{
-            categories = @("Coding","Documentation")
-            tags            = @(
+            categories = @("Coding", "Documentation")
+            tags = @(
               "mermaid",
               "diagram",
               "solution",
@@ -133,12 +133,12 @@ jobs:
               "visualization"
             )
             identity = @{
-              publisher = $publisherName
+              publisher     = $publisherName
               extensionName = $extensionName
             }
-            overview = "README.md"
+            overview      = "README.md"
             priceCategory = "free"
-            publisher = $publisherName
+            publisher     = $publisherName
           }
 
           ($obj | ConvertTo-Json -Depth 10) | Set-Content -Path $publishManifestPath -Encoding utf8
@@ -157,12 +157,18 @@ jobs:
             throw "VSIX package not found in src/SlnxMermaidVsix/bin/Release"
           }
 
-          $publisherPath = "${{ steps.vsixpublisher.outputs.path }}"
+          $publisherPath       = "${{ steps.vsixpublisher.outputs.path }}"
+          $publishManifestPath = "${{ steps.publishmanifest.outputs.path }}"
+
+          if (-not (Test-Path $publisherPath)) { throw "VsixPublisher.exe not found at $publisherPath" }
+          if (-not (Test-Path $publishManifestPath)) { throw "publishManifest.json not found at $publishManifestPath" }
+
           $publishHelp = (& $publisherPath publish -? 2>&1 | Out-String)
 
-          if ($publishHelp -match '(?m)^\s*-flags\\b') {
+          if ($publishHelp -match '(?m)^\s*-flags\b') {
             & $publisherPath publish `
               -payload $vsixPath `
+              -publishManifest $publishManifestPath `
               -personalAccessToken $env:VS_MARKETPLACE_TOKEN `
               -flags Preview
           }
@@ -170,5 +176,6 @@ jobs:
             Write-Warning "VsixPublisher on this runner does not support '-flags'. Publishing RC without Preview flag."
             & $publisherPath publish `
               -payload $vsixPath `
+              -publishManifest $publishManifestPath `
               -personalAccessToken $env:VS_MARKETPLACE_TOKEN
           }
