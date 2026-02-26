@@ -95,6 +95,10 @@ jobs:
 
   CD-docs-pages:
     if: github.ref == 'refs/heads/master' && inputs.deploy_docs == true
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     uses: ./.github/workflows/CD-docs-pages.yml
 
   CD-tag:
