@@ -1,9 +1,7 @@
-name: Check Mermaid Diagram
+name: CI-check-mermaid
 
 on:
-  pull_request:
-  push:
-    branches: [ master ]
+  workflow_call:
 
 permissions:
   contents: read

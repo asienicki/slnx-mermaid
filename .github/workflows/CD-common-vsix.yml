@@ -1,4 +1,4 @@
-name: Reusable VSIX Release
+name: CD-common-vsix
 
 on:
   workflow_call:

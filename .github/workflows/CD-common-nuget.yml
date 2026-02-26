@@ -1,4 +1,4 @@
-name: Reusable NuGet Release
+name: CD-common-nuget
 
 on:
   workflow_call:

@@ -1,7 +1,7 @@
-name: branch-merge-guard
+name: CI-branch-merge-guard
 
 on:
-  pull_request:
+  workflow_call:
 
 jobs:
   guard:
