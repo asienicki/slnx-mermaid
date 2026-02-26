@@ -33,29 +33,40 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
     env:
-      VSIX_BASE_VERSION: 17.1.0
+      SHARED_MAJOR: '17'
+      SHARED_MINOR: '3'
     steps:
+      - name: Checkout (with tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Calculate shared version
         id: version
         run: |
           set -euo pipefail
 
-          if ! [[ "$VSIX_BASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Bad VSIX_BASE_VERSION: $VSIX_BASE_VERSION"
+          if ! [[ "$SHARED_MAJOR" =~ ^[0-9]+$ && "$SHARED_MINOR" =~ ^[0-9]+$ ]]; then
+            echo "Bad shared version base: major=$SHARED_MAJOR minor=$SHARED_MINOR"
             exit 1
           fi
 
-          IFS='.' read -r major minor patch <<< "$VSIX_BASE_VERSION"
+          prefix="v${SHARED_MAJOR}.${SHARED_MINOR}."
+          latest_patch=$(git tag --list "${prefix}*" \
+            | sed -n "s/^v${SHARED_MAJOR}\.${SHARED_MINOR}\.\([0-9]\+\)$/\1/p" \
+            | sort -n \
+            | tail -n1)
 
-          yy=$(date +%y)
-          doy=$(date +%j)
-          run=$((GITHUB_RUN_NUMBER % 1000))
-          revision=$((10#$yy * 1000000 + 10#$doy * 1000 + run))
+          if [[ -z "$latest_patch" ]]; then
+            next_patch=0
+          else
+            next_patch=$((latest_patch + 1))
+          fi
 
-          version="$major.$minor.$patch.$revision"
+          version="${SHARED_MAJOR}.${SHARED_MINOR}.${next_patch}"
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "Shared release version: $version"
+          echo "Shared release version (from tags): $version"
 
   CD-nuget-rc:
     needs: CD-version

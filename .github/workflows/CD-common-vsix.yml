@@ -50,7 +50,7 @@ jobs:
 
           $identity.SetAttribute("Id",$env:VSIX_ID_RC)
           $identity.SetAttribute("Publisher",$env:VS_MARKETPLACE_AUTHOR_DISPLAY_NAME)
-          $identity.SetAttribute("Version","${{ inputs.version }}")
+          $identity.SetAttribute("Version","${{ inputs.version }}.0")
 
           $displayName = $xml.SelectSingleNode("//vsix:Metadata/vsix:DisplayName",$ns)
           if ($displayName -and -not [string]::IsNullOrWhiteSpace($env:VSIX_DISPLAY_NAME_RC)) {
@@ -86,7 +86,7 @@ jobs:
           if (-not $metadata) { throw "Cannot find vsix:Metadata node" }
 
           $identity.SetAttribute("Publisher",$env:VS_MARKETPLACE_PUBLISHER_ID)
-          $identity.SetAttribute("Version","${{ inputs.version }}")
+          $identity.SetAttribute("Version","${{ inputs.version }}.0")
 
           $author = $xml.SelectSingleNode("//vsix:Metadata/vsix:Author",$ns)
           if (-not $author) {
