@@ -6,72 +6,16 @@ on:
       channel:
         required: true
         type: string
+      version:
+        required: true
+        type: string
 
 permissions:
   contents: write
   packages: write
 
 jobs:
-  versioning:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Calculate NuGet version
-        id: version
-        run: |
-          set -euo pipefail
-
-          if [ "${{ inputs.channel }}" = "rc" ]; then
-            ALL_TAGS=$(git tag --list 'v1.*' --sort=-v:refname)
-            STABLE_TAG=$(echo "$ALL_TAGS" | grep -Ev '\-rc\.' | head -n 1)
-
-            if [ -z "$STABLE_TAG" ]; then
-              echo "ERROR: No stable v1 tag found (expected e.g. v1.0.1)"
-              exit 1
-            fi
-
-            VERSION="${STABLE_TAG#v}"
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-
-            NEXT_PATCH=$((PATCH + 1))
-            LAST_RC=$(git tag --list "v$MAJOR.$MINOR.$NEXT_PATCH-rc.*" --sort=-v:refname | head -n 1)
-
-            if [ -z "$LAST_RC" ]; then
-              RC=1
-            else
-              RC="${LAST_RC##*.}"
-              RC=$((RC + 1))
-            fi
-
-            NEXT_VERSION="$MAJOR.$MINOR.$NEXT_PATCH-rc.$RC"
-            echo "Calculated RC version: $NEXT_VERSION"
-            echo "version=$NEXT_VERSION" >> "$GITHUB_OUTPUT"
-          elif [ "${{ inputs.channel }}" = "prod" ]; then
-            RC_TAG=$(git tag --list 'v*-rc.*' --sort=-v:refname | head -n 1)
-
-            if [ -z "$RC_TAG" ]; then
-              echo "ERROR: No RC tag found"
-              exit 1
-            fi
-
-            VERSION="${RC_TAG#v}"
-            VERSION="${VERSION%-rc.*}"
-
-            echo "Release version: $VERSION"
-            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          else
-            echo "ERROR: Unsupported channel: ${{ inputs.channel }}"
-            exit 1
-          fi
-
   build:
-    needs: versioning
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -83,15 +27,13 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Build
-        run: dotnet build SlnxMermaid.slnx -c Release /p:Version=${{ needs.versioning.outputs.version }}
+        run: dotnet build SlnxMermaid.slnx -c Release /p:Version=${{ inputs.version }}
 
       - name: Test
-        run: dotnet test SlnxMermaid.slnx -c Release /p:Version=${{ needs.versioning.outputs.version }}
+        run: dotnet test SlnxMermaid.slnx -c Release /p:Version=${{ inputs.version }}
 
   pack:
-    needs:
-      - versioning
-      - build
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -106,7 +48,7 @@ jobs:
         run: |
           dotnet pack src/SlnxMermaid.CLI/SlnxMermaid.CLI.csproj \
             -c Release \
-            /p:Version=${{ needs.versioning.outputs.version }} \
+            /p:Version=${{ inputs.version }} \
             -o ./nupkg
 
       - name: Upload NuGet package
@@ -116,9 +58,7 @@ jobs:
           path: ./nupkg/*.nupkg
 
   publish:
-    needs:
-      - versioning
-      - pack
+    needs: pack
     runs-on: ubuntu-latest
     steps:
       - name: Download NuGet package
@@ -135,27 +75,3 @@ jobs:
             --api-key "$NUGET_API_KEY" \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
-
-  tag:
-    needs:
-      - versioning
-      - publish
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: true
-
-      - name: Tag release
-        run: |
-          set -euo pipefail
-
-          TAG="v${{ needs.versioning.outputs.version }}"
-
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-          git tag "$TAG"
-          git push origin "$TAG"

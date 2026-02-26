@@ -20,12 +20,16 @@ jobs:
     uses: ./.github/workflows/CI-branch-merge-guard.yml
     secrets: inherit
 
-  CI-build-test:
-    uses: ./.github/workflows/CI-build-test.yml
+  CI-build-linux-net10:
+    uses: ./.github/workflows/CI-build-linux-net10.yml
 
   CI-check-mermaid:
-    needs: CI-build-test
+    needs: CI-build-linux-net10
     if: github.event_name != 'schedule'
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     uses: ./.github/workflows/CI-check-mermaid.yml
     secrets: inherit
 
@@ -37,15 +41,22 @@ jobs:
     if: |
       github.event_name == 'pull_request' ||
       (github.event_name == 'push' && github.ref == 'refs/heads/master')
-    needs: CI-build-test
+    needs: CI-build-linux-net10
     uses: ./.github/workflows/CI-sonar.yml
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   CI-license-check:
     if: github.event_name != 'schedule'
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     uses: ./.github/workflows/CI-license-check.yml
     secrets: inherit
 
   CI-codeql:
+    permissions:
+      contents: read
+      security-events: write
     uses: ./.github/workflows/CI-codeql.yml
