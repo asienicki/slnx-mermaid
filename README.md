@@ -1,11 +1,11 @@
-[![CI](https://github.com/asienicki/slnx-mermaid/actions/workflows/ci.yml/badge.svg)](https://github.com/asienicki/slnx-mermaid/actions/workflows/ci.yml)
+[![CI](https://github.com/asienicki/slnx-mermaid/actions/workflows/CI.yml/badge.svg)](https://github.com/asienicki/slnx-mermaid/actions/workflows/CI.yml)
 ![License](https://img.shields.io/github/license/asienicki/slnx-mermaid)
 ![Last Commit](https://img.shields.io/github/last-commit/asienicki/slnx-mermaid)
 ![PRs](https://img.shields.io/github/issues-pr/asienicki/slnx-mermaid)
 [![NuGet](https://img.shields.io/nuget/v/slnx-mermaid.svg)](https://www.nuget.org/packages/slnx-mermaid/)
 [![Version](https://img.shields.io/visual-studio-marketplace/v/SharpCode.slnxmermaid?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SharpCode.slnxmermaid)
-[![architecture](https://img.shields.io/github/actions/workflow/status/asienicki/slnx-mermaid/check-mermaid.yml?branch=master&label=architecture&style=flat-square)](https://github.com/asienicki/slnx-mermaid/actions/workflows/check-mermaid.yml)
-[![CodeQL](https://img.shields.io/github/actions/workflow/status/asienicki/slnx-mermaid/codeql.yml?label=codeql&style=flat-square)](https://github.com/asienicki/slnx-mermaid/actions/workflows/codeql.yml)
+[![architecture](https://img.shields.io/github/actions/workflow/status/asienicki/slnx-mermaid/CI-check-mermaid.yml?branch=master&label=architecture&style=flat-square)](https://github.com/asienicki/slnx-mermaid/actions/workflows/CI-check-mermaid.yml)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/asienicki/slnx-mermaid/CI-codeql.yml?label=codeql&style=flat-square)](https://github.com/asienicki/slnx-mermaid/actions/workflows/CI-codeql.yml)
 
 
 # 🧜 slnx-mermaid
@@ -46,40 +46,32 @@ See [`LICENSE.txt`](LICENSE.txt).
 
 ## VSIX publication to Visual Studio Marketplace (GitHub Actions)
 
-Repository contains two dedicated workflows for extension publication:
+VSIX publishing is handled by reusable workflow building blocks, orchestrated by the manual **CD** pipeline:
 
-- **RC VSIX** (`.github/workflows/rc_vsix.yml`) — runs on push to branch `rc` and publishes package as **Preview (beta)**.
-- **Release VSIX** (`.github/workflows/release_vsix.yml`) — runs on push to branch `release` and publishes stable package.
+- **CD entrypoint**: `.github/workflows/CD.yml` (triggered with `workflow_dispatch` from `master`).
+- **VSIX reusable workflow**: `.github/workflows/CD-common-vsix.yml` (called with `channel=rc` or `channel=prod`).
 
-### Versioning convention
+### Release flow
 
-Workflows automatically generate VSIX version in format:
-
-- `17.1.0.yyDDDrr`
-
-Where:
-
-- `17.1.0` — fixed base version,
-- `yyDDD` — UTC date (`yy` = year, `DDD` = day of year),
-- `rr` — two-digit sequence derived from GitHub Actions run number (`GITHUB_RUN_NUMBER % 100`).
-
-Example: `17.1.0.2604601` means year `26`, day `046`, sequence `01`.
+1. Run **CD** workflow manually and choose `release_channel`: `rc`, `prod`, or `both`.
+2. `CD.yml` computes a shared semantic version `17.3.x` from existing Git tags.
+3. `CD-common-vsix.yml` builds and publishes VSIX to Visual Studio Marketplace:
+   - `rc` channel publishes **Slnx Mermaid (RC)** preview package.
+   - `prod` channel publishes stable **Slnx Mermaid** package.
 
 ### Required GitHub configuration
 
-To make publication work with `SharpCode.slnxmermaid` on Visual Studio Marketplace, configure:
+To publish `SharpCode.slnxmermaid` in Visual Studio Marketplace, configure:
 
 1. **Marketplace PAT token**
-   - In Visual Studio Marketplace generate Personal Access Token for publisher account `SharpCode` (or account with permissions to update this extension).
-   - Store token in repository secrets as:
-     - `VS_MARKETPLACE_TOKEN`
+   - Generate a Visual Studio Marketplace PAT with permission to manage the publisher.
+   - Save it in repository secrets as `VS_MARKETPLACE_TOKEN`.
 
 2. **Workflow permissions**
    - In GitHub repository open **Settings → Actions → General**.
-   - Ensure actions are enabled and workflows from this repository can run.
+   - Ensure GitHub Actions are enabled for this repository.
 
-3. **Branch flow**
-   - Push commit to `rc` → workflow publishes **beta/preview** package.
-   - Push commit to `release` → workflow publishes **release** package.
+3. **Triggering rules**
+   - Run CD from branch `master` (the workflow gates publishing on `refs/heads/master`).
 
-> Note: publication is done by `VsixPublisher.exe` available on `windows-latest` GitHub runner.
+> Note: VSIX publication uses `VsixPublisher.exe` on `windows-latest` runners.

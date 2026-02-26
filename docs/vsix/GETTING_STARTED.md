@@ -1,29 +1,32 @@
 SLNX Mermaid – Getting Started
 
+[![CI](https://github.com/asienicki/slnx-mermaid/actions/workflows/CI.yml/badge.svg)](https://github.com/asienicki/slnx-mermaid/actions/workflows/CI.yml)
+[![Code scanning alerts](https://img.shields.io/github/issues/asienicki/slnx-mermaid/code-scanning?label=Code%20scanning%20alerts)](https://github.com/asienicki/slnx-mermaid/security/code-scanning)
+[![NuGet](https://img.shields.io/nuget/v/slnx-mermaid.svg)](https://www.nuget.org/packages/slnx-mermaid/)
+[![GitHub](https://img.shields.io/badge/GitHub-asienicki%2Fslnx--mermaid-181717?logo=github)](https://github.com/asienicki/slnx-mermaid)
+
 ## Overview
 
-SLNX Mermaid generates Mermaid diagrams from Visual Studio solution files (.sln / .slnx).
+SLNX Mermaid generates Mermaid diagrams from Visual Studio solution files (`.sln` / `.slnx`).
 It helps visualize project dependencies and architecture directly inside Visual Studio.
 
 ## Installation
 
-1. Install the extension from the Visual Studio Marketplace.
+1. Install the extension from Visual Studio Marketplace.
 2. Restart Visual Studio if required.
 
 ## How to Use
 
-1. Open a solution (.sln or .slnx).
+1. Open a solution (`.sln` or `.slnx`).
 2. Right-click the solution node in Solution Explorer.
-3. Select the SLNX Mermaid command.
+3. Select the **SLNX Mermaid** command.
 4. The diagram file will be generated.
 5. Open the generated file in a Mermaid-compatible viewer or Markdown preview.
 
 ## Configuration
 
-If a configuration file is supported:
-
-* Place the configuration file in the solution directory.
-* Adjust filtering or output options as needed.
+The extension uses the same `slnx-mermaid.yml` configuration model as the CLI.
+You can keep one shared config in the solution directory (output path, filters, naming).
 
 ## Output
 
