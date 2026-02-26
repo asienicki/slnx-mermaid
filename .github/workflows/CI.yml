@@ -56,4 +56,7 @@ jobs:
     secrets: inherit
 
   CI-codeql:
+    permissions:
+      contents: read
+      security-events: write
     uses: ./.github/workflows/CI-codeql.yml
