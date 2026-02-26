@@ -26,6 +26,10 @@ jobs:
   CI-check-mermaid:
     needs: CI-build-test
     if: github.event_name != 'schedule'
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     uses: ./.github/workflows/CI-check-mermaid.yml
     secrets: inherit
 
