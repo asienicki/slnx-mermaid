@@ -1,8 +1,9 @@
 SLNX Mermaid – Getting Started
 
-![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/SharpCode.slnxmermaid?label=VS%20Marketplace)
-![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/SharpCode.slnxmermaid?label=Downloads)
-![Visual Studio Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/SharpCode.slnxmermaid?label=Rating)
+[![CI](https://github.com/asienicki/slnx-mermaid/actions/workflows/CI.yml/badge.svg)](https://github.com/asienicki/slnx-mermaid/actions/workflows/CI.yml)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/asienicki/slnx-mermaid/CI-codeql.yml?label=CodeQL)](https://github.com/asienicki/slnx-mermaid/actions/workflows/CI-codeql.yml)
+[![NuGet](https://img.shields.io/nuget/v/slnx-mermaid.svg)](https://www.nuget.org/packages/slnx-mermaid/)
+[![GitHub](https://img.shields.io/badge/GitHub-asienicki%2Fslnx--mermaid-181717?logo=github)](https://github.com/asienicki/slnx-mermaid)
 
 ## Overview
 
