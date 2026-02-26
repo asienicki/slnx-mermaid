@@ -6,41 +6,12 @@ on:
       channel:
         required: true
         type: string
+      version:
+        required: true
+        type: string
 
 jobs:
-  versioning:
-    runs-on: windows-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-    env:
-      VSIX_BASE_VERSION: 17.1.0
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Calculate VSIX version
-        id: version
-        shell: pwsh
-        run: |
-          if ($env:VSIX_BASE_VERSION -notmatch '^\d+\.\d+\.\d+$') {
-            throw "Bad VSIX_BASE_VERSION"
-          }
-
-          $now = Get-Date
-          $yy  = $now.Year % 100
-          $doy = $now.DayOfYear
-          $run = [int]$env:GITHUB_RUN_NUMBER
-
-          $run3 = $run % 1000
-          $revision = ($yy * 1000000) + ($doy * 1000) + $run3
-
-          $version = "$env:VSIX_BASE_VERSION.$revision"
-          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-
-          Write-Host "Version: $version"
-
   build:
-    needs: versioning
     runs-on: windows-latest
 
     env:
@@ -79,7 +50,7 @@ jobs:
 
           $identity.SetAttribute("Id",$env:VSIX_ID_RC)
           $identity.SetAttribute("Publisher",$env:VS_MARKETPLACE_AUTHOR_DISPLAY_NAME)
-          $identity.SetAttribute("Version","${{ needs.versioning.outputs.version }}")
+          $identity.SetAttribute("Version","${{ inputs.version }}")
 
           $displayName = $xml.SelectSingleNode("//vsix:Metadata/vsix:DisplayName",$ns)
           if ($displayName -and -not [string]::IsNullOrWhiteSpace($env:VSIX_DISPLAY_NAME_RC)) {
@@ -115,7 +86,7 @@ jobs:
           if (-not $metadata) { throw "Cannot find vsix:Metadata node" }
 
           $identity.SetAttribute("Publisher",$env:VS_MARKETPLACE_PUBLISHER_ID)
-          $identity.SetAttribute("Version","${{ needs.versioning.outputs.version }}")
+          $identity.SetAttribute("Version","${{ inputs.version }}")
 
           $author = $xml.SelectSingleNode("//vsix:Metadata/vsix:Author",$ns)
           if (-not $author) {
