@@ -1,24 +1,13 @@
-name: Release VSIX
+name: Reusable VSIX Release
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - "src/SlnxMermaidVsix/**"
-      - "SlnxMermaidVisualStudio.slnx"
-      - ".github/workflows/release_vsix.yml"
-
-concurrency:
-  group: release-vsix-publish
-  cancel-in-progress: true
+  workflow_call:
+    inputs:
+      channel:
+        required: true
+        type: string
 
 jobs:
-
-  # =========================
-  # VERSIONING
-  # =========================
   versioning:
     runs-on: windows-latest
     outputs:
@@ -50,9 +39,6 @@ jobs:
 
           Write-Host "Version: $version"
 
-  # =========================
-  # BUILD
-  # =========================
   build:
     needs: versioning
     runs-on: windows-latest
@@ -60,6 +46,8 @@ jobs:
     env:
       VS_MARKETPLACE_PUBLISHER_ID: SharpCode
       VS_MARKETPLACE_AUTHOR_DISPLAY_NAME: "Sharp Code"
+      VSIX_ID_RC: "{1f7cdd6e-e9f7-4562-826f-24843b73f471}"
+      VSIX_DISPLAY_NAME_RC: "Slnx Mermaid (RC)"
 
     steps:
       - uses: actions/checkout@v4
@@ -68,16 +56,41 @@ jobs:
       - name: Patch VSIX manifest
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+
           $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
+          if (-not (Test-Path $manifestPath)) { throw "Missing: $manifestPath" }
 
           [xml]$xml = Get-Content $manifestPath
           $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
           $ns.AddNamespace("vsix","http://schemas.microsoft.com/developer/vsx-schema/2011")
 
           $identity = $xml.SelectSingleNode("//vsix:Identity",$ns)
-          $metadata = $xml.SelectSingleNode("//vsix:Metadata",$ns)
+          if (-not $identity) { throw "Cannot find vsix:Identity node" }
 
-          $identity.SetAttribute("Publisher",$env:VS_MARKETPLACE_PUBLISHER_ID)
+          $metadata = $xml.SelectSingleNode("//vsix:Metadata",$ns)
+          if (-not $metadata) { throw "Cannot find vsix:Metadata node" }
+
+          if ("${{ inputs.channel }}" -eq "rc") {
+            if ($env:VSIX_ID_RC -notmatch '^\{[0-9a-fA-F-]{36}\}$') {
+              throw "VSIX_ID_RC must be a GUID in braces, e.g. {11111111-2222-3333-4444-555555555555}"
+            }
+
+            $identity.SetAttribute("Id",$env:VSIX_ID_RC)
+            $identity.SetAttribute("Publisher",$env:VS_MARKETPLACE_AUTHOR_DISPLAY_NAME)
+
+            $displayName = $xml.SelectSingleNode("//vsix:Metadata/vsix:DisplayName",$ns)
+            if ($displayName -and -not [string]::IsNullOrWhiteSpace($env:VSIX_DISPLAY_NAME_RC)) {
+              $displayName.InnerText = $env:VSIX_DISPLAY_NAME_RC
+            }
+          }
+          elseif ("${{ inputs.channel }}" -eq "prod") {
+            $identity.SetAttribute("Publisher",$env:VS_MARKETPLACE_PUBLISHER_ID)
+          }
+          else {
+            throw "Unsupported channel: ${{ inputs.channel }}"
+          }
+
           $identity.SetAttribute("Version","${{ needs.versioning.outputs.version }}")
 
           $author = $xml.SelectSingleNode("//vsix:Metadata/vsix:Author",$ns)
@@ -98,19 +111,16 @@ jobs:
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@v4
         with:
-          name: vsix-package
+          name: vsix-${{ inputs.channel }}-package
           path: src/SlnxMermaidVsix/bin/**/*.vsix
 
-  # =========================
-  # PUBLISH
-  # =========================
   publish:
     needs: build
     runs-on: windows-latest
 
     env:
       VS_MARKETPLACE_PUBLISHER_ID: SharpCode
-      VS_MARKETPLACE_INTERNAL_NAME: slnxmermaid
+      VS_MARKETPLACE_INTERNAL_NAME: ${{ inputs.channel == 'rc' && 'slnxmermaid-rc' || 'slnxmermaid' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -119,17 +129,26 @@ jobs:
       - name: Download VSIX artifact
         uses: actions/download-artifact@v4
         with:
-          name: vsix-package
+          name: vsix-${{ inputs.channel }}-package
           path: vsix
 
       - name: Locate VsixPublisher
         id: vsixpublisher
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
+
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path $vswhere)) { throw "vswhere not found: $vswhere" }
+
           $installationPath = & $vswhere -latest -products * -property installationPath
+          if ([string]::IsNullOrWhiteSpace($installationPath)) { throw "Visual Studio installation not found by vswhere" }
+
           $publisherPath = Join-Path $installationPath "VSSDK\VisualStudioIntegration\Tools\Bin\VsixPublisher.exe"
+          if (-not (Test-Path $publisherPath)) { throw "VsixPublisher.exe not found: $publisherPath" }
+
           "path=$publisherPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
       - name: Create publish manifest
         id: publishmanifest
         shell: pwsh
@@ -139,15 +158,19 @@ jobs:
           $workspace = $env:GITHUB_WORKSPACE
           if ([string]::IsNullOrWhiteSpace($workspace)) {
             $workspace = (Get-Location).Path
-            Write-Host "GITHUB_WORKSPACE is empty. Fallback to: $workspace"
           }
 
           $publishManifestPath = Join-Path -Path $workspace -ChildPath "publishManifest.json"
 
+          $tags = @("mermaid","diagram")
+          if ("${{ inputs.channel }}" -eq "rc") {
+            $tags += "rc"
+          }
+
           $obj = [ordered]@{
             '$schema'     = "http://json.schemastore.org/vsix-publish"
             categories    = @("Coding","Documentation")
-            tags          = @("mermaid","diagram")
+            tags          = $tags
             identity      = @{ internalName = $env:VS_MARKETPLACE_INTERNAL_NAME }
             priceCategory = "free"
             publisher     = $env:VS_MARKETPLACE_PUBLISHER_ID
@@ -167,7 +190,14 @@ jobs:
         env:
           VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN }}
         run: |
+          $ErrorActionPreference = 'Stop'
+
+          if ([string]::IsNullOrWhiteSpace($env:VS_MARKETPLACE_TOKEN)) {
+            throw "Missing VS_MARKETPLACE_TOKEN secret"
+          }
+
           $vsixPath = (Get-ChildItem vsix -Filter *.vsix -Recurse | Select-Object -First 1).FullName
+          if ([string]::IsNullOrWhiteSpace($vsixPath)) { throw "VSIX not found under ./vsix" }
 
           & "${{ steps.vsixpublisher.outputs.path }}" publish `
             -payload $vsixPath `
