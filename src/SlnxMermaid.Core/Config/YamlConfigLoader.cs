@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using SlnxMermaid.CLI.Exceptions;
+using SlnxMermaid.Core.Exceptions;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 

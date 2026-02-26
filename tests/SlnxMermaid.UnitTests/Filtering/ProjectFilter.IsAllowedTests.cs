@@ -1,6 +1,6 @@
 ﻿using SlnxMermaid.Core.Filtering;
 
-namespace SlnxMermaid.Core.Tests.Filtering;
+namespace SlnxMermaid.UnitTests.Filtering;
 
 public class ProjectFilterIsAllowedTests
 {

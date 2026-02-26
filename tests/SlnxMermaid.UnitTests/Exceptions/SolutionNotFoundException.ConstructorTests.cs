@@ -1,6 +1,6 @@
-﻿using SlnxMermaid.CLI.Exceptions;
+﻿using SlnxMermaid.Core.Exceptions;
 
-namespace SlnxMermaid.Core.Tests.Exceptions;
+namespace SlnxMermaid.UnitTests.Exceptions;
 
 public class SolutionNotFoundExceptionConstructorTests
 {

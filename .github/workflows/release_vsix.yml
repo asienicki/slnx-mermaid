@@ -1,0 +1,176 @@
+name: Release VSIX
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/SlnxMermaidVsix/**"
+      - "SlnxMermaidVisualStudio.slnx"
+      - ".github/workflows/release_vsix.yml"
+
+concurrency:
+  group: release-vsix-publish
+  cancel-in-progress: true
+
+jobs:
+
+  # =========================
+  # VERSIONING
+  # =========================
+  versioning:
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    env:
+      VSIX_BASE_VERSION: 17.1.0
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Calculate VSIX version
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:VSIX_BASE_VERSION -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Bad VSIX_BASE_VERSION"
+          }
+
+          $now = Get-Date
+          $yy  = $now.Year % 100
+          $doy = $now.DayOfYear
+          $run = [int]$env:GITHUB_RUN_NUMBER
+
+          $run3 = $run % 1000
+          $revision = ($yy * 1000000) + ($doy * 1000) + $run3
+
+          $version = "$env:VSIX_BASE_VERSION.$revision"
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+          Write-Host "Version: $version"
+
+  # =========================
+  # BUILD
+  # =========================
+  build:
+    needs: versioning
+    runs-on: windows-latest
+
+    env:
+      VS_MARKETPLACE_PUBLISHER_ID: SharpCode
+      VS_MARKETPLACE_AUTHOR_DISPLAY_NAME: "Sharp Code"
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Patch VSIX manifest
+        shell: pwsh
+        run: |
+          $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
+
+          [xml]$xml = Get-Content $manifestPath
+          $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+          $ns.AddNamespace("vsix","http://schemas.microsoft.com/developer/vsx-schema/2011")
+
+          $identity = $xml.SelectSingleNode("//vsix:Identity",$ns)
+          $metadata = $xml.SelectSingleNode("//vsix:Metadata",$ns)
+
+          $identity.SetAttribute("Publisher",$env:VS_MARKETPLACE_PUBLISHER_ID)
+          $identity.SetAttribute("Version","${{ needs.versioning.outputs.version }}")
+
+          $author = $xml.SelectSingleNode("//vsix:Metadata/vsix:Author",$ns)
+          if (-not $author) {
+            $author = $xml.CreateElement("Author",$ns.LookupNamespace("vsix"))
+            [void]$metadata.AppendChild($author)
+          }
+          $author.InnerText = $env:VS_MARKETPLACE_AUTHOR_DISPLAY_NAME
+
+          $xml.Save($manifestPath)
+
+      - name: Restore
+        run: msbuild SlnxMermaidVisualStudio.slnx /t:Restore /p:Configuration=Release
+
+      - name: Build VSIX
+        run: msbuild SlnxMermaidVisualStudio.slnx /t:Build /p:Configuration=Release /p:DeployExtension=false
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix-package
+          path: src/SlnxMermaidVsix/bin/**/*.vsix
+
+  # =========================
+  # PUBLISH
+  # =========================
+  publish:
+    needs: build
+    runs-on: windows-latest
+
+    env:
+      VS_MARKETPLACE_PUBLISHER_ID: SharpCode
+      VS_MARKETPLACE_INTERNAL_NAME: slnxmermaid
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Download VSIX artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vsix-package
+          path: vsix
+
+      - name: Locate VsixPublisher
+        id: vsixpublisher
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installationPath = & $vswhere -latest -products * -property installationPath
+          $publisherPath = Join-Path $installationPath "VSSDK\VisualStudioIntegration\Tools\Bin\VsixPublisher.exe"
+          "path=$publisherPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+      - name: Create publish manifest
+        id: publishmanifest
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $workspace = $env:GITHUB_WORKSPACE
+          if ([string]::IsNullOrWhiteSpace($workspace)) {
+            $workspace = (Get-Location).Path
+            Write-Host "GITHUB_WORKSPACE is empty. Fallback to: $workspace"
+          }
+
+          $publishManifestPath = Join-Path -Path $workspace -ChildPath "publishManifest.json"
+
+          $obj = [ordered]@{
+            '$schema'     = "http://json.schemastore.org/vsix-publish"
+            categories    = @("Coding","Documentation")
+            tags          = @("mermaid","diagram")
+            identity      = @{ internalName = $env:VS_MARKETPLACE_INTERNAL_NAME }
+            priceCategory = "free"
+            publisher     = $env:VS_MARKETPLACE_PUBLISHER_ID
+            repo          = "https://github.com/asienicki/slnx-mermaid"
+            qna           = $true
+            private       = $false
+            overview      = "docs/vsix/GETTING_STARTED.md"
+          }
+
+          ($obj | ConvertTo-Json -Depth 10) | Set-Content -Path $publishManifestPath -Encoding utf8
+          "path=$publishManifestPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+          Write-Host "publishManifest.json created at: $publishManifestPath"
+
+      - name: Publish to VS Marketplace
+        shell: pwsh
+        env:
+          VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+        run: |
+          $vsixPath = (Get-ChildItem vsix -Filter *.vsix -Recurse | Select-Object -First 1).FullName
+
+          & "${{ steps.vsixpublisher.outputs.path }}" publish `
+            -payload $vsixPath `
+            -publishManifest "${{ steps.publishmanifest.outputs.path }}" `
+            -personalAccessToken $env:VS_MARKETPLACE_TOKEN `
+            -ignoreWarnings "VSIXValidatorWarning01,VSIXValidatorWarning02"

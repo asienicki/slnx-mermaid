@@ -1,6 +1,6 @@
 ﻿using SlnxMermaid.Core.Config;
 
-namespace SlnxMermaid.Core.Tests.Config;
+namespace SlnxMermaid.UnitTests.Config;
 
 public class ConfigDefaultsTests
 {

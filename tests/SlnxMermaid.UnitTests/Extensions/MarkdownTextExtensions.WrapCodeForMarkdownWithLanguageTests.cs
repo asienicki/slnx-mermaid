@@ -1,6 +1,6 @@
 ﻿using SlnxMermaid.Core.Extensions;
 
-namespace SlnxMermaid.Core.Tests.Extensions;
+namespace SlnxMermaid.UnitTests.Extensions;
 
 public class MarkdownTextExtensionsWrapCodeForMarkdownWithLanguageTests
 {

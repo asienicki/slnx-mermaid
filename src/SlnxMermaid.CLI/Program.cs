@@ -1,6 +1,6 @@
 ﻿using Microsoft.Build.Locator;
-using SlnxMermaid.Cli;
-using SlnxMermaid.CLI.Exceptions;
+using SlnxMermaid.CLI.Commands;
+using SlnxMermaid.Core.Exceptions;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
