@@ -48,6 +48,10 @@ jobs:
 
   CI-license-check:
     if: github.event_name != 'schedule'
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     uses: ./.github/workflows/CI-license-check.yml
     secrets: inherit
 
