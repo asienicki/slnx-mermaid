@@ -7,6 +7,11 @@
 [![NuGet](https://img.shields.io/nuget/v/slnx-mermaid.svg)](https://www.nuget.org/packages/slnx-mermaid/)
 [![GitHub](https://img.shields.io/badge/GitHub-asienicki%2Fslnx--mermaid-181717?logo=github)](https://github.com/asienicki/slnx-mermaid)
 
+[![CI](https://github.com/asienicki/slnx-mermaid/actions/workflows/CI.yml/badge.svg)](https://github.com/asienicki/slnx-mermaid/actions/workflows/CI.yml)
+[![Code scanning alerts](https://img.shields.io/github/issues/asienicki/slnx-mermaid/code-scanning?label=Code%20scanning%20alerts)](https://github.com/asienicki/slnx-mermaid/security/code-scanning)
+[![NuGet](https://img.shields.io/nuget/v/slnx-mermaid.svg)](https://www.nuget.org/packages/slnx-mermaid/)
+[![GitHub](https://img.shields.io/badge/GitHub-asienicki%2Fslnx--mermaid-181717?logo=github)](https://github.com/asienicki/slnx-mermaid)
+
 ## Overview
 
 SLNX Mermaid generates Mermaid diagrams from Visual Studio solution files (`.sln` / `.slnx`).
