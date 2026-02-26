@@ -29,10 +29,7 @@ The extension uses the same project configuration approach as the CLI workflow (
 
 ## VSIX packaging note
 
-The folder [`docs/vsix`]({{ '/vsix/README.md' | relative_url }}) contains VSIX metadata source files in `.txt` format (`GETTING_STARTED.txt`, `CHANGELOG.txt`) because VSIX manifest metadata does not support Markdown for those fields.
+The folder [`docs/vsix`]({{ '/vsix/' | relative_url }}) contains VSIX Marketplace metadata source files in Markdown format.
 
-- Source details: [`docs/vsix/README.md`]({{ '/vsix/README.md' | relative_url }})
-- Getting started metadata: [`docs/vsix/GETTING_STARTED.txt`]({{ '/vsix/GETTING_STARTED.txt' | relative_url }})
-- Changelog metadata: [`docs/vsix/CHANGELOG.txt`]({{ '/vsix/CHANGELOG.txt' | relative_url }})
-
-Do not convert those metadata files to Markdown.
+- Getting started metadata: [`docs/vsix/GETTING_STARTED.md`]({{ '/vsix/GETTING_STARTED.md' | relative_url }})
+- Changelog metadata: [`docs/vsix/CHANGELOG.md`]({{ '/vsix/CHANGELOG.md' | relative_url }})
