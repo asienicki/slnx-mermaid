@@ -46,14 +46,57 @@ jobs:
     env:
       VS_MARKETPLACE_PUBLISHER_ID: SharpCode
       VS_MARKETPLACE_AUTHOR_DISPLAY_NAME: "Sharp Code"
-      VSIX_ID_RC: "{1f7cdd6e-e9f7-4562-826f-24843b73f471}"
-      VSIX_DISPLAY_NAME_RC: "Slnx Mermaid (RC)"
 
     steps:
       - uses: actions/checkout@v4
       - uses: microsoft/setup-msbuild@v2
 
-      - name: Patch VSIX manifest
+      - name: Patch VSIX manifest (RC)
+        if: inputs.channel == 'rc'
+        shell: pwsh
+        env:
+          VSIX_ID_RC: "{1f7cdd6e-e9f7-4562-826f-24843b73f471}"
+          VSIX_DISPLAY_NAME_RC: "Slnx Mermaid (RC)"
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $manifestPath = "src/SlnxMermaidVsix/source.extension.vsixmanifest"
+          if (-not (Test-Path $manifestPath)) { throw "Missing: $manifestPath" }
+
+          [xml]$xml = Get-Content $manifestPath
+          $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+          $ns.AddNamespace("vsix","http://schemas.microsoft.com/developer/vsx-schema/2011")
+
+          $identity = $xml.SelectSingleNode("//vsix:Identity",$ns)
+          if (-not $identity) { throw "Cannot find vsix:Identity node" }
+
+          $metadata = $xml.SelectSingleNode("//vsix:Metadata",$ns)
+          if (-not $metadata) { throw "Cannot find vsix:Metadata node" }
+
+          if ($env:VSIX_ID_RC -notmatch '^\{[0-9a-fA-F-]{36}\}$') {
+            throw "VSIX_ID_RC must be a GUID in braces, e.g. {11111111-2222-3333-4444-555555555555}"
+          }
+
+          $identity.SetAttribute("Id",$env:VSIX_ID_RC)
+          $identity.SetAttribute("Publisher",$env:VS_MARKETPLACE_AUTHOR_DISPLAY_NAME)
+          $identity.SetAttribute("Version","${{ needs.versioning.outputs.version }}")
+
+          $displayName = $xml.SelectSingleNode("//vsix:Metadata/vsix:DisplayName",$ns)
+          if ($displayName -and -not [string]::IsNullOrWhiteSpace($env:VSIX_DISPLAY_NAME_RC)) {
+            $displayName.InnerText = $env:VSIX_DISPLAY_NAME_RC
+          }
+
+          $author = $xml.SelectSingleNode("//vsix:Metadata/vsix:Author",$ns)
+          if (-not $author) {
+            $author = $xml.CreateElement("Author",$ns.LookupNamespace("vsix"))
+            [void]$metadata.AppendChild($author)
+          }
+          $author.InnerText = $env:VS_MARKETPLACE_AUTHOR_DISPLAY_NAME
+
+          $xml.Save($manifestPath)
+
+      - name: Patch VSIX manifest (PROD)
+        if: inputs.channel == 'prod'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -71,26 +114,7 @@ jobs:
           $metadata = $xml.SelectSingleNode("//vsix:Metadata",$ns)
           if (-not $metadata) { throw "Cannot find vsix:Metadata node" }
 
-          if ("${{ inputs.channel }}" -eq "rc") {
-            if ($env:VSIX_ID_RC -notmatch '^\{[0-9a-fA-F-]{36}\}$') {
-              throw "VSIX_ID_RC must be a GUID in braces, e.g. {11111111-2222-3333-4444-555555555555}"
-            }
-
-            $identity.SetAttribute("Id",$env:VSIX_ID_RC)
-            $identity.SetAttribute("Publisher",$env:VS_MARKETPLACE_AUTHOR_DISPLAY_NAME)
-
-            $displayName = $xml.SelectSingleNode("//vsix:Metadata/vsix:DisplayName",$ns)
-            if ($displayName -and -not [string]::IsNullOrWhiteSpace($env:VSIX_DISPLAY_NAME_RC)) {
-              $displayName.InnerText = $env:VSIX_DISPLAY_NAME_RC
-            }
-          }
-          elseif ("${{ inputs.channel }}" -eq "prod") {
-            $identity.SetAttribute("Publisher",$env:VS_MARKETPLACE_PUBLISHER_ID)
-          }
-          else {
-            throw "Unsupported channel: ${{ inputs.channel }}"
-          }
-
+          $identity.SetAttribute("Publisher",$env:VS_MARKETPLACE_PUBLISHER_ID)
           $identity.SetAttribute("Version","${{ needs.versioning.outputs.version }}")
 
           $author = $xml.SelectSingleNode("//vsix:Metadata/vsix:Author",$ns)
