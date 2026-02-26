@@ -47,21 +47,12 @@ jobs:
 
           IFS='.' read -r major minor patch <<< "$VSIX_BASE_VERSION"
 
-          # Keep all version components within System.Version limits (0..65535)
-          # so the same value works for NuGet, VSIX and AssemblyVersion.
           yy=$(date +%y)
           doy=$(date +%j)
-          run=$((GITHUB_RUN_NUMBER % 100))
+          run=$((GITHUB_RUN_NUMBER % 1000))
+          revision=$((10#$yy * 1000000 + 10#$doy * 1000 + run))
 
-          build=$((10#$yy))
-          revision=$((10#$doy * 100 + run))
-
-          if (( build > 65535 || revision > 65535 )); then
-            echo "Calculated version component out of range: build=$build revision=$revision"
-            exit 1
-          fi
-
-          version="$major.$minor.$build.$revision"
+          version="$major.$minor.$patch.$revision"
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Shared release version: $version"
