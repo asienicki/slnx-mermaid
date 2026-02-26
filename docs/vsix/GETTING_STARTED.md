@@ -1,4 +1,6 @@
-SLNX Mermaid – Getting Started
+# 🧜 slnx-mermaid
+
+## Getting Started (VSIX)
 
 [![CI](https://github.com/asienicki/slnx-mermaid/actions/workflows/CI.yml/badge.svg)](https://github.com/asienicki/slnx-mermaid/actions/workflows/CI.yml)
 [![Code scanning alerts](https://img.shields.io/github/issues/asienicki/slnx-mermaid/code-scanning?label=Code%20scanning%20alerts)](https://github.com/asienicki/slnx-mermaid/security/code-scanning)
