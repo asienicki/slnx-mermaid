@@ -32,6 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
+      version_rc: ${{ steps.version.outputs.version_rc }}
     env:
       SHARED_MAJOR: '17'
       SHARED_MINOR: '3'
@@ -66,6 +67,7 @@ jobs:
           version="${SHARED_MAJOR}.${SHARED_MINOR}.${next_patch}"
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "version_rc=${version}-rc" >> "$GITHUB_OUTPUT"
           echo "Shared release version (from tags): $version"
 
   CD-nuget-rc:
@@ -74,7 +76,7 @@ jobs:
     uses: ./.github/workflows/CD-common-nuget.yml
     with:
       channel: rc
-      version: ${{ needs.CD-version.outputs.version }}
+      version: ${{ needs.CD-version.outputs.version_rc }}
     secrets: inherit
 
   CD-vsix-rc:
