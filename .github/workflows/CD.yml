@@ -27,34 +27,123 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  CD-version:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    env:
+      VSIX_BASE_VERSION: 17.1.0
+    steps:
+      - name: Calculate shared version
+        id: version
+        run: |
+          set -euo pipefail
+
+          if ! [[ "$VSIX_BASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Bad VSIX_BASE_VERSION: $VSIX_BASE_VERSION"
+            exit 1
+          fi
+
+          IFS='.' read -r major minor patch <<< "$VSIX_BASE_VERSION"
+
+          # Keep all version components within System.Version limits (0..65535)
+          # so the same value works for NuGet, VSIX and AssemblyVersion.
+          yy=$(date +%y)
+          doy=$(date +%j)
+          run=$((GITHUB_RUN_NUMBER % 100))
+
+          build=$((10#$yy))
+          revision=$((10#$doy * 100 + run))
+
+          if (( build > 65535 || revision > 65535 )); then
+            echo "Calculated version component out of range: build=$build revision=$revision"
+            exit 1
+          fi
+
+          version="$major.$minor.$build.$revision"
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Shared release version: $version"
+
   CD-nuget-rc:
+    needs: CD-version
     if: github.ref == 'refs/heads/master' && (inputs.release_channel == 'rc' || inputs.release_channel == 'both')
     uses: ./.github/workflows/CD-common-nuget.yml
     with:
       channel: rc
+      version: ${{ needs.CD-version.outputs.version }}
     secrets: inherit
 
   CD-vsix-rc:
+    needs: CD-version
     if: github.ref == 'refs/heads/master' && (inputs.release_channel == 'rc' || inputs.release_channel == 'both')
     uses: ./.github/workflows/CD-common-vsix.yml
     with:
       channel: rc
+      version: ${{ needs.CD-version.outputs.version }}
     secrets: inherit
 
   CD-nuget-prod:
+    needs: CD-version
     if: github.ref == 'refs/heads/master' && (inputs.release_channel == 'prod' || inputs.release_channel == 'both')
     uses: ./.github/workflows/CD-common-nuget.yml
     with:
       channel: prod
+      version: ${{ needs.CD-version.outputs.version }}
     secrets: inherit
 
   CD-vsix-prod:
+    needs: CD-version
     if: github.ref == 'refs/heads/master' && (inputs.release_channel == 'prod' || inputs.release_channel == 'both')
     uses: ./.github/workflows/CD-common-vsix.yml
     with:
       channel: prod
+      version: ${{ needs.CD-version.outputs.version }}
     secrets: inherit
 
   CD-docs-pages:
     if: github.ref == 'refs/heads/master' && inputs.deploy_docs == true
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     uses: ./.github/workflows/CD-docs-pages.yml
+
+  CD-tag:
+    needs:
+      - CD-version
+      - CD-nuget-rc
+      - CD-vsix-rc
+      - CD-nuget-prod
+      - CD-vsix-prod
+      - CD-docs-pages
+    if: |
+      always() &&
+      github.ref == 'refs/heads/master' &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Create release tag
+        run: |
+          set -euo pipefail
+
+          TAG="v${{ needs.CD-version.outputs.version }}"
+
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists, skipping."
+            exit 0
+          fi
+
+          git tag "$TAG"
+          git push origin "$TAG"

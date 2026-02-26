@@ -13,12 +13,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  generate:
-    name: Generate Diagram
+  mermaid-check:
+    name: Generate Diagram & Report
     runs-on: ubuntu-latest
-
-    outputs:
-      outdated: ${{ steps.mermaid_check.outputs.outdated }}
+    environment:
+      name: mermaid-check
 
     steps:
       - name: Checkout
@@ -32,7 +31,7 @@ jobs:
       - name: Install slnx-mermaid
         run: dotnet tool install slnx-mermaid --tool-path ./.tools
 
-      - name: Generate diagram
+      - name: Generate Diagram
         run: |
           ./.tools/slnx-mermaid \
             --solution SlnxMermaid.slnx
@@ -56,16 +55,8 @@ jobs:
             echo "✅ Diagram is up to date" >> $GITHUB_STEP_SUMMARY
           fi
 
-  report:
-    name: Report & Validate
-    needs: generate
-    runs-on: ubuntu-latest
-    environment:
-      name: mermaid-check
-
-    steps:
       - name: Comment on PR
-        if: needs.generate.outputs.outdated == 'true' && github.event_name == 'pull_request'
+        if: steps.mermaid_check.outputs.outdated == 'true' && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
@@ -77,11 +68,11 @@ jobs:
             })
 
       - name: Fail if outdated
-        if: needs.generate.outputs.outdated == 'true'
+        if: steps.mermaid_check.outputs.outdated == 'true'
         run: |
           echo "::error title=Mermaid diagram outdated::Run slnx-mermaid and commit the updated file."
           exit 1
 
       - name: Success marker
-        if: needs.generate.outputs.outdated == 'false'
+        if: steps.mermaid_check.outputs.outdated == 'false'
         run: echo "Diagram validation passed."
