@@ -1,7 +1,7 @@
-name: branch-merge-guard
+name: CI-branch-merge-guard
 
 on:
-  pull_request:
+  workflow_call:
 
 jobs:
   guard:
@@ -37,28 +37,14 @@ jobs:
           case "$BASE" in
 
             master)
-              if [[ "$HEAD" =~ ^feat/.* || "$HEAD" =~ ^fix/.* || "$HEAD" =~ ^codex/.* || "$HEAD" == "rc" ]]; then
+              if [[ "$HEAD" =~ ^feat/.* || "$HEAD" =~ ^fix/.* || "$HEAD" =~ ^codex/.* ]]; then
                 exit 0
               fi
-              fail "Into **master** allowed only from **feat/***, **fix/***, **codex/*** or **rc**."
-              ;;
-
-            rc)
-              if [[ "$HEAD" == "master" || "$HEAD" == "release" ]]; then
-                exit 0
-              fi
-              fail "Into **rc** allowed only from **master** or **release**."
-              ;;
-
-            release)
-              if [[ "$HEAD" == "rc" ]]; then
-                exit 0
-              fi
-              fail "Into **release** allowed only from **rc**."
+              fail "Into **master** allowed only from **feat/***, **fix/*** or **codex/***."
               ;;
 
             *)
-              # All other branches (feat/*, fix/*, codex/* etc.)
+              # For non-master targets we don't enforce merge naming restrictions.
               exit 0
               ;;
 

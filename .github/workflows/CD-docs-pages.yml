@@ -1,12 +1,7 @@
-name: docs-pages
+name: CD-docs-pages
 
 on:
-  push:
-    branches: ["master"]
-    paths:
-      - "docs/**"
-      - ".github/workflows/docs-pages.yml"
-  workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read

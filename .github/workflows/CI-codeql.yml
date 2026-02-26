@@ -1,10 +1,7 @@
-name: CodeQL
+name: CI-codeql
 
 on:
-  pull_request:
-    branches: [ "master", "rc", "release" ]
-  schedule:
-    - cron: '0 3 * * 0' # raz w tygodniu
+  workflow_call:
 
 jobs:
   analyze:

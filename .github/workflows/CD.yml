@@ -1,0 +1,60 @@
+name: CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_channel:
+        description: "Release channel"
+        required: true
+        default: both
+        type: choice
+        options:
+          - rc
+          - prod
+          - both
+      deploy_docs:
+        description: "Deploy docs pages"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  CD-nuget-rc:
+    if: github.ref == 'refs/heads/master' && (inputs.release_channel == 'rc' || inputs.release_channel == 'both')
+    uses: ./.github/workflows/CD-common-nuget.yml
+    with:
+      channel: rc
+    secrets: inherit
+
+  CD-vsix-rc:
+    if: github.ref == 'refs/heads/master' && (inputs.release_channel == 'rc' || inputs.release_channel == 'both')
+    uses: ./.github/workflows/CD-common-vsix.yml
+    with:
+      channel: rc
+    secrets: inherit
+
+  CD-nuget-prod:
+    if: github.ref == 'refs/heads/master' && (inputs.release_channel == 'prod' || inputs.release_channel == 'both')
+    uses: ./.github/workflows/CD-common-nuget.yml
+    with:
+      channel: prod
+    secrets: inherit
+
+  CD-vsix-prod:
+    if: github.ref == 'refs/heads/master' && (inputs.release_channel == 'prod' || inputs.release_channel == 'both')
+    uses: ./.github/workflows/CD-common-vsix.yml
+    with:
+      channel: prod
+    secrets: inherit
+
+  CD-docs-pages:
+    if: github.ref == 'refs/heads/master' && inputs.deploy_docs == true
+    uses: ./.github/workflows/CD-docs-pages.yml

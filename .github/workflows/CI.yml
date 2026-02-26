@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: '0 3 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  CI-branch-merge-guard:
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: ./.github/workflows/CI-branch-merge-guard.yml
+    secrets: inherit
+
+  CI-build-test:
+    uses: ./.github/workflows/CI-build-test.yml
+
+  CI-check-mermaid:
+    needs: CI-build-test
+    if: github.event_name != 'schedule'
+    uses: ./.github/workflows/CI-check-mermaid.yml
+    secrets: inherit
+
+  CI-vsix-build:
+    if: github.event_name != 'schedule'
+    uses: ./.github/workflows/CI-vsix-build.yml
+
+  CI-sonar:
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    needs: CI-build-test
+    uses: ./.github/workflows/CI-sonar.yml
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  CI-license-check:
+    if: github.event_name != 'schedule'
+    uses: ./.github/workflows/CI-license-check.yml
+    secrets: inherit
+
+  CI-codeql:
+    uses: ./.github/workflows/CI-codeql.yml
