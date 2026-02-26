@@ -20,11 +20,11 @@ jobs:
     uses: ./.github/workflows/CI-branch-merge-guard.yml
     secrets: inherit
 
-  CI-build-test:
-    uses: ./.github/workflows/CI-build-test.yml
+  CI-build-linux-net10:
+    uses: ./.github/workflows/CI-build-linux-net10.yml
 
   CI-check-mermaid:
-    needs: CI-build-test
+    needs: CI-build-linux-net10
     if: github.event_name != 'schedule'
     permissions:
       contents: read
@@ -41,7 +41,7 @@ jobs:
     if: |
       github.event_name == 'pull_request' ||
       (github.event_name == 'push' && github.ref == 'refs/heads/master')
-    needs: CI-build-test
+    needs: CI-build-linux-net10
     uses: ./.github/workflows/CI-sonar.yml
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
