@@ -1,8 +1,8 @@
 SLNX Mermaid – Getting Started
 
-[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/SharpCode.slnxmermaid?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SharpCode.slnxmermaid)
-[![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/SharpCode.slnxmermaid?label=Downloads)](https://marketplace.visualstudio.com/items?itemName=SharpCode.slnxmermaid)
-[![Visual Studio Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/SharpCode.slnxmermaid?label=Rating)](https://marketplace.visualstudio.com/items?itemName=SharpCode.slnxmermaid)
+![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/SharpCode.slnxmermaid?label=VS%20Marketplace)
+![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/SharpCode.slnxmermaid?label=Downloads)
+![Visual Studio Marketplace Rating](https://img.shields.io/visual-studio-marketplace/r/SharpCode.slnxmermaid?label=Rating)
 
 ## Overview
 
