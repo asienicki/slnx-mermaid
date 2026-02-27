@@ -114,40 +114,68 @@ jobs:
       id-token: write
     uses: ./.github/workflows/CD-docs-pages.yml
 
-  CD-tag:
+  CD-tag-rc:
     needs:
       - CD-version
       - CD-nuget-rc
       - CD-vsix-rc
+      - CD-docs-pages
+    if: |
+      always() &&
+      github.ref == 'refs/heads/master' &&
+      (inputs.release_channel == 'rc' || inputs.release_channel == 'both') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    uses: ./.github/workflows/CD-common-tag.yml
+    with:
+      version: ${{ needs.CD-version.outputs.version_rc }}
+    secrets: inherit
+
+  CD-github-release-rc:
+    needs:
+      - CD-version
+      - CD-tag-rc
+    if: |
+      always() &&
+      github.ref == 'refs/heads/master' &&
+      (inputs.release_channel == 'rc' || inputs.release_channel == 'both') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    uses: ./.github/workflows/CD-common-github-release.yml
+    with:
+      version: ${{ needs.CD-version.outputs.version_rc }}
+      prerelease: true
+    secrets: inherit
+
+  CD-tag-prod:
+    needs:
+      - CD-version
       - CD-nuget-prod
       - CD-vsix-prod
       - CD-docs-pages
     if: |
       always() &&
       github.ref == 'refs/heads/master' &&
+      (inputs.release_channel == 'prod' || inputs.release_channel == 'both') &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: true
+    uses: ./.github/workflows/CD-common-tag.yml
+    with:
+      version: ${{ needs.CD-version.outputs.version }}
+    secrets: inherit
 
-      - name: Create release tag
-        run: |
-          set -euo pipefail
-
-          TAG="v${{ needs.CD-version.outputs.version }}"
-
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists, skipping."
-            exit 0
-          fi
-
-          git tag "$TAG"
-          git push origin "$TAG"
+  CD-github-release-prod:
+    needs:
+      - CD-version
+      - CD-tag-prod
+    if: |
+      always() &&
+      github.ref == 'refs/heads/master' &&
+      (inputs.release_channel == 'prod' || inputs.release_channel == 'both') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    uses: ./.github/workflows/CD-common-github-release.yml
+    with:
+      version: ${{ needs.CD-version.outputs.version }}
+      prerelease: false
+    secrets: inherit
