@@ -42,7 +42,6 @@ jobs:
           dotnet sonarscanner begin \
             /k:"asienicki_slnx-mermaid" \
             /o:"asienicki" \
-            /d:sonar.host.url="http://localhost:9000" \
             /d:sonar.token="${SONAR_TOKEN}" \
             /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml" \
             /d:sonar.exclusions="**/bin/**,**/obj/**"
