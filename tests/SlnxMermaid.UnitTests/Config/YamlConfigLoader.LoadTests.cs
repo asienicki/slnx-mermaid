@@ -15,6 +15,7 @@ public class YamlConfigLoaderLoadTests
         Assert.Equal("./out/diagram.md", result.Output.File);
         Assert.Equal("LR", result.Diagram.Direction);
         Assert.False(result.Diagram.IncludeTransitiveDependencies);
+        Assert.True(result.Diagram.OrderDependenciesByRole);
         Assert.Single(result.Filters.Exclude);
         Assert.Equal("Company.", result.Naming.StripPrefix);
         Assert.Equal("S", result.Naming.Aliases["Sample"]);
@@ -28,6 +29,7 @@ public class YamlConfigLoaderLoadTests
         var result = YamlConfigLoader.Load(path);
 
         Assert.False(result.Diagram.IncludeTransitiveDependencies);
+        Assert.False(result.Diagram.OrderDependenciesByRole);
     }
 
     [Fact]

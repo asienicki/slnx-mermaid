@@ -23,22 +23,57 @@ public sealed class MermaidEmitter
 
     public string Emit(
         IEnumerable<ProjectNode> nodes,
-        string direction)
+        string direction,
+        bool orderDependenciesByRole = false)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"graph {direction}");
 
-        var orderedEdges = OrderEdgesForReadability(nodes).ToList();
-
-        for (var i = 0; i < orderedEdges.Count; i++)
+        if (orderDependenciesByRole)
         {
-            if (i > 0 && orderedEdges[i].Group != orderedEdges[i - 1].Group)
-                sb.AppendLine();
+            var orderedEdges = OrderEdgesForReadability(nodes).ToList();
 
-            sb.AppendLine($"    {orderedEdges[i].From} --> {orderedEdges[i].To}");
+            for (var i = 0; i < orderedEdges.Count; i++)
+            {
+                if (i > 0 && orderedEdges[i].Group != orderedEdges[i - 1].Group)
+                    sb.AppendLine();
+
+                sb.AppendLine($"    {orderedEdges[i].From} --> {orderedEdges[i].To}");
+            }
+        }
+        else
+        {
+            foreach (var edge in GetLegacySortedEdges(nodes))
+                sb.AppendLine($"    {edge.From} --> {edge.To}");
         }
 
         return sb.ToString();
+    }
+
+    private IEnumerable<LegacyEdge> GetLegacySortedEdges(IEnumerable<ProjectNode> nodes)
+    {
+        var edges = new HashSet<LegacyEdge>(LegacyEdgeComparer.Instance);
+
+        foreach (var node in nodes)
+        {
+            if (!_filter.IsAllowed(node.Id))
+                continue;
+
+            var from = _naming.Transform(node.Id);
+
+            foreach (var depId in node.Dependencies.Select(dep => dep.Id))
+            {
+                if (!_filter.IsAllowed(depId))
+                    continue;
+
+                var to = _naming.Transform(depId);
+                edges.Add(new LegacyEdge(from, to));
+            }
+        }
+
+        return edges
+            .OrderBy(edge => edge.From, StringComparer.Ordinal)
+            .ThenBy(edge => edge.To, StringComparer.Ordinal);
     }
 
     private IEnumerable<OrderedEdge> OrderEdgesForReadability(IEnumerable<ProjectNode> nodes)
@@ -221,6 +256,44 @@ public sealed class MermaidEmitter
     private static bool IsRolePart(string part, string role)
     {
         return string.Equals(part, role, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class LegacyEdge
+    {
+        public LegacyEdge(string from, string to)
+        {
+            From = from;
+            To = to;
+        }
+
+        public string From { get; }
+        public string To { get; }
+    }
+
+    private sealed class LegacyEdgeComparer : IEqualityComparer<LegacyEdge>
+    {
+        public static readonly LegacyEdgeComparer Instance = new LegacyEdgeComparer();
+
+        public bool Equals(LegacyEdge x, LegacyEdge y)
+        {
+            if (ReferenceEquals(x, y))
+                return true;
+
+            if (ReferenceEquals(x, null) || ReferenceEquals(y, null))
+                return false;
+
+            return string.Equals(x.From, y.From, StringComparison.Ordinal) &&
+                string.Equals(x.To, y.To, StringComparison.Ordinal);
+        }
+
+        public int GetHashCode(LegacyEdge obj)
+        {
+            unchecked
+            {
+                return ((obj.From != null ? StringComparer.Ordinal.GetHashCode(obj.From) : 0) * 397) ^
+                    (obj.To != null ? StringComparer.Ordinal.GetHashCode(obj.To) : 0);
+            }
+        }
     }
 
     private sealed class OrderedEdge

@@ -32,6 +32,14 @@ public class ConfigDefaultsTests
     }
 
     [Fact]
+    public void DiagramConfig_DefaultOrderDependenciesByRole_ShouldBeFalse()
+    {
+        var config = new DiagramConfig();
+
+        Assert.False(config.OrderDependenciesByRole);
+    }
+
+    [Fact]
     public void FilterConfig_DefaultExclude_ShouldBeEmptyList()
     {
         var config = new FilterConfig();

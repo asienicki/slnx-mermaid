@@ -15,6 +15,7 @@ solution: SlnxMermaid.slnx
 diagram:
   direction: TD   # TD (top-down) | LR (left-right)
   includeTransitiveDependencies: false  # false = direct only | true = direct + indirect
+  orderDependenciesByRole: false  # false = legacy alphabetical edge order | true = role/topological order
 
 filters:
   exclude:
@@ -48,6 +49,10 @@ Path to `.sln` / `.slnx` file.
 - `false` (default): include only direct project references.
 - `true`: include both direct and indirect project dependencies.
 - If omitted from `slnx-mermaid.yml`, the default remains `false` to keep diagrams focused on explicit project references.
+
+### `diagram.orderDependenciesByRole`
+- `false` (default): preserve the legacy alphabetical Mermaid edge order.
+- `true`: emit edges by project role and topological layer, starting with main entry points and placing secondary/tooling entry points last.
 
 ### `filters.exclude`
 Project name patterns to omit from the graph.
