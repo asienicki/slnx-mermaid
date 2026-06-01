@@ -56,6 +56,38 @@ public class MermaidEmitterEmitTests
         Assert.Equal($"graph TD{Environment.NewLine}", result);
     }
 
+    [Fact]
+    public void Emit_WhenGraphIsScrambled_ShouldOrderEdgesFromEntryPointsTowardDomainDependencies()
+    {
+        var minimalApi = new ProjectNode("MinimalApi", "MinimalApi.csproj");
+        var application = new ProjectNode("Application", "Application.csproj");
+        var infrastructure = new ProjectNode("Infrastructure", "Infrastructure.csproj");
+        var dataAccess = new ProjectNode("DataAccess", "DataAccess.csproj");
+        var domain = new ProjectNode("Domain", "Domain.csproj");
+
+        application.Dependencies.Add(domain);
+        infrastructure.Dependencies.Add(application);
+        infrastructure.Dependencies.Add(dataAccess);
+        minimalApi.Dependencies.Add(application);
+        minimalApi.Dependencies.Add(infrastructure);
+
+        var emitter = CreateEmitter();
+
+        var result = emitter.Emit([domain, infrastructure, dataAccess, minimalApi, application], "TD");
+
+        var expected =
+            $"graph TD{Environment.NewLine}" +
+            $"    MinimalApi --> Application{Environment.NewLine}" +
+            $"    MinimalApi --> Infrastructure{Environment.NewLine}" +
+            $"{Environment.NewLine}" +
+            $"    Infrastructure --> Application{Environment.NewLine}" +
+            $"    Infrastructure --> DataAccess{Environment.NewLine}" +
+            $"{Environment.NewLine}" +
+            $"    Application --> Domain{Environment.NewLine}";
+
+        Assert.Equal(expected, result);
+    }
+
     private static MermaidEmitter CreateEmitter() =>
         new(
             new NameTransformer(new NamingConfig()),
