@@ -24,6 +24,14 @@ public class ConfigDefaultsTests
     }
 
     [Fact]
+    public void DiagramConfig_DefaultIncludeTransitiveDependencies_ShouldBeTrue()
+    {
+        var config = new DiagramConfig();
+
+        Assert.True(config.IncludeTransitiveDependencies);
+    }
+
+    [Fact]
     public void FilterConfig_DefaultExclude_ShouldBeEmptyList()
     {
         var config = new FilterConfig();

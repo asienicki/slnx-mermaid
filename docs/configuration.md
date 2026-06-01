@@ -14,6 +14,7 @@ solution: SlnxMermaid.slnx
 
 diagram:
   direction: TD   # TD (top-down) | LR (left-right)
+  includeTransitiveDependencies: true  # true = direct + indirect | false = direct only
 
 filters:
   exclude:
@@ -42,6 +43,11 @@ Path to `.sln` / `.slnx` file.
 ### `diagram.direction`
 - `TD` (top-down)
 - `LR` (left-right)
+
+### `diagram.includeTransitiveDependencies`
+- `true` (default): include both direct and indirect project dependencies.
+- `false`: include only direct project references.
+- If omitted from `slnx-mermaid.yml`, the default remains `true` for backward compatibility.
 
 ### `filters.exclude`
 Project name patterns to omit from the graph.

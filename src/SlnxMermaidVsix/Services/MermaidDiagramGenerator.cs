@@ -53,7 +53,9 @@ namespace SlnxMermaidVsix
             await outputService.LogAsync(pane,
                 string.Format(Strings.LogAnalyzingSolutionFormat, config.Solution));
 
-            var nodes = SolutionGraphAnalyzer.Analyze(config.Solution);
+            var nodes = SolutionGraphAnalyzer.Analyze(
+                config.Solution,
+                config.Diagram.IncludeTransitiveDependencies);
 
             await outputService.LogAsync(pane,
                 string.Format(Strings.LogDiscoveredProjectsFormat, nodes.Count));

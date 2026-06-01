@@ -19,36 +19,9 @@ public class SolutionGraphAnalyzerAnalyzeTests
 
         try
         {
-            var projectB = Path.Combine(root, "Project.B", "Project.B.csproj");
-            Directory.CreateDirectory(Path.GetDirectoryName(projectB)!);
-            File.WriteAllText(projectB, """
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-  </PropertyGroup>
-</Project>
-""");
-
-            var projectA = Path.Combine(root, "Project.A", "Project.A.csproj");
-            Directory.CreateDirectory(Path.GetDirectoryName(projectA)!);
-            File.WriteAllText(projectA, $"""
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..{Path.DirectorySeparatorChar}Project.B{Path.DirectorySeparatorChar}Project.B.csproj" />
-  </ItemGroup>
-</Project>
-""");
-
-            var solution = Path.Combine(root, "sample.slnx");
-            File.WriteAllText(solution, $"""
-<Solution>
-  <Project Path="Project.A{Path.DirectorySeparatorChar}Project.A.csproj" />
-  <Project Path="Project.B{Path.DirectorySeparatorChar}Project.B.csproj" />
-</Solution>
-""");
+            var projectB = WriteProject(root, "Project.B");
+            var projectA = WriteProject(root, "Project.A", projectB);
+            var solution = WriteSolution(root, projectA, projectB);
 
             var nodes = SolutionGraphAnalyzer.Analyze(solution);
             var a = Assert.Single(nodes, n => n.Id == "Project_A");
@@ -60,5 +33,109 @@ public class SolutionGraphAnalyzerAnalyzeTests
         {
             Directory.Delete(root, recursive: true);
         }
+    }
+
+    [Fact]
+    public void Analyze_WhenTransitiveDependenciesAreIncluded_ShouldCreateIndirectDependencyEdge()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"slnx-mermaid-{Guid.NewGuid()}");
+        Directory.CreateDirectory(root);
+
+        try
+        {
+            var projectC = WriteProject(root, "Project.C");
+            var projectB = WriteProject(root, "Project.B", projectC);
+            var projectA = WriteProject(root, "Project.A", projectB);
+            var solution = WriteSolution(root, projectA, projectB, projectC);
+
+            var nodes = SolutionGraphAnalyzer.Analyze(solution, includeTransitiveDependencies: true);
+            var a = Assert.Single(nodes, n => n.Id == "Project_A");
+            var b = Assert.Single(nodes, n => n.Id == "Project_B");
+            var c = Assert.Single(nodes, n => n.Id == "Project_C");
+
+            Assert.Contains(b, a.Dependencies);
+            Assert.Contains(c, a.Dependencies);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Analyze_WhenTransitiveDependenciesAreExcluded_ShouldOnlyCreateDirectDependencyEdges()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"slnx-mermaid-{Guid.NewGuid()}");
+        Directory.CreateDirectory(root);
+
+        try
+        {
+            var projectC = WriteProject(root, "Project.C");
+            var projectB = WriteProject(root, "Project.B", projectC);
+            var projectA = WriteProject(root, "Project.A", projectB);
+            var solution = WriteSolution(root, projectA, projectB, projectC);
+
+            var nodes = SolutionGraphAnalyzer.Analyze(solution, includeTransitiveDependencies: false);
+            var a = Assert.Single(nodes, n => n.Id == "Project_A");
+            var b = Assert.Single(nodes, n => n.Id == "Project_B");
+            var c = Assert.Single(nodes, n => n.Id == "Project_C");
+
+            Assert.Contains(b, a.Dependencies);
+            Assert.DoesNotContain(c, a.Dependencies);
+            Assert.Contains(c, b.Dependencies);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private static string WriteProject(
+        string root,
+        string projectName,
+        params string[] projectReferences)
+    {
+        var projectPath = Path.Combine(root, projectName, $"{projectName}.csproj");
+        Directory.CreateDirectory(Path.GetDirectoryName(projectPath)!);
+
+        var references = string.Join(
+            Environment.NewLine,
+            projectReferences.Select(reference =>
+                $"    <ProjectReference Include=\"{Path.GetRelativePath(Path.GetDirectoryName(projectPath)!, reference)}\" />"));
+
+        var itemGroup = projectReferences.Length == 0
+            ? string.Empty
+            : $"""
+  <ItemGroup>
+{references}
+  </ItemGroup>
+""";
+
+        File.WriteAllText(projectPath, $"""
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+{itemGroup}</Project>
+""");
+
+        return projectPath;
+    }
+
+    private static string WriteSolution(string root, params string[] projects)
+    {
+        var solution = Path.Combine(root, "sample.slnx");
+        var projectEntries = string.Join(
+            Environment.NewLine,
+            projects.Select(project =>
+                $"  <Project Path=\"{Path.GetRelativePath(root, project)}\" />"));
+
+        File.WriteAllText(solution, $"""
+<Solution>
+{projectEntries}
+</Solution>
+""");
+
+        return solution;
     }
 }
