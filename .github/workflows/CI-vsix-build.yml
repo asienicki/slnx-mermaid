@@ -1,15 +1,7 @@
-name: Build VSIX
+name: CI-vsix-build
 
 on:
-  push:
-    branches: [ master ]
-    paths:
-      - 'src/SlnxMermaidVsix/**'
-      - 'SlnxMermaidVisualStudio.slnx'
-  pull_request:
-    paths:
-      - 'src/SlnxMermaidVsix/**'
-      - 'SlnxMermaidVisualStudio.slnx'
+  workflow_call:
 
 jobs:
   build:
@@ -24,5 +16,5 @@ jobs:
       - name: Restore
         run: msbuild SlnxMermaidVisualStudio.slnx /t:Restore
 
-      - name: Build VSIX
+      - name: CI-vsix-build
         run: msbuild SlnxMermaidVisualStudio.slnx /p:Configuration=Release

@@ -11,7 +11,7 @@ This repository is prepared to publish documentation from `docs/`.
 
 - Jekyll config in [`docs/_config.yml`]({{ '/_config.yml' | relative_url }})
 - Docs entry page in [`docs/index.md`]({{ '/' | relative_url }})
-- Deployment workflow in [`.github/workflows/docs-pages.yml`](https://github.com/asienicki/slnx-mermaid/blob/master/.github/workflows/docs-pages.yml)
+- Deployment workflow in [`.github/workflows/CD-docs-pages.yml`](https://github.com/asienicki/slnx-mermaid/blob/master/.github/workflows/CD-docs-pages.yml), orchestrated by [`.github/workflows/CD.yml`](https://github.com/asienicki/slnx-mermaid/blob/master/.github/workflows/CD.yml)
 
 ## Enable GitHub Pages (one-time)
 
@@ -19,7 +19,7 @@ This repository is prepared to publish documentation from `docs/`.
 2. In **Build and deployment**, set **Source** to **GitHub Actions**.
 3. Save.
 
-After that, every push to `master` that changes `docs/**` automatically deploys docs.
+After that, run the **CD** workflow (`.github/workflows/CD.yml`) with `deploy_docs=true` from `master` to publish docs.
 
 ## Expected URL
 

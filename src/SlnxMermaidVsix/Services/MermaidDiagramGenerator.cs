@@ -53,7 +53,7 @@ namespace SlnxMermaidVsix
             await outputService.LogAsync(pane,
                 string.Format(Strings.LogAnalyzingSolutionFormat, config.Solution));
 
-            var nodes = SolutionGraphAnalyzer.Analyze(config.Solution);
+            var nodes = SolutionGraphAnalyzer.Analyze(config);
 
             await outputService.LogAsync(pane,
                 string.Format(Strings.LogDiscoveredProjectsFormat, nodes.Count));
@@ -65,7 +65,7 @@ namespace SlnxMermaidVsix
             await outputService.LogAsync(pane,
                 Strings.LogEmittingMermaid);
 
-            var mermaid = emitter.Emit(nodes, config.Diagram.Direction);
+            var mermaid = emitter.Emit(nodes, config.Diagram);
             var markdownDiagram = mermaid.WrapCodeForMarkdown();
 
             if (string.IsNullOrWhiteSpace(config.Output?.File))

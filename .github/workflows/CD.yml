@@ -1,0 +1,181 @@
+name: CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_channel:
+        description: "Release channel"
+        required: true
+        default: both
+        type: choice
+        options:
+          - rc
+          - prod
+          - both
+      deploy_docs:
+        description: "Deploy docs pages"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  CD-version:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_rc: ${{ steps.version.outputs.version_rc }}
+    env:
+      SHARED_MAJOR: '17'
+      SHARED_MINOR: '3'
+    steps:
+      - name: Checkout (with tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate shared version
+        id: version
+        run: |
+          set -euo pipefail
+
+          if ! [[ "$SHARED_MAJOR" =~ ^[0-9]+$ && "$SHARED_MINOR" =~ ^[0-9]+$ ]]; then
+            echo "Bad shared version base: major=$SHARED_MAJOR minor=$SHARED_MINOR"
+            exit 1
+          fi
+
+          prefix="v${SHARED_MAJOR}.${SHARED_MINOR}."
+          latest_patch=$(git tag --list "${prefix}*" \
+            | sed -n "s/^v${SHARED_MAJOR}\.${SHARED_MINOR}\.\([0-9]\+\)$/\1/p" \
+            | sort -n \
+            | tail -n1)
+
+          if [[ -z "$latest_patch" ]]; then
+            next_patch=0
+          else
+            next_patch=$((latest_patch + 1))
+          fi
+
+          version="${SHARED_MAJOR}.${SHARED_MINOR}.${next_patch}"
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "version_rc=${version}-rc" >> "$GITHUB_OUTPUT"
+          echo "Shared release version (from tags): $version"
+
+  CD-nuget-rc:
+    needs: CD-version
+    if: github.ref == 'refs/heads/master' && (inputs.release_channel == 'rc' || inputs.release_channel == 'both')
+    uses: ./.github/workflows/CD-common-nuget.yml
+    with:
+      channel: rc
+      version: ${{ needs.CD-version.outputs.version_rc }}
+    secrets: inherit
+
+  CD-vsix-rc:
+    needs: CD-version
+    if: github.ref == 'refs/heads/master' && (inputs.release_channel == 'rc' || inputs.release_channel == 'both')
+    uses: ./.github/workflows/CD-common-vsix.yml
+    with:
+      channel: rc
+      version: ${{ needs.CD-version.outputs.version }}
+    secrets: inherit
+
+  CD-nuget-prod:
+    needs: CD-version
+    if: github.ref == 'refs/heads/master' && (inputs.release_channel == 'prod' || inputs.release_channel == 'both')
+    uses: ./.github/workflows/CD-common-nuget.yml
+    with:
+      channel: prod
+      version: ${{ needs.CD-version.outputs.version }}
+    secrets: inherit
+
+  CD-vsix-prod:
+    needs: CD-version
+    if: github.ref == 'refs/heads/master' && (inputs.release_channel == 'prod' || inputs.release_channel == 'both')
+    uses: ./.github/workflows/CD-common-vsix.yml
+    with:
+      channel: prod
+      version: ${{ needs.CD-version.outputs.version }}
+    secrets: inherit
+
+  CD-docs-pages:
+    if: github.ref == 'refs/heads/master' && inputs.deploy_docs == true
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/CD-docs-pages.yml
+
+  CD-tag-rc:
+    needs:
+      - CD-version
+      - CD-nuget-rc
+      - CD-vsix-rc
+      - CD-docs-pages
+    if: |
+      always() &&
+      github.ref == 'refs/heads/master' &&
+      (inputs.release_channel == 'rc' || inputs.release_channel == 'both') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    uses: ./.github/workflows/CD-common-tag.yml
+    with:
+      version: ${{ needs.CD-version.outputs.version_rc }}
+    secrets: inherit
+
+  CD-github-release-rc:
+    needs:
+      - CD-version
+      - CD-tag-rc
+    if: |
+      always() &&
+      github.ref == 'refs/heads/master' &&
+      (inputs.release_channel == 'rc' || inputs.release_channel == 'both') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    uses: ./.github/workflows/CD-common-github-release.yml
+    with:
+      version: ${{ needs.CD-version.outputs.version_rc }}
+      prerelease: true
+    secrets: inherit
+
+  CD-tag-prod:
+    needs:
+      - CD-version
+      - CD-nuget-prod
+      - CD-vsix-prod
+      - CD-docs-pages
+    if: |
+      always() &&
+      github.ref == 'refs/heads/master' &&
+      (inputs.release_channel == 'prod' || inputs.release_channel == 'both') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    uses: ./.github/workflows/CD-common-tag.yml
+    with:
+      version: ${{ needs.CD-version.outputs.version }}
+    secrets: inherit
+
+  CD-github-release-prod:
+    needs:
+      - CD-version
+      - CD-tag-prod
+    if: |
+      always() &&
+      github.ref == 'refs/heads/master' &&
+      (inputs.release_channel == 'prod' || inputs.release_channel == 'both') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    uses: ./.github/workflows/CD-common-github-release.yml
+    with:
+      version: ${{ needs.CD-version.outputs.version }}
+      prerelease: false
+    secrets: inherit

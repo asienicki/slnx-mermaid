@@ -1,0 +1,77 @@
+name: CD-common-nuget
+
+on:
+  workflow_call:
+    inputs:
+      channel:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build
+        run: dotnet build SlnxMermaid.slnx -c Release /p:Version=${{ inputs.version }}
+
+      - name: Test
+        run: dotnet test SlnxMermaid.slnx -c Release /p:Version=${{ inputs.version }}
+
+  pack:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Pack CLI only
+        run: |
+          dotnet pack src/SlnxMermaid.CLI/SlnxMermaid.CLI.csproj \
+            -c Release \
+            /p:Version=${{ inputs.version }} \
+            -o ./nupkg
+
+      - name: Upload NuGet package
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-${{ inputs.channel }}-package
+          path: ./nupkg/*.nupkg
+
+  publish:
+    needs: pack
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download NuGet package
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget-${{ inputs.channel }}-package
+          path: ./nupkg
+
+      - name: Publish to NuGet
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          dotnet nuget push ./nupkg/*.nupkg \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate

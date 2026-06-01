@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SlnxMermaid.Core.Config;
 using SlnxMermaid.Core.Filtering;
 using SlnxMermaid.Core.Graph;
 using SlnxMermaid.Core.Naming;
@@ -22,12 +24,41 @@ public sealed class MermaidEmitter
 
     public string Emit(
         IEnumerable<ProjectNode> nodes,
-        string direction)
+        DiagramConfig diagram)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine($"graph {direction}");
+        if (diagram == null)
+            throw new ArgumentNullException(nameof(diagram));
 
-        var edges = new HashSet<(string From, string To)>();
+        var sb = new StringBuilder();
+        sb.AppendLine($"graph {diagram.Direction}");
+
+        if (diagram.OrderDependenciesByDepth)
+        {
+            var orderedEdges = OrderEdgesByDependencyDepth(nodes).ToList();
+
+            if (orderedEdges.Count > 0)
+                sb.AppendLine();
+
+            for (var i = 0; i < orderedEdges.Count; i++)
+            {
+                if (i > 0 && !string.Equals(orderedEdges[i].SourceId, orderedEdges[i - 1].SourceId, StringComparison.Ordinal))
+                    sb.AppendLine();
+
+                sb.AppendLine($"    {orderedEdges[i].From} --> {orderedEdges[i].To}");
+            }
+        }
+        else
+        {
+            foreach (var edge in GetLegacySortedEdges(nodes))
+                sb.AppendLine($"    {edge.From} --> {edge.To}");
+        }
+
+        return sb.ToString();
+    }
+
+    private IEnumerable<LegacyEdge> GetLegacySortedEdges(IEnumerable<ProjectNode> nodes)
+    {
+        var edges = new HashSet<LegacyEdge>(LegacyEdgeComparer.Instance);
 
         foreach (var node in nodes)
         {
@@ -42,14 +73,20 @@ public sealed class MermaidEmitter
                     continue;
 
                 var to = _naming.Transform(depId);
-                edges.Add((from, to));
+                edges.Add(new LegacyEdge(from, to));
             }
         }
 
-        foreach (var edge in edges.OrderBy(e => e.From).ThenBy(e => e.To))
-            sb.AppendLine($"    {edge.From} --> {edge.To}");
-
-        return sb.ToString();
+        return edges
+            .OrderBy(edge => edge.From, StringComparer.Ordinal)
+            .ThenBy(edge => edge.To, StringComparer.Ordinal);
     }
+
+    private IEnumerable<DepthOrderedEdge> OrderEdgesByDependencyDepth(IEnumerable<ProjectNode> nodes)
+    {
+        return DependencyDepthGraph.Create(nodes, _filter)
+            .GetDepthOrderedEdges(_naming);
+    }
+
 }
 }
