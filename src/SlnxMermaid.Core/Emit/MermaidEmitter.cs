@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SlnxMermaid.Core.Config;
 using SlnxMermaid.Core.Filtering;
 using SlnxMermaid.Core.Graph;
 using SlnxMermaid.Core.Naming;
@@ -23,13 +24,15 @@ public sealed class MermaidEmitter
 
     public string Emit(
         IEnumerable<ProjectNode> nodes,
-        string direction,
-        bool orderDependenciesByRole = false)
+        DiagramConfig diagram)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine($"graph {direction}");
+        if (diagram == null)
+            throw new ArgumentNullException(nameof(diagram));
 
-        if (orderDependenciesByRole)
+        var sb = new StringBuilder();
+        sb.AppendLine($"graph {diagram.Direction}");
+
+        if (diagram.OrderDependenciesByRole)
         {
             var orderedEdges = OrderEdgesForReadability(nodes).ToList();
 

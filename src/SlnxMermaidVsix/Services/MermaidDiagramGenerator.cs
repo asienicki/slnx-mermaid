@@ -65,7 +65,7 @@ namespace SlnxMermaidVsix
             await outputService.LogAsync(pane,
                 Strings.LogEmittingMermaid);
 
-            var mermaid = emitter.Emit(nodes, config.Diagram.Direction, config.Diagram.OrderDependenciesByRole);
+            var mermaid = emitter.Emit(nodes, config.Diagram);
             var markdownDiagram = mermaid.WrapCodeForMarkdown();
 
             if (string.IsNullOrWhiteSpace(config.Output?.File))

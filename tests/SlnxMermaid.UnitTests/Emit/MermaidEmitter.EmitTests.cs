@@ -13,7 +13,7 @@ public class MermaidEmitterEmitTests
     {
         var emitter = CreateEmitter();
 
-        var result = emitter.Emit([], "TD");
+        var result = emitter.Emit([], CreateDiagram("TD"));
 
         Assert.Equal($"graph TD{Environment.NewLine}", result);
     }
@@ -30,7 +30,7 @@ public class MermaidEmitterEmitTests
 
         var emitter = CreateEmitter();
 
-        var result = emitter.Emit([a, b, c], "LR");
+        var result = emitter.Emit([a, b, c], CreateDiagram("LR"));
 
         var expected =
             $"graph LR{Environment.NewLine}" +
@@ -51,7 +51,7 @@ public class MermaidEmitterEmitTests
             new NameTransformer(new NamingConfig()),
             new ProjectFilter(["Excluded"]));
 
-        var result = emitter.Emit([source, excluded], "TD");
+        var result = emitter.Emit([source, excluded], CreateDiagram("TD"));
 
         Assert.Equal($"graph TD{Environment.NewLine}", result);
     }
@@ -75,7 +75,7 @@ public class MermaidEmitterEmitTests
 
         var emitter = CreateEmitter();
 
-        var result = emitter.Emit([seeder, domain, infrastructure, dataAccess, minimalApi, application], "TD");
+        var result = emitter.Emit([seeder, domain, infrastructure, dataAccess, minimalApi, application], CreateDiagram("TD"));
 
         var expected =
             $"graph TD{Environment.NewLine}" +
@@ -108,7 +108,7 @@ public class MermaidEmitterEmitTests
 
         var emitter = CreateEmitter();
 
-        var result = emitter.Emit([seeder, domain, infrastructure, dataAccess, minimalApi, application], "TD", orderDependenciesByRole: true);
+        var result = emitter.Emit([seeder, domain, infrastructure, dataAccess, minimalApi, application], CreateDiagram("TD", orderDependenciesByRole: true));
 
         var expected =
             $"graph TD{Environment.NewLine}" +
@@ -124,6 +124,23 @@ public class MermaidEmitterEmitTests
 
         Assert.Equal(expected, result);
     }
+
+    [Fact]
+    public void Emit_WhenDiagramConfigIsNull_ShouldThrowArgumentNullException()
+    {
+        var emitter = CreateEmitter();
+
+        Assert.Throws<ArgumentNullException>(() => emitter.Emit([], null!));
+    }
+
+    private static DiagramConfig CreateDiagram(
+        string direction,
+        bool orderDependenciesByRole = false) =>
+        new()
+        {
+            Direction = direction,
+            OrderDependenciesByRole = orderDependenciesByRole
+        };
 
     private static MermaidEmitter CreateEmitter() =>
         new(

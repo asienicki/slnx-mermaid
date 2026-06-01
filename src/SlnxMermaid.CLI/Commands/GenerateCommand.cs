@@ -40,7 +40,7 @@ public sealed class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
         var emitter = new MermaidEmitter(naming, filter);
 
-        var mermaid = emitter.Emit(nodes, config.Diagram.Direction, config.Diagram.OrderDependenciesByRole);
+        var mermaid = emitter.Emit(nodes, config.Diagram);
 
         await HandleResult(config.Output.File, mermaid, AnsiConsole.MarkupLine, cancellationToken);
 
