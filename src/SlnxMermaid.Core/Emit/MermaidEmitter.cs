@@ -32,7 +32,7 @@ public sealed class MermaidEmitter
 
         for (var i = 0; i < orderedEdges.Count; i++)
         {
-            if (i > 0 && orderedEdges[i].Layer != orderedEdges[i - 1].Layer)
+            if (i > 0 && orderedEdges[i].Group != orderedEdges[i - 1].Group)
                 sb.AppendLine();
 
             sb.AppendLine($"    {orderedEdges[i].From} --> {orderedEdges[i].To}");
@@ -47,7 +47,7 @@ public sealed class MermaidEmitter
             .Where(node => _filter.IsAllowed(node.Id))
             .GroupBy(node => node.Id, StringComparer.Ordinal)
             .Select(group => group.OrderBy(node => node.Path, StringComparer.OrdinalIgnoreCase).First())
-            .OrderBy(node => GetProjectLayer(node.Id))
+            .OrderBy(node => GetProjectRolePriority(node.Id))
             .ThenBy(node => node.Id, StringComparer.Ordinal)
             .ToList();
 
@@ -58,7 +58,7 @@ public sealed class MermaidEmitter
                 .Where(dependency => allowedIds.Contains(dependency.Id))
                 .Select(dependency => dependency.Id)
                 .Distinct(StringComparer.Ordinal)
-                .OrderBy(GetProjectLayer)
+                .OrderBy(GetProjectRolePriority)
                 .ThenBy(id => id, StringComparer.Ordinal)
                 .ToList(),
             StringComparer.Ordinal);
@@ -70,15 +70,15 @@ public sealed class MermaidEmitter
                 _naming.Transform(source.Key),
                 _naming.Transform(dependency),
                 layerById[source.Key],
-                GetProjectLayer(source.Key),
+                GetProjectRolePriority(source.Key),
                 source.Key,
-                GetProjectLayer(dependency),
+                GetProjectRolePriority(dependency),
                 dependency)))
             .Distinct(OrderedEdgeIdentityComparer.Instance)
-            .OrderBy(edge => edge.Layer)
-            .ThenBy(edge => edge.FromProjectLayer)
+            .OrderBy(edge => edge.FromProjectRolePriority)
+            .ThenBy(edge => edge.Layer)
             .ThenBy(edge => edge.FromId, StringComparer.Ordinal)
-            .ThenBy(edge => edge.ToProjectLayer)
+            .ThenBy(edge => edge.ToProjectRolePriority)
             .ThenBy(edge => edge.ToId, StringComparer.Ordinal);
     }
 
@@ -95,7 +95,7 @@ public sealed class MermaidEmitter
         var queue = incomingCountById
             .Where(pair => pair.Value == 0)
             .Select(pair => pair.Key)
-            .OrderBy(GetProjectLayer)
+            .OrderBy(GetProjectRolePriority)
             .ThenBy(id => id, StringComparer.Ordinal)
             .ToList();
 
@@ -113,7 +113,7 @@ public sealed class MermaidEmitter
                 {
                     queue.Add(dependencyId);
                     queue = queue
-                        .OrderBy(GetProjectLayer)
+                        .OrderBy(GetProjectRolePriority)
                         .ThenBy(id => id, StringComparer.Ordinal)
                         .ToList();
                 }
@@ -127,7 +127,7 @@ public sealed class MermaidEmitter
         foreach (var unresolvedId in incomingCountById
             .Where(pair => pair.Value > 0)
             .Select(pair => pair.Key)
-            .OrderBy(GetProjectLayer)
+            .OrderBy(GetProjectRolePriority)
             .ThenBy(id => id, StringComparer.Ordinal))
         {
             layerById[unresolvedId] = unresolvedLayer;
@@ -136,65 +136,91 @@ public sealed class MermaidEmitter
         return layerById;
     }
 
-    private static int GetProjectLayer(string projectId)
+    private static int GetProjectRolePriority(string projectId)
     {
         var normalized = projectId.Replace('_', '.').Replace('-', '.');
         var parts = normalized.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
 
-        if (parts.Any(IsPresentationPart))
+        if (parts.Any(IsMainEntryPointPart))
             return 0;
 
-        if (parts.Any(part => IsLayerPart(part, "Application") || IsLayerPart(part, "App")))
+        if (parts.Any(IsWorkerEntryPointPart))
             return 1;
 
-        if (parts.Any(part =>
-            IsLayerPart(part, "Infrastructure") ||
-            IsLayerPart(part, "Infra") ||
-            IsLayerPart(part, "Persistence") ||
-            IsLayerPart(part, "Repository") ||
-            IsLayerPart(part, "Repositories")))
+        if (parts.Any(part => IsRolePart(part, "Application") || IsRolePart(part, "App")))
             return 2;
 
         if (parts.Any(part =>
-            IsLayerPart(part, "DataAccess") ||
-            IsLayerPart(part, "Data") ||
-            IsLayerPart(part, "Database") ||
-            IsLayerPart(part, "Db") ||
-            IsLayerPart(part, "Storage")))
+            IsRolePart(part, "Domain") ||
+            IsRolePart(part, "Core") ||
+            IsRolePart(part, "Shared") ||
+            IsRolePart(part, "Common")))
             return 3;
 
         if (parts.Any(part =>
-            IsLayerPart(part, "Domain") ||
-            IsLayerPart(part, "Core") ||
-            IsLayerPart(part, "Shared") ||
-            IsLayerPart(part, "Common")))
+            IsRolePart(part, "Infrastructure") ||
+            IsRolePart(part, "Infra") ||
+            IsRolePart(part, "Repository") ||
+            IsRolePart(part, "Repositories")))
             return 4;
 
-        return 5;
+        if (parts.Any(part =>
+            IsRolePart(part, "DataAccess") ||
+            IsRolePart(part, "Persistence") ||
+            IsRolePart(part, "Data") ||
+            IsRolePart(part, "Database") ||
+            IsRolePart(part, "Db") ||
+            IsRolePart(part, "Storage")))
+            return 5;
+
+        if (parts.Any(IsSecondaryEntryPointPart))
+            return 6;
+
+        return 7;
     }
 
-    private static bool IsPresentationPart(string part)
+    private static bool IsMainEntryPointPart(string part)
     {
         return
-            IsLayerPart(part, "Api") ||
-            IsLayerPart(part, "MinimalApi") ||
-            IsLayerPart(part, "Web") ||
-            IsLayerPart(part, "Ui") ||
-            IsLayerPart(part, "Mvc") ||
-            IsLayerPart(part, "Worker") ||
-            IsLayerPart(part, "Workers") ||
-            IsLayerPart(part, "Console") ||
-            IsLayerPart(part, "Cli") ||
-            IsLayerPart(part, "Function") ||
-            IsLayerPart(part, "Functions") ||
-            IsLayerPart(part, "FunctionApp") ||
-            IsLayerPart(part, "Service") ||
-            IsLayerPart(part, "Host");
+            IsRolePart(part, "Api") ||
+            IsRolePart(part, "MinimalApi") ||
+            IsRolePart(part, "Web") ||
+            IsRolePart(part, "Ui") ||
+            IsRolePart(part, "Mvc") ||
+            IsRolePart(part, "Host") ||
+            IsRolePart(part, "Service") ||
+            IsRolePart(part, "Function") ||
+            IsRolePart(part, "Functions") ||
+            IsRolePart(part, "FunctionApp");
     }
 
-    private static bool IsLayerPart(string part, string layer)
+    private static bool IsWorkerEntryPointPart(string part)
     {
-        return string.Equals(part, layer, StringComparison.OrdinalIgnoreCase);
+        return
+            IsRolePart(part, "Worker") ||
+            IsRolePart(part, "Workers") ||
+            IsRolePart(part, "Job") ||
+            IsRolePart(part, "Jobs");
+    }
+
+    private static bool IsSecondaryEntryPointPart(string part)
+    {
+        return
+            IsRolePart(part, "Seeder") ||
+            IsRolePart(part, "Seeders") ||
+            IsRolePart(part, "Migrator") ||
+            IsRolePart(part, "Migrators") ||
+            IsRolePart(part, "Migration") ||
+            IsRolePart(part, "Migrations") ||
+            IsRolePart(part, "Tool") ||
+            IsRolePart(part, "Tools") ||
+            IsRolePart(part, "Console") ||
+            IsRolePart(part, "Cli");
+    }
+
+    private static bool IsRolePart(string part, string role)
+    {
+        return string.Equals(part, role, StringComparison.OrdinalIgnoreCase);
     }
 
     private sealed class OrderedEdge
@@ -203,26 +229,27 @@ public sealed class MermaidEmitter
             string from,
             string to,
             int layer,
-            int fromProjectLayer,
+            int fromProjectRolePriority,
             string fromId,
-            int toProjectLayer,
+            int toProjectRolePriority,
             string toId)
         {
             From = from;
             To = to;
             Layer = layer;
-            FromProjectLayer = fromProjectLayer;
+            FromProjectRolePriority = fromProjectRolePriority;
             FromId = fromId;
-            ToProjectLayer = toProjectLayer;
+            ToProjectRolePriority = toProjectRolePriority;
             ToId = toId;
         }
 
         public string From { get; }
         public string To { get; }
         public int Layer { get; }
-        public int FromProjectLayer { get; }
+        public int Group { get { return FromProjectRolePriority; } }
+        public int FromProjectRolePriority { get; }
         public string FromId { get; }
-        public int ToProjectLayer { get; }
+        public int ToProjectRolePriority { get; }
         public string ToId { get; }
     }
 
