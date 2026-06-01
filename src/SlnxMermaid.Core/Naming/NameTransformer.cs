@@ -18,7 +18,7 @@ public sealed class NameTransformer
 
     public string Transform(string rawName)
     {
-        var name = rawName.PrepareToDisplayOnMermaidDiagram();
+        var name = NormalizeKnownAcronymCasing(rawName.PrepareToDisplayOnMermaidDiagram());
 
         if (!string.IsNullOrEmpty(_stripPrefix) &&
             name.StartsWith(_stripPrefix, StringComparison.Ordinal))
@@ -30,6 +30,13 @@ public sealed class NameTransformer
                _aliases.TryGetValue(name, out var alias)
                 ? alias
                 : name;
+    }
+
+    private static string NormalizeKnownAcronymCasing(string name)
+    {
+        return string.IsNullOrEmpty(name)
+            ? name
+            : name.Replace("APi", "Api");
     }
 }
 }

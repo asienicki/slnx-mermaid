@@ -52,7 +52,7 @@ internal sealed class DependencyDepthGraph
 
         foreach (var rootId in GetTraversalRoots())
         {
-            foreach (var edge in Traverse(rootId, rootId, naming, emittedEdges, new HashSet<string>(StringComparer.Ordinal)))
+            foreach (var edge in TraverseBreadthFirst(rootId, naming, emittedEdges))
                 yield return edge;
         }
     }
@@ -79,35 +79,42 @@ internal sealed class DependencyDepthGraph
         return rootIds.Concat(nonRootIds);
     }
 
-    private IEnumerable<DepthOrderedEdge> Traverse(
-        string sourceId,
+    private IEnumerable<DepthOrderedEdge> TraverseBreadthFirst(
         string rootId,
         NameTransformer naming,
-        ISet<LegacyEdge> emittedEdges,
-        ISet<string> activePath)
+        ISet<LegacyEdge> emittedEdges)
     {
-        if (!activePath.Add(sourceId))
-            yield break;
+        var visitedSources = new HashSet<string>(StringComparer.Ordinal);
+        var queuedSources = new HashSet<string>(StringComparer.Ordinal);
+        var queue = new Queue<string>();
 
-        foreach (var dependencyId in _dependenciesById[sourceId]
-            .OrderByDescending(GetDependencyDepth)
-            .ThenBy(id => id, StringComparer.Ordinal))
+        queue.Enqueue(rootId);
+        queuedSources.Add(rootId);
+
+        while (queue.Count > 0)
         {
-            var edgeKey = new LegacyEdge(sourceId, dependencyId);
+            var sourceId = queue.Dequeue();
 
-            if (emittedEdges.Add(edgeKey))
+            if (!visitedSources.Add(sourceId))
+                continue;
+
+            foreach (var dependencyId in _dependenciesById[sourceId])
             {
-                yield return new DepthOrderedEdge(
-                    rootId,
-                    naming.Transform(sourceId),
-                    naming.Transform(dependencyId));
+                var edgeKey = new LegacyEdge(sourceId, dependencyId);
+
+                if (emittedEdges.Add(edgeKey))
+                {
+                    yield return new DepthOrderedEdge(
+                        rootId,
+                        sourceId,
+                        naming.Transform(sourceId),
+                        naming.Transform(dependencyId));
+                }
+
+                if (queuedSources.Add(dependencyId))
+                    queue.Enqueue(dependencyId);
             }
-
-            foreach (var childEdge in Traverse(dependencyId, rootId, naming, emittedEdges, activePath))
-                yield return childEdge;
         }
-
-        activePath.Remove(sourceId);
     }
 
     private int GetDependencyDepth(string nodeId)

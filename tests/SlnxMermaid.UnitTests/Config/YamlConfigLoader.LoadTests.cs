@@ -29,7 +29,7 @@ public class YamlConfigLoaderLoadTests
         var result = YamlConfigLoader.Load(path);
 
         Assert.False(result.Diagram.IncludeTransitiveDependencies);
-        Assert.False(result.Diagram.OrderDependenciesByDepth);
+        Assert.True(result.Diagram.OrderDependenciesByDepth);
     }
 
     [Fact]

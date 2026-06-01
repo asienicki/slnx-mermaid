@@ -36,9 +36,12 @@ public sealed class MermaidEmitter
         {
             var orderedEdges = OrderEdgesByDependencyDepth(nodes).ToList();
 
+            if (orderedEdges.Count > 0)
+                sb.AppendLine();
+
             for (var i = 0; i < orderedEdges.Count; i++)
             {
-                if (i > 0 && !string.Equals(orderedEdges[i].RootId, orderedEdges[i - 1].RootId, StringComparison.Ordinal))
+                if (i > 0 && !string.Equals(orderedEdges[i].SourceId, orderedEdges[i - 1].SourceId, StringComparison.Ordinal))
                     sb.AppendLine();
 
                 sb.AppendLine($"    {orderedEdges[i].From} --> {orderedEdges[i].To}");

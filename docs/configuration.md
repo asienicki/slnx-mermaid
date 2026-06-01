@@ -51,8 +51,8 @@ Path to `.sln` / `.slnx` file.
 - If omitted from `slnx-mermaid.yml`, the default remains `false` to keep diagrams focused on explicit project references.
 
 ### `diagram.orderDependenciesByDepth`
-- `false` (default): preserve the legacy alphabetical Mermaid edge order.
-- `true`: emit edges by dependency depth, starting with the roots that have the longest dependency chains and walking each chain downward before shorter dependent roots.
+- `true` (default): emit edges by dependency depth, starting with the roots that have the longest dependency chains and walking each dependency layer before shorter roots.
+- `false`: preserve the legacy alphabetical Mermaid edge order.
 
 ### `filters.exclude`
 Project name patterns to omit from the graph.

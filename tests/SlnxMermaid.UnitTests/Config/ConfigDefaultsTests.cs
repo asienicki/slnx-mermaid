@@ -32,11 +32,11 @@ public class ConfigDefaultsTests
     }
 
     [Fact]
-    public void DiagramConfig_DefaultOrderDependenciesByDepth_ShouldBeFalse()
+    public void DiagramConfig_DefaultOrderDependenciesByDepth_ShouldBeTrue()
     {
         var config = new DiagramConfig();
 
-        Assert.False(config.OrderDependenciesByDepth);
+        Assert.True(config.OrderDependenciesByDepth);
     }
 
     [Fact]

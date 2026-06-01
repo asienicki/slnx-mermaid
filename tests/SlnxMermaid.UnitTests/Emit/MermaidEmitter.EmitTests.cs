@@ -59,7 +59,7 @@ public class MermaidEmitterEmitTests
     [Fact]
     public void Emit_WhenDepthOrderingIsDisabled_ShouldPreserveLegacyAlphabeticalEdgeOrdering()
     {
-        var minimalApi = new ProjectNode("MinimalApi", "MinimalApi.csproj");
+        var minimalApi = new ProjectNode("MinimalAPi", "MinimalAPi.csproj");
         var application = new ProjectNode("Application", "Application.csproj");
         var infrastructure = new ProjectNode("Infrastructure", "Infrastructure.csproj");
         var dataAccess = new ProjectNode("DataAccess", "DataAccess.csproj");
@@ -92,7 +92,7 @@ public class MermaidEmitterEmitTests
     [Fact]
     public void Emit_WhenDepthOrderingIsEnabled_ShouldWalkLongestDependencyChainsBeforeShorterRoots()
     {
-        var minimalApi = new ProjectNode("MinimalApi", "MinimalApi.csproj");
+        var minimalApi = new ProjectNode("MinimalAPi", "MinimalAPi.csproj");
         var application = new ProjectNode("Application", "Application.csproj");
         var infrastructure = new ProjectNode("Infrastructure", "Infrastructure.csproj");
         var dataAccess = new ProjectNode("DataAccess", "DataAccess.csproj");
@@ -112,17 +112,20 @@ public class MermaidEmitterEmitTests
 
         var expected =
             $"graph TD{Environment.NewLine}" +
-            $"    MinimalApi --> Infrastructure{Environment.NewLine}" +
-            $"    Infrastructure --> Application{Environment.NewLine}" +
-            $"    Application --> Domain{Environment.NewLine}" +
-            $"    Infrastructure --> DataAccess{Environment.NewLine}" +
+            $"{Environment.NewLine}" +
             $"    MinimalApi --> Application{Environment.NewLine}" +
+            $"    MinimalApi --> Infrastructure{Environment.NewLine}" +
+            $"{Environment.NewLine}" +
+            $"    Application --> Domain{Environment.NewLine}" +
+            $"{Environment.NewLine}" +
+            $"    Infrastructure --> Application{Environment.NewLine}" +
+            $"    Infrastructure --> DataAccess{Environment.NewLine}" +
             $"{Environment.NewLine}" +
             $"    Seeder --> DataAccess{Environment.NewLine}";
 
         Assert.Equal(expected, result);
         Assert.StartsWith(
-            $"graph TD{Environment.NewLine}    MinimalApi -->",
+            $"graph TD{Environment.NewLine}{Environment.NewLine}    MinimalApi -->",
             result,
             StringComparison.Ordinal);
     }
@@ -147,8 +150,11 @@ public class MermaidEmitterEmitTests
 
         var expected =
             $"graph TD{Environment.NewLine}" +
+            $"{Environment.NewLine}" +
             $"    A --> B{Environment.NewLine}" +
+            $"{Environment.NewLine}" +
             $"    B --> C{Environment.NewLine}" +
+            $"{Environment.NewLine}" +
             $"    C --> D{Environment.NewLine}" +
             $"{Environment.NewLine}" +
             $"    E --> C{Environment.NewLine}";
