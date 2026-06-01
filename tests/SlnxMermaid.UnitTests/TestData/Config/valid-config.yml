@@ -1,0 +1,13 @@
+solution: ./src/sample.slnx
+output:
+  file: ./out/diagram.md
+diagram:
+  direction: LR
+  includeTransitiveDependencies: false
+filters:
+  exclude:
+    - Test
+naming:
+  stripPrefix: Company.
+  aliases:
+    Sample: S
