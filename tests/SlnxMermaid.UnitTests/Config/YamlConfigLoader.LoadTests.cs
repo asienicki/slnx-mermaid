@@ -7,37 +7,27 @@ public class YamlConfigLoaderLoadTests
     [Fact]
     public void Load_WhenYamlIsValid_ShouldDeserializeConfig()
     {
-        var path = Path.GetTempFileName();
-        try
-        {
-            File.WriteAllText(path, """
-solution: ./src/sample.slnx
-output:
-  file: ./out/diagram.md
-diagram:
-  direction: LR
-filters:
-  exclude:
-    - Test
-naming:
-  stripPrefix: Company.
-  aliases:
-    Sample: S
-""");
+        var path = GetConfigPath("valid-config.yml");
 
-            var result = YamlConfigLoader.Load(path);
+        var result = YamlConfigLoader.Load(path);
 
-            Assert.Equal("./src/sample.slnx", result.Solution);
-            Assert.Equal("./out/diagram.md", result.Output.File);
-            Assert.Equal("LR", result.Diagram.Direction);
-            Assert.Single(result.Filters.Exclude);
-            Assert.Equal("Company.", result.Naming.StripPrefix);
-            Assert.Equal("S", result.Naming.Aliases["Sample"]);
-        }
-        finally
-        {
-            File.Delete(path);
-        }
+        Assert.Equal("./src/sample.slnx", result.Solution);
+        Assert.Equal("./out/diagram.md", result.Output.File);
+        Assert.Equal("LR", result.Diagram.Direction);
+        Assert.False(result.Diagram.IncludeTransitiveDependencies);
+        Assert.Single(result.Filters.Exclude);
+        Assert.Equal("Company.", result.Naming.StripPrefix);
+        Assert.Equal("S", result.Naming.Aliases["Sample"]);
+    }
+
+    [Fact]
+    public void Load_WhenIncludeTransitiveDependenciesIsMissing_ShouldUseDefaultFalse()
+    {
+        var path = GetConfigPath("missing-transitive-dependencies-config.yml");
+
+        var result = YamlConfigLoader.Load(path);
+
+        Assert.False(result.Diagram.IncludeTransitiveDependencies);
     }
 
     [Fact]
@@ -47,4 +37,7 @@ naming:
 
         Assert.Throws<FileNotFoundException>(() => YamlConfigLoader.Load(path));
     }
+
+    private static string GetConfigPath(string fileName) =>
+        Path.Combine(AppContext.BaseDirectory, "TestData", "Config", fileName);
 }

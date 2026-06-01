@@ -5,6 +5,7 @@ solution: SlnxMermaid.slnx
 
 diagram:
   direction: TD   # TD (top-down) | LR (left-right)
+  includeTransitiveDependencies: false  # false = direct only | true = direct + indirect
 
 filters:
   exclude:
