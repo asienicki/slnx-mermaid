@@ -121,6 +121,10 @@ public class MermaidEmitterEmitTests
             $"    Seeder --> DataAccess{Environment.NewLine}";
 
         Assert.Equal(expected, result);
+        Assert.StartsWith(
+            $"graph TD{Environment.NewLine}    MinimalApi -->",
+            result,
+            StringComparison.Ordinal);
     }
 
     [Fact]
