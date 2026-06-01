@@ -6,6 +6,6 @@ public sealed class DiagramConfig
 
     public bool IncludeTransitiveDependencies { get; set; } = false;
 
-    public bool OrderDependenciesByRole { get; set; } = false;
+    public bool OrderDependenciesByDepth { get; set; } = false;
 }
 }

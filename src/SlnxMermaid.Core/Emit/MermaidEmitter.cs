@@ -32,13 +32,13 @@ public sealed class MermaidEmitter
         var sb = new StringBuilder();
         sb.AppendLine($"graph {diagram.Direction}");
 
-        if (diagram.OrderDependenciesByRole)
+        if (diagram.OrderDependenciesByDepth)
         {
-            var orderedEdges = OrderEdgesForReadability(nodes).ToList();
+            var orderedEdges = OrderEdgesByDependencyDepth(nodes).ToList();
 
             for (var i = 0; i < orderedEdges.Count; i++)
             {
-                if (i > 0 && orderedEdges[i].Group != orderedEdges[i - 1].Group)
+                if (i > 0 && !string.Equals(orderedEdges[i].RootId, orderedEdges[i - 1].RootId, StringComparison.Ordinal))
                     sb.AppendLine();
 
                 sb.AppendLine($"    {orderedEdges[i].From} --> {orderedEdges[i].To}");
@@ -79,186 +79,148 @@ public sealed class MermaidEmitter
             .ThenBy(edge => edge.To, StringComparer.Ordinal);
     }
 
-    private IEnumerable<OrderedEdge> OrderEdgesForReadability(IEnumerable<ProjectNode> nodes)
+    private IEnumerable<DepthOrderedEdge> OrderEdgesByDependencyDepth(IEnumerable<ProjectNode> nodes)
     {
-        var allowedNodes = nodes
-            .Where(node => _filter.IsAllowed(node.Id))
-            .GroupBy(node => node.Id, StringComparer.Ordinal)
-            .Select(group => group.OrderBy(node => node.Path, StringComparer.OrdinalIgnoreCase).First())
-            .OrderBy(node => GetProjectRolePriority(node.Id))
-            .ThenBy(node => node.Id, StringComparer.Ordinal)
-            .ToList();
-
-        var allowedIds = new HashSet<string>(allowedNodes.Select(node => node.Id), StringComparer.Ordinal);
-        var dependenciesById = allowedNodes.ToDictionary(
-            node => node.Id,
-            node => node.Dependencies
-                .Where(dependency => allowedIds.Contains(dependency.Id))
-                .Select(dependency => dependency.Id)
-                .Distinct(StringComparer.Ordinal)
-                .OrderBy(GetProjectRolePriority)
-                .ThenBy(id => id, StringComparer.Ordinal)
-                .ToList(),
-            StringComparer.Ordinal);
-
-        var layerById = GetTopologicalLayers(allowedNodes, dependenciesById);
-
-        return dependenciesById
-            .SelectMany(source => source.Value.Select(dependency => new OrderedEdge(
-                _naming.Transform(source.Key),
-                _naming.Transform(dependency),
-                layerById[source.Key],
-                GetProjectRolePriority(source.Key),
-                source.Key,
-                GetProjectRolePriority(dependency),
-                dependency)))
-            .Distinct(OrderedEdgeIdentityComparer.Instance)
-            .OrderBy(edge => edge.FromProjectRolePriority)
-            .ThenBy(edge => edge.Layer)
-            .ThenBy(edge => edge.FromId, StringComparer.Ordinal)
-            .ThenBy(edge => edge.ToProjectRolePriority)
-            .ThenBy(edge => edge.ToId, StringComparer.Ordinal);
+        return DependencyDepthGraph.Create(nodes, _filter)
+            .GetDepthOrderedEdges(_naming);
     }
 
-    private static Dictionary<string, int> GetTopologicalLayers(
-        IReadOnlyCollection<ProjectNode> nodes,
-        IReadOnlyDictionary<string, List<string>> dependenciesById)
+    private sealed class DependencyDepthGraph
     {
-        var incomingCountById = nodes.ToDictionary(node => node.Id, node => 0, StringComparer.Ordinal);
+        private readonly IReadOnlyDictionary<string, List<string>> _dependenciesById;
+        private readonly IReadOnlyCollection<string> _nodeIds;
+        private readonly Dictionary<string, int> _depthById = new Dictionary<string, int>(StringComparer.Ordinal);
 
-        foreach (var dependencyId in dependenciesById.SelectMany(pair => pair.Value))
-            incomingCountById[dependencyId]++;
-
-        var layerById = nodes.ToDictionary(node => node.Id, node => 0, StringComparer.Ordinal);
-        var queue = incomingCountById
-            .Where(pair => pair.Value == 0)
-            .Select(pair => pair.Key)
-            .OrderBy(GetProjectRolePriority)
-            .ThenBy(id => id, StringComparer.Ordinal)
-            .ToList();
-
-        while (queue.Count > 0)
+        private DependencyDepthGraph(
+            IReadOnlyCollection<string> nodeIds,
+            IReadOnlyDictionary<string, List<string>> dependenciesById)
         {
-            var current = queue[0];
-            queue.RemoveAt(0);
+            _nodeIds = nodeIds;
+            _dependenciesById = dependenciesById;
+        }
 
-            foreach (var dependencyId in dependenciesById[current])
+        public static DependencyDepthGraph Create(
+            IEnumerable<ProjectNode> nodes,
+            ProjectFilter filter)
+        {
+            var allowedNodes = nodes
+                .Where(node => filter.IsAllowed(node.Id))
+                .GroupBy(node => node.Id, StringComparer.Ordinal)
+                .Select(group => group.OrderBy(node => node.Path, StringComparer.OrdinalIgnoreCase).First())
+                .OrderBy(node => node.Id, StringComparer.Ordinal)
+                .ToList();
+
+            var allowedIds = new HashSet<string>(allowedNodes.Select(node => node.Id), StringComparer.Ordinal);
+            var dependenciesById = allowedNodes.ToDictionary(
+                node => node.Id,
+                node => node.Dependencies
+                    .Where(dependency => allowedIds.Contains(dependency.Id))
+                    .Select(dependency => dependency.Id)
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(id => id, StringComparer.Ordinal)
+                    .ToList(),
+                StringComparer.Ordinal);
+
+            return new DependencyDepthGraph(allowedIds.ToList(), dependenciesById);
+        }
+
+        public IEnumerable<DepthOrderedEdge> GetDepthOrderedEdges(NameTransformer naming)
+        {
+            var emittedEdges = new HashSet<LegacyEdge>(LegacyEdgeComparer.Instance);
+
+            foreach (var rootId in GetTraversalRoots())
             {
-                layerById[dependencyId] = Math.Max(layerById[dependencyId], layerById[current] + 1);
-                incomingCountById[dependencyId]--;
-
-                if (incomingCountById[dependencyId] == 0)
-                {
-                    queue.Add(dependencyId);
-                    queue = queue
-                        .OrderBy(GetProjectRolePriority)
-                        .ThenBy(id => id, StringComparer.Ordinal)
-                        .ToList();
-                }
+                foreach (var edge in Traverse(rootId, rootId, naming, emittedEdges, new HashSet<string>(StringComparer.Ordinal)))
+                    yield return edge;
             }
         }
 
-        var deepestResolvedLayer = layerById.Count == 0 ? 0 : layerById.Values.Max();
-
-        var unresolvedLayer = deepestResolvedLayer + 1;
-
-        foreach (var unresolvedId in incomingCountById
-            .Where(pair => pair.Value > 0)
-            .Select(pair => pair.Key)
-            .OrderBy(GetProjectRolePriority)
-            .ThenBy(id => id, StringComparer.Ordinal))
+        private IEnumerable<string> GetTraversalRoots()
         {
-            layerById[unresolvedId] = unresolvedLayer;
+            var incomingCountById = _nodeIds.ToDictionary(id => id, id => 0, StringComparer.Ordinal);
+
+            foreach (var dependencyId in _dependenciesById.SelectMany(pair => pair.Value))
+                incomingCountById[dependencyId]++;
+
+            var rootIds = incomingCountById
+                .Where(pair => pair.Value == 0)
+                .Select(pair => pair.Key)
+                .OrderByDescending(GetDependencyDepth)
+                .ThenBy(id => id, StringComparer.Ordinal)
+                .ToList();
+
+            var nonRootIds = _nodeIds
+                .Except(rootIds, StringComparer.Ordinal)
+                .OrderByDescending(GetDependencyDepth)
+                .ThenBy(id => id, StringComparer.Ordinal);
+
+            return rootIds.Concat(nonRootIds);
         }
 
-        return layerById;
-    }
+        private IEnumerable<DepthOrderedEdge> Traverse(
+            string sourceId,
+            string rootId,
+            NameTransformer naming,
+            ISet<LegacyEdge> emittedEdges,
+            ISet<string> activePath)
+        {
+            if (!activePath.Add(sourceId))
+                yield break;
 
-    private static int GetProjectRolePriority(string projectId)
-    {
-        var normalized = projectId.Replace('_', '.').Replace('-', '.');
-        var parts = normalized.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var dependencyId in _dependenciesById[sourceId]
+                .OrderByDescending(GetDependencyDepth)
+                .ThenBy(id => id, StringComparer.Ordinal))
+            {
+                var edgeKey = new LegacyEdge(sourceId, dependencyId);
 
-        if (parts.Any(IsMainEntryPointPart))
-            return 0;
+                if (emittedEdges.Add(edgeKey))
+                {
+                    yield return new DepthOrderedEdge(
+                        rootId,
+                        naming.Transform(sourceId),
+                        naming.Transform(dependencyId));
+                }
 
-        if (parts.Any(IsWorkerEntryPointPart))
-            return 1;
+                foreach (var childEdge in Traverse(dependencyId, rootId, naming, emittedEdges, activePath))
+                    yield return childEdge;
+            }
 
-        if (parts.Any(part => IsRolePart(part, "Application") || IsRolePart(part, "App")))
-            return 2;
+            activePath.Remove(sourceId);
+        }
 
-        if (parts.Any(part =>
-            IsRolePart(part, "Domain") ||
-            IsRolePart(part, "Core") ||
-            IsRolePart(part, "Shared") ||
-            IsRolePart(part, "Common")))
-            return 3;
+        private int GetDependencyDepth(string nodeId)
+        {
+            int depth;
 
-        if (parts.Any(part =>
-            IsRolePart(part, "Infrastructure") ||
-            IsRolePart(part, "Infra") ||
-            IsRolePart(part, "Repository") ||
-            IsRolePart(part, "Repositories")))
-            return 4;
+            if (_depthById.TryGetValue(nodeId, out depth))
+                return depth;
 
-        if (parts.Any(part =>
-            IsRolePart(part, "DataAccess") ||
-            IsRolePart(part, "Persistence") ||
-            IsRolePart(part, "Data") ||
-            IsRolePart(part, "Database") ||
-            IsRolePart(part, "Db") ||
-            IsRolePart(part, "Storage")))
-            return 5;
+            depth = GetDependencyDepth(nodeId, new HashSet<string>(StringComparer.Ordinal));
+            _depthById[nodeId] = depth;
 
-        if (parts.Any(IsSecondaryEntryPointPart))
-            return 6;
+            return depth;
+        }
 
-        return 7;
-    }
+        private int GetDependencyDepth(string nodeId, ISet<string> activePath)
+        {
+            int depth;
 
-    private static bool IsMainEntryPointPart(string part)
-    {
-        return
-            IsRolePart(part, "Api") ||
-            IsRolePart(part, "MinimalApi") ||
-            IsRolePart(part, "Web") ||
-            IsRolePart(part, "Ui") ||
-            IsRolePart(part, "Mvc") ||
-            IsRolePart(part, "Host") ||
-            IsRolePart(part, "Service") ||
-            IsRolePart(part, "Function") ||
-            IsRolePart(part, "Functions") ||
-            IsRolePart(part, "FunctionApp");
-    }
+            if (_depthById.TryGetValue(nodeId, out depth))
+                return depth;
 
-    private static bool IsWorkerEntryPointPart(string part)
-    {
-        return
-            IsRolePart(part, "Worker") ||
-            IsRolePart(part, "Workers") ||
-            IsRolePart(part, "Job") ||
-            IsRolePart(part, "Jobs");
-    }
+            if (!activePath.Add(nodeId))
+                return 0;
 
-    private static bool IsSecondaryEntryPointPart(string part)
-    {
-        return
-            IsRolePart(part, "Seeder") ||
-            IsRolePart(part, "Seeders") ||
-            IsRolePart(part, "Migrator") ||
-            IsRolePart(part, "Migrators") ||
-            IsRolePart(part, "Migration") ||
-            IsRolePart(part, "Migrations") ||
-            IsRolePart(part, "Tool") ||
-            IsRolePart(part, "Tools") ||
-            IsRolePart(part, "Console") ||
-            IsRolePart(part, "Cli");
-    }
+            depth = 0;
 
-    private static bool IsRolePart(string part, string role)
-    {
-        return string.Equals(part, role, StringComparison.OrdinalIgnoreCase);
+            foreach (var dependencyId in _dependenciesById[nodeId])
+                depth = Math.Max(depth, 1 + GetDependencyDepth(dependencyId, activePath));
+
+            activePath.Remove(nodeId);
+            _depthById[nodeId] = depth;
+
+            return depth;
+        }
     }
 
     private sealed class LegacyEdge
@@ -269,6 +231,23 @@ public sealed class MermaidEmitter
             To = to;
         }
 
+        public string From { get; }
+        public string To { get; }
+    }
+
+    private sealed class DepthOrderedEdge
+    {
+        public DepthOrderedEdge(
+            string rootId,
+            string from,
+            string to)
+        {
+            RootId = rootId;
+            From = from;
+            To = to;
+        }
+
+        public string RootId { get; }
         public string From { get; }
         public string To { get; }
     }
@@ -290,62 +269,6 @@ public sealed class MermaidEmitter
         }
 
         public int GetHashCode(LegacyEdge obj)
-        {
-            unchecked
-            {
-                return ((obj.From != null ? StringComparer.Ordinal.GetHashCode(obj.From) : 0) * 397) ^
-                    (obj.To != null ? StringComparer.Ordinal.GetHashCode(obj.To) : 0);
-            }
-        }
-    }
-
-    private sealed class OrderedEdge
-    {
-        public OrderedEdge(
-            string from,
-            string to,
-            int layer,
-            int fromProjectRolePriority,
-            string fromId,
-            int toProjectRolePriority,
-            string toId)
-        {
-            From = from;
-            To = to;
-            Layer = layer;
-            FromProjectRolePriority = fromProjectRolePriority;
-            FromId = fromId;
-            ToProjectRolePriority = toProjectRolePriority;
-            ToId = toId;
-        }
-
-        public string From { get; }
-        public string To { get; }
-        public int Layer { get; }
-        public int Group { get { return FromProjectRolePriority; } }
-        public int FromProjectRolePriority { get; }
-        public string FromId { get; }
-        public int ToProjectRolePriority { get; }
-        public string ToId { get; }
-    }
-
-    private sealed class OrderedEdgeIdentityComparer : IEqualityComparer<OrderedEdge>
-    {
-        public static readonly OrderedEdgeIdentityComparer Instance = new OrderedEdgeIdentityComparer();
-
-        public bool Equals(OrderedEdge x, OrderedEdge y)
-        {
-            if (ReferenceEquals(x, y))
-                return true;
-
-            if (ReferenceEquals(x, null) || ReferenceEquals(y, null))
-                return false;
-
-            return string.Equals(x.From, y.From, StringComparison.Ordinal) &&
-                string.Equals(x.To, y.To, StringComparison.Ordinal);
-        }
-
-        public int GetHashCode(OrderedEdge obj)
         {
             unchecked
             {

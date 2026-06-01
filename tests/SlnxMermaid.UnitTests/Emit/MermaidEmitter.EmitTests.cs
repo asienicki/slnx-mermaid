@@ -57,7 +57,7 @@ public class MermaidEmitterEmitTests
     }
 
     [Fact]
-    public void Emit_WhenRoleOrderingIsDisabled_ShouldPreserveLegacyAlphabeticalEdgeOrdering()
+    public void Emit_WhenDepthOrderingIsDisabled_ShouldPreserveLegacyAlphabeticalEdgeOrdering()
     {
         var minimalApi = new ProjectNode("MinimalApi", "MinimalApi.csproj");
         var application = new ProjectNode("Application", "Application.csproj");
@@ -90,7 +90,7 @@ public class MermaidEmitterEmitTests
     }
 
     [Fact]
-    public void Emit_WhenGraphIsScrambled_ShouldOrderMainEntryPointsBeforeSecondaryEntryPoints()
+    public void Emit_WhenDepthOrderingIsEnabled_ShouldWalkLongestDependencyChainsBeforeShorterRoots()
     {
         var minimalApi = new ProjectNode("MinimalApi", "MinimalApi.csproj");
         var application = new ProjectNode("Application", "Application.csproj");
@@ -108,19 +108,46 @@ public class MermaidEmitterEmitTests
 
         var emitter = CreateEmitter();
 
-        var result = emitter.Emit([seeder, domain, infrastructure, dataAccess, minimalApi, application], CreateDiagram("TD", orderDependenciesByRole: true));
+        var result = emitter.Emit([seeder, domain, infrastructure, dataAccess, minimalApi, application], CreateDiagram("TD", orderDependenciesByDepth: true));
 
         var expected =
             $"graph TD{Environment.NewLine}" +
-            $"    MinimalApi --> Application{Environment.NewLine}" +
             $"    MinimalApi --> Infrastructure{Environment.NewLine}" +
-            $"{Environment.NewLine}" +
-            $"    Application --> Domain{Environment.NewLine}" +
-            $"{Environment.NewLine}" +
             $"    Infrastructure --> Application{Environment.NewLine}" +
+            $"    Application --> Domain{Environment.NewLine}" +
             $"    Infrastructure --> DataAccess{Environment.NewLine}" +
+            $"    MinimalApi --> Application{Environment.NewLine}" +
             $"{Environment.NewLine}" +
             $"    Seeder --> DataAccess{Environment.NewLine}";
+
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void Emit_WhenDepthOrderingIsEnabled_ShouldCompleteDeeperRootChainBeforeShallowerRoot()
+    {
+        var a = new ProjectNode("A", "A.csproj");
+        var b = new ProjectNode("B", "B.csproj");
+        var c = new ProjectNode("C", "C.csproj");
+        var d = new ProjectNode("D", "D.csproj");
+        var e = new ProjectNode("E", "E.csproj");
+
+        a.Dependencies.Add(b);
+        b.Dependencies.Add(c);
+        c.Dependencies.Add(d);
+        e.Dependencies.Add(c);
+
+        var emitter = CreateEmitter();
+
+        var result = emitter.Emit([e, d, c, b, a], CreateDiagram("TD", orderDependenciesByDepth: true));
+
+        var expected =
+            $"graph TD{Environment.NewLine}" +
+            $"    A --> B{Environment.NewLine}" +
+            $"    B --> C{Environment.NewLine}" +
+            $"    C --> D{Environment.NewLine}" +
+            $"{Environment.NewLine}" +
+            $"    E --> C{Environment.NewLine}";
 
         Assert.Equal(expected, result);
     }
@@ -135,11 +162,11 @@ public class MermaidEmitterEmitTests
 
     private static DiagramConfig CreateDiagram(
         string direction,
-        bool orderDependenciesByRole = false) =>
+        bool orderDependenciesByDepth = false) =>
         new()
         {
             Direction = direction,
-            OrderDependenciesByRole = orderDependenciesByRole
+            OrderDependenciesByDepth = orderDependenciesByDepth
         };
 
     private static MermaidEmitter CreateEmitter() =>
