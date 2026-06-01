@@ -4,6 +4,7 @@ output:
 diagram:
   direction: LR
   includeTransitiveDependencies: false
+  orderDependenciesByDepth: true
 filters:
   exclude:
     - Test

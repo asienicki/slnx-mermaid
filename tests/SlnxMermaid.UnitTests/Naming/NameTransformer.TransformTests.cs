@@ -31,6 +31,16 @@ public class NameTransformerTransformTests
     }
 
     [Fact]
+    public void Transform_WhenNameContainsMixedCaseApi_ShouldNormalizeApiCasing()
+    {
+        var transformer = new NameTransformer(new NamingConfig());
+
+        var result = transformer.Transform("MinimalAPi");
+
+        Assert.Equal("MinimalApi", result);
+    }
+
+    [Fact]
     public void Transform_WhenPrefixMatches_ShouldStripPrefix()
     {
         var transformer = new NameTransformer(new NamingConfig
