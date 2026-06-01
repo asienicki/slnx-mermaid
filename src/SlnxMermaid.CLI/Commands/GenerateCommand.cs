@@ -32,7 +32,7 @@ public sealed class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
         AnsiConsole.MarkupLine($"[green]Using config[/]: [grey]{Path.GetFileName(configPath)}[/]");
 
-        var nodes = SolutionGraphAnalyzer.Analyze(config.Solution);
+        var nodes = SolutionGraphAnalyzer.Analyze(config);
 
         var naming = new NameTransformer(config.Naming);
 
