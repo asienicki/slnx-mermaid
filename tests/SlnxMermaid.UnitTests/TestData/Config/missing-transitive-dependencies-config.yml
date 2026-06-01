@@ -1,0 +1,5 @@
+solution: ./src/sample.slnx
+diagram:
+  direction: LR
+output:
+  file: ./out/diagram.md
