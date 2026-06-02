@@ -30,29 +30,14 @@ public sealed class MermaidEmitter
         if (config == null)
             throw new ArgumentNullException(nameof(config));
 
-        return Emit(nodes, config.Diagram, config.Ui);
-    }
-
-    public string Emit(
-        IEnumerable<ProjectNode> nodes,
-        DiagramConfig diagram)
-    {
-        return Emit(nodes, diagram, null);
-    }
-
-    private string Emit(
-        IEnumerable<ProjectNode> nodes,
-        DiagramConfig diagram,
-        UiConfig ui)
-    {
-        if (diagram == null)
-            throw new ArgumentNullException(nameof(diagram));
+        if (config.Diagram == null)
+            throw new ArgumentNullException(nameof(config.Diagram));
 
         var nodeList = nodes == null ? new List<ProjectNode>() : nodes.ToList();
         var sb = new StringBuilder();
-        sb.AppendLine($"graph {diagram.Direction}");
+        sb.AppendLine($"graph {config.Diagram.Direction}");
 
-        if (diagram.OrderDependenciesByDepth)
+        if (config.Diagram.OrderDependenciesByDepth)
         {
             var orderedEdges = OrderEdgesByDependencyDepth(nodeList).ToList();
 
@@ -73,10 +58,24 @@ public sealed class MermaidEmitter
                 sb.AppendLine($"    {edge.From} --> {edge.To}");
         }
 
-        if (ui != null)
-            AppendNodeStyles(sb, nodeList, ui);
+        if (config.Ui != null)
+            AppendNodeStyles(sb, nodeList, config.Ui);
 
         return sb.ToString();
+    }
+
+    public string Emit(
+        IEnumerable<ProjectNode> nodes,
+        DiagramConfig diagram)
+    {
+        if (diagram == null)
+            throw new ArgumentNullException(nameof(diagram));
+
+        return Emit(nodes, new SlnxMermaidConfig
+        {
+            Diagram = diagram,
+            Ui = null
+        });
     }
 
     private void AppendNodeStyles(StringBuilder sb, IEnumerable<ProjectNode> nodes, UiConfig ui)
