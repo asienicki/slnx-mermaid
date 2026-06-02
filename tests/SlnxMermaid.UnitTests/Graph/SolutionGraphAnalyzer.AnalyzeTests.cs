@@ -1,3 +1,4 @@
+using Microsoft.Build.Exceptions;
 using Microsoft.Build.Graph;
 using Microsoft.Build.Locator;
 using SlnxMermaid.Core.Config;
@@ -219,6 +220,64 @@ public class SolutionGraphAnalyzerAnalyzeTests
     }
 
     [Fact]
+    public void AnalyzeSolutionFile_WhenSlnxContainsProjectReference_ShouldCreateDependencyEdgeWithoutMsBuildEvaluation()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"slnx-mermaid-{Guid.NewGuid()}");
+        Directory.CreateDirectory(root);
+
+        try
+        {
+            var projectB = WriteProject(root, "Project.B");
+            var projectA = WriteProject(root, "Project.A", projectB);
+            var solution = WriteSolution(root, projectA, projectB);
+
+            var nodes = SolutionGraphAnalyzer.AnalyzeSolutionFile(solution, includeTransitiveDependencies: false);
+            var a = Assert.Single(nodes, n => n.Id == "Project_A");
+            var b = Assert.Single(nodes, n => n.Id == "Project_B");
+
+            Assert.Contains(b, a.Dependencies);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void AnalyzeSolutionFile_WhenSlnContainsProjectReference_ShouldCreateDependencyEdgeWithoutMsBuildEvaluation()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"slnx-mermaid-{Guid.NewGuid()}");
+        Directory.CreateDirectory(root);
+
+        try
+        {
+            var projectB = WriteProject(root, "Project.B");
+            var projectA = WriteProject(root, "Project.A", projectB);
+            var solution = WriteLegacySolution(root, projectA, projectB);
+
+            var nodes = SolutionGraphAnalyzer.AnalyzeSolutionFile(solution, includeTransitiveDependencies: false);
+            var a = Assert.Single(nodes, n => n.Id == "Project_A");
+            var b = Assert.Single(nodes, n => n.Id == "Project_B");
+
+            Assert.Contains(b, a.Dependencies);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void IsProjectEvaluationFailure_WhenAggregateContainsInvalidProjectFileException_ShouldReturnTrue()
+    {
+        var exception = new AggregateException(new InvalidProjectFileException("sample.csproj"));
+
+        var result = SolutionGraphAnalyzer.IsProjectEvaluationFailure(exception);
+
+        Assert.True(result);
+    }
+
+    [Fact]
     public void ToId_WhenProjectNameContainsSeparators_ShouldNormalizeName()
     {
         var result = SolutionGraphAnalyzer.ToId(Path.Combine("src", "Company.Project-Api.csproj"));
@@ -256,6 +315,25 @@ public class SolutionGraphAnalyzerAnalyzeTests
 """);
 
         return projectPath;
+    }
+
+    private static string WriteLegacySolution(string root, params string[] projects)
+    {
+        var solution = Path.Combine(root, "sample.sln");
+        var projectEntries = string.Join(
+            Environment.NewLine,
+            projects.Select(project =>
+                $"Project(\"{{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}}\") = \"{Path.GetFileNameWithoutExtension(project)}\", \"{Path.GetRelativePath(root, project)}\", \"{{{Guid.NewGuid()}}}\"{Environment.NewLine}EndProject"));
+
+        File.WriteAllText(solution, $"""
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+{projectEntries}
+Global
+EndGlobal
+""");
+
+        return solution;
     }
 
     private static string WriteSolution(string root, params string[] projects)
