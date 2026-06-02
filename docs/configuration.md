@@ -26,6 +26,26 @@ filters:
     - ServiceDefaults
     - Seeder
 
+ui:
+  mode: dark  # dark | light
+  # Optional semantic role colors. Supported palette names: blue, green, yellow, orange, pink, purple, gray, red.
+  semantic:
+    presentation: blue      # Api/Web/Host/Gateway projects
+    application: green      # Application projects
+    domain: yellow          # Domain/Core projects
+    infrastructure: orange  # Infrastructure projects
+    dataAccess: pink        # DataAccess/Persistence/Database/Storage projects
+    tooling: purple         # CLI/Console/Tools/Seeder/Migrator projects
+    tests: gray             # Tests/Test/Spec projects
+  # Optional per-project overrides. Keys may be exact project names or wildcard patterns.
+  mappings:
+    SlnxMermaid.CLI: purple
+    "*Tests*": gray
+    SlnxMermaid.Core:
+      fill: "#141414"
+      stroke: "#90CAF9"
+      color: "#FFFFFF"
+
 naming:
   stripPrefix: SlnxMermaid_
   aliases:
@@ -56,6 +76,36 @@ Path to `.sln` / `.slnx` file.
 
 ### `filters.exclude`
 Project name patterns to omit from the graph.
+
+### `ui.mode`
+Chooses the built-in diagram color palette. Supported values are:
+
+- `dark` (default)
+- `light`
+
+### `ui.semantic`
+Overrides colors assigned automatically to semantic project roles detected from project names.
+
+Supported palette colors are `blue`, `green`, `yellow`, `orange`, `pink`, `purple`, `gray`, and `red`. The built-in roles are:
+
+| Role | Matching project name terms | Default color |
+| ---- | --------------------------- | ------------- |
+| `presentation` | `Api`, `Web`, `MinimalApi`, `Host`, `Gateway` | `blue` |
+| `application` | `Application` | `green` |
+| `domain` | `Domain`, `Core` | `yellow` |
+| `infrastructure` | `Infrastructure` | `orange` |
+| `dataAccess` | `DataAccess`, `Persistence`, `Database`, `Storage` | `pink` |
+| `tooling` | `Seeder`, `Migrator`, `Tools`, `Tool`, `CLI`, `Console` | `purple` |
+| `tests` | `Tests`, `Test`, `Spec`, `Specs` | `gray` |
+
+### `ui.mappings`
+Defines per-project color overrides. Mapping keys may be exact project names or wildcard patterns with `*`. Exact project names win over wildcard matches; if several wildcard patterns match, the most specific pattern wins.
+
+Mapping values can be:
+
+- a palette color name, for example `purple`
+- a fill color in `#RRGGBB` format
+- a style object with `fill`, `stroke`, and/or `color` fields in `#RRGGBB` format
 
 ### `naming.stripPrefix`
 Removes repeated prefix from project names in diagram output.
