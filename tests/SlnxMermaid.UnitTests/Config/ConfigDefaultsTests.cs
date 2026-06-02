@@ -13,6 +13,7 @@ public class ConfigDefaultsTests
         Assert.NotNull(config.Filters);
         Assert.NotNull(config.Naming);
         Assert.NotNull(config.Output);
+        Assert.NotNull(config.Ui);
     }
 
     [Fact]
@@ -54,6 +55,14 @@ public class ConfigDefaultsTests
 
         Assert.Empty(config.Aliases);
         Assert.Null(config.StripPrefix);
+    }
+
+    [Fact]
+    public void UiConfig_DefaultMode_ShouldBeDark()
+    {
+        var config = new UiConfig();
+
+        Assert.Equal("dark", config.Mode);
     }
 
     [Fact]
