@@ -13,7 +13,7 @@ public class MermaidEmitterEmitTests
     {
         var emitter = CreateEmitter();
 
-        var result = emitter.Emit([], CreateDiagram("TD"));
+        var result = emitter.Emit([], CreateConfig("TD"));
 
         Assert.Equal($"graph TD{Environment.NewLine}", result);
     }
@@ -30,7 +30,7 @@ public class MermaidEmitterEmitTests
 
         var emitter = CreateEmitter();
 
-        var result = emitter.Emit([a, b, c], CreateDiagram("LR"));
+        var result = emitter.Emit([a, b, c], CreateConfig("LR"));
 
         var expected =
             $"graph LR{Environment.NewLine}" +
@@ -51,7 +51,7 @@ public class MermaidEmitterEmitTests
             new NameTransformer(new NamingConfig()),
             new ProjectFilter(["Excluded"]));
 
-        var result = emitter.Emit([source, excluded], CreateDiagram("TD"));
+        var result = emitter.Emit([source, excluded], CreateConfig("TD"));
 
         Assert.Equal($"graph TD{Environment.NewLine}", result);
     }
@@ -75,7 +75,7 @@ public class MermaidEmitterEmitTests
 
         var emitter = CreateEmitter();
 
-        var result = emitter.Emit([seeder, domain, infrastructure, dataAccess, minimalApi, application], CreateDiagram("TD"));
+        var result = emitter.Emit([seeder, domain, infrastructure, dataAccess, minimalApi, application], CreateConfig("TD"));
 
         var expected =
             $"graph TD{Environment.NewLine}" +
@@ -108,7 +108,7 @@ public class MermaidEmitterEmitTests
 
         var emitter = CreateEmitter();
 
-        var result = emitter.Emit([seeder, domain, infrastructure, dataAccess, minimalApi, application], CreateDiagram("TD", orderDependenciesByDepth: true));
+        var result = emitter.Emit([seeder, domain, infrastructure, dataAccess, minimalApi, application], CreateConfig("TD", orderDependenciesByDepth: true));
 
         var expected =
             $"graph TD{Environment.NewLine}" +
@@ -146,7 +146,7 @@ public class MermaidEmitterEmitTests
 
         var emitter = CreateEmitter();
 
-        var result = emitter.Emit([e, d, c, b, a], CreateDiagram("TD", orderDependenciesByDepth: true));
+        var result = emitter.Emit([e, d, c, b, a], CreateConfig("TD", orderDependenciesByDepth: true));
 
         var expected =
             $"graph TD{Environment.NewLine}" +
@@ -163,20 +163,37 @@ public class MermaidEmitterEmitTests
     }
 
     [Fact]
-    public void Emit_WhenDiagramConfigIsNull_ShouldThrowArgumentNullException()
+    public void Emit_WhenConfigIsNull_ShouldThrowArgumentNullException()
     {
         var emitter = CreateEmitter();
 
         Assert.Throws<ArgumentNullException>(() => emitter.Emit([], null!));
     }
 
-    private static DiagramConfig CreateDiagram(
+    [Fact]
+    public void Emit_WhenDiagramConfigIsNull_ShouldThrowArgumentNullException()
+    {
+        var emitter = CreateEmitter();
+        var config = new SlnxMermaidConfig
+        {
+            Diagram = null!,
+            Ui = null!
+        };
+
+        Assert.Throws<ArgumentNullException>(() => emitter.Emit([], config));
+    }
+
+    private static SlnxMermaidConfig CreateConfig(
         string direction,
         bool orderDependenciesByDepth = false) =>
         new()
         {
-            Direction = direction,
-            OrderDependenciesByDepth = orderDependenciesByDepth
+            Diagram = new DiagramConfig
+            {
+                Direction = direction,
+                OrderDependenciesByDepth = orderDependenciesByDepth
+            },
+            Ui = null!
         };
 
     private static MermaidEmitter CreateEmitter() =>
