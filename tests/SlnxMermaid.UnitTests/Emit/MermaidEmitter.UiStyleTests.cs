@@ -220,7 +220,7 @@ public class MermaidEmitterUiStyleTests
 
         Assert.Equal(1, CountOccurrences(result, "classDef cls_green "));
         Assert.Contains("class Application cls_green", result);
-        Assert.Contains("class MyApp.Application cls_green", result);
+        Assert.Contains("class MyApp_Application cls_green", result);
         Assert.True(result.IndexOf("classDef", StringComparison.Ordinal) < result.IndexOf("class Application", StringComparison.Ordinal));
     }
 
