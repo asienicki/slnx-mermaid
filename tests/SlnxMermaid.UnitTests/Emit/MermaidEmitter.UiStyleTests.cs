@@ -225,7 +225,11 @@ public class MermaidEmitterUiStyleTests
     }
 
     private static string Emit(IEnumerable<ProjectNode> nodes, UiConfig ui) =>
-        CreateEmitter().Emit(nodes, new DiagramConfig { Direction = "TD", OrderDependenciesByDepth = false }, ui);
+        CreateEmitter().Emit(nodes, new SlnxMermaidConfig
+        {
+            Diagram = new DiagramConfig { Direction = "TD", OrderDependenciesByDepth = false },
+            Ui = ui
+        });
 
     private static ProjectNode Node(string id) => new(id, id + ".csproj");
 

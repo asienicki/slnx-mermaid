@@ -25,12 +25,22 @@ public sealed class MermaidEmitter
 
     public string Emit(
         IEnumerable<ProjectNode> nodes,
+        SlnxMermaidConfig config)
+    {
+        if (config == null)
+            throw new ArgumentNullException(nameof(config));
+
+        return Emit(nodes, config.Diagram, config.Ui);
+    }
+
+    public string Emit(
+        IEnumerable<ProjectNode> nodes,
         DiagramConfig diagram)
     {
         return Emit(nodes, diagram, null);
     }
 
-    public string Emit(
+    private string Emit(
         IEnumerable<ProjectNode> nodes,
         DiagramConfig diagram,
         UiConfig ui)
