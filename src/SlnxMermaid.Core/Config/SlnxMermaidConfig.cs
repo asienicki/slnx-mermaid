@@ -11,5 +11,7 @@ public sealed class SlnxMermaidConfig
     public NamingConfig Naming { get; set; } = new NamingConfig();
 
     public OutputConfig Output { get; set; } = new OutputConfig();
+
+    public UiConfig Ui { get; set; } = new UiConfig();
 }
 }

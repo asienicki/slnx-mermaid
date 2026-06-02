@@ -1,0 +1,14 @@
+solution: ./src/sample.slnx
+ui:
+  mode: light
+  semantic:
+    application: red
+  mappings:
+    MinimalApi: blue
+    "*Model*": gray
+    Application:
+      fill: "#141414"
+    Infrastructure:
+      fill: "#EF6C00"
+      stroke: "#FFCC80"
+      color: "#FFFFFF"
