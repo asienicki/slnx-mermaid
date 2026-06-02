@@ -19,7 +19,7 @@ jobs:
       VS_MARKETPLACE_AUTHOR_DISPLAY_NAME: "Sharp Code"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: microsoft/setup-msbuild@v2
 
       - name: Patch VSIX manifest (RC)
@@ -118,7 +118,7 @@ jobs:
       VS_MARKETPLACE_INTERNAL_NAME: ${{ inputs.channel == 'rc' && 'slnxmermaid-rc' || 'slnxmermaid' }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: microsoft/setup-msbuild@v2
 
       - name: Download VSIX artifact
