@@ -1,0 +1,2 @@
+# The loader should treat a comments-only YAML document the same as an empty one.
+# This catches accidental successful deserialization of a document without values.

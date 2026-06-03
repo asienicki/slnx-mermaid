@@ -1,0 +1,39 @@
+solution: ../solutions/Company.Sample.slnx
+output:
+  file: ../docs/architecture/{date}-sample.md
+diagram:
+  direction: BT
+  includeTransitiveDependencies: true
+  orderDependenciesByDepth: false
+filters:
+  exclude:
+    - "*.Tests"
+    - "Company.Legacy.*"
+    - "Project With Spaces"
+    - "Project-With-Dashes"
+    - "Project_With_Underscores"
+naming:
+  stripPrefix: Company.Sample.
+  aliases:
+    Company.Sample.Api: API
+    Company.Sample.Application: App Layer
+    Company.Sample.Infrastructure: Infra
+ui:
+  mode: light
+  semantic:
+    presentation: blue
+    application: green
+    domain: yellow
+    infrastructure: orange
+    dataAccess: pink
+    tooling: purple
+    tests: gray
+  mappings:
+    Company.Sample.Api: purple
+    "*.Tests": gray
+    "*Application*": green
+    Company.Sample.Domain: "#112233"
+    Company.Sample.Infrastructure:
+      fill: "#141414"
+      stroke: "#90CAF9"
+      color: "#FFFFFF"

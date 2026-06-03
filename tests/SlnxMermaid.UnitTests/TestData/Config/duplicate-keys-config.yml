@@ -1,0 +1,32 @@
+solution: ./first.slnx
+solution: ./second.slnx
+output:
+  file: ./first.md
+  file: ./second.md
+diagram:
+  direction: TD
+  direction: RL
+  includeTransitiveDependencies: false
+  includeTransitiveDependencies: true
+  orderDependenciesByDepth: true
+  orderDependenciesByDepth: false
+filters:
+  exclude:
+    - First
+  exclude:
+    - Second
+naming:
+  stripPrefix: First.
+  stripPrefix: Second.
+  aliases:
+    Duplicate: FirstAlias
+    Duplicate: SecondAlias
+ui:
+  mode: dark
+  mode: light
+  semantic:
+    application: green
+    application: red
+  mappings:
+    Duplicate.Project: blue
+    Duplicate.Project: orange
