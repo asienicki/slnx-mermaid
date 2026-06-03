@@ -1,0 +1,19 @@
+solution: ./src/sample.slnx
+unknownRootValue: should-be-ignored
+diagram:
+  direction: LR
+  unsupportedNestedValue: should-also-be-ignored
+filters:
+  exclude:
+    - Tests
+  unsupportedNestedList:
+    - ignored
+naming:
+  stripPrefix: Company.
+  unsupportedNestedValue: ignored
+output:
+  file: ./out/diagram.md
+  unsupportedNestedValue: ignored
+ui:
+  mode: dark
+  unsupportedNestedValue: ignored

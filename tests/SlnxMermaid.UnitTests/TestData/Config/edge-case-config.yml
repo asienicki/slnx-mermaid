@@ -1,0 +1,25 @@
+solution: "./Ścieżka Z Odstępami/Sample Solution.slnx"
+output:
+  file: "./out/Diagram Final {date}.md"
+diagram:
+  direction: "lR"
+  includeTransitiveDependencies: TRUE
+  orderDependenciesByDepth: FaLsE
+filters:
+  exclude: []
+naming:
+  stripPrefix: "  Company.  "
+  aliases:
+    "Project With Spaces": "Alias With Spaces"
+    "UPPER.case-Mix_123": "mIxEd Alias 123"
+ui:
+  mode: "DaRk"
+  semantic:
+    application: "GrEeN"
+  mappings:
+    "Project With Spaces": "#aBc123"
+    "*case-Mix*": "PuRpLe"
+    "ObjectStyle":
+      FILL: "#abcdef"
+      Stroke: "#123456"
+      color: "#FEDCBA"
