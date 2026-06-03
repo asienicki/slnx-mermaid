@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using SlnxMermaid.Core.Config;
 using SlnxMermaid.Core.Extensions;
@@ -82,16 +82,11 @@ namespace SlnxMermaidVsix
             return new SlnxMermaidConfig
             {
                 Solution = Path.GetFileName(solutionPath),
-                Output = new OutputConfig
+                Diagram = new DiagramConfig
                 {
-                    File = Strings.DefaultOutputFile
-                },
-                Naming = new NamingConfig
-                {
-                    StripPrefix = string.IsNullOrEmpty(normalizedSolutionName)
-                        ? string.Empty
-                        : $"{normalizedSolutionName}_",
-                    Aliases = new Dictionary<string, string>()
+                    Direction = "TD",
+                    IncludeTransitiveDependencies = false,
+                    OrderDependenciesByDepth = true
                 },
                 Filters = new FilterConfig
                 {
@@ -112,6 +107,46 @@ namespace SlnxMermaidVsix
                         Strings.ExcludeServiceDefaults,
                         Strings.ExcludeDto
                     }.ToList()
+                },
+                Ui = new UiConfig
+                {
+                    Mode = "dark",
+                    Semantic = new Dictionary<string, string>
+                    {
+                        ["presentation"] = "blue",
+                        ["application"] = "green",
+                        ["domain"] = "yellow",
+                        ["infrastructure"] = "orange",
+                        ["dataAccess"] = "pink",
+                        ["tooling"] = "purple",
+                        ["tests"] = "gray"
+                    },
+                    Mappings = new Dictionary<string, object>
+                    {
+                        ["Sample.CLI"] = "purple",
+                        ["*App*"] = "yellow",
+                        ["Sample.Core"] = new Dictionary<string, string>
+                        {
+                            ["fill"] = "#141414",
+                            ["stroke"] = "#90CAF9",
+                            ["color"] = "#FFFFFF"
+                        }
+                    }
+                },
+                Naming = new NamingConfig
+                {
+                    StripPrefix = string.IsNullOrEmpty(normalizedSolutionName)
+                        ? string.Empty
+                        : $"{normalizedSolutionName}_",
+                    Aliases = new Dictionary<string, string>
+                    {
+                        ["Core"] = "CORE",
+                        ["CLI"] = "CommandLineInterface"
+                    }
+                },
+                Output = new OutputConfig
+                {
+                    File = Strings.DefaultOutputFile
                 },
             };
         }
