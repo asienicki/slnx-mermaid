@@ -163,11 +163,23 @@ public class MermaidEmitterEmitTests
     }
 
     [Fact]
+    public void Emit_WhenNodesIsNull_ShouldThrowArgumentNullException()
+    {
+        var emitter = CreateEmitter();
+
+        var ex = Assert.Throws<ArgumentNullException>(() => emitter.Emit(null!, CreateConfig("TD")));
+
+        Assert.Equal("nodes", ex.ParamName);
+    }
+
+    [Fact]
     public void Emit_WhenConfigIsNull_ShouldThrowArgumentNullException()
     {
         var emitter = CreateEmitter();
 
-        Assert.Throws<ArgumentNullException>(() => emitter.Emit([], null!));
+        var ex = Assert.Throws<ArgumentNullException>(() => emitter.Emit([], null!));
+
+        Assert.Equal("config", ex.ParamName);
     }
 
     [Fact]
@@ -180,7 +192,9 @@ public class MermaidEmitterEmitTests
             Ui = null!
         };
 
-        Assert.Throws<ArgumentNullException>(() => emitter.Emit([], config));
+        var ex = Assert.Throws<ArgumentNullException>(() => emitter.Emit([], config));
+
+        Assert.Equal("diagram", ex.ParamName);
     }
 
     private static SlnxMermaidConfig CreateConfig(
