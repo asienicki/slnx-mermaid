@@ -17,6 +17,26 @@ filters:
     - ServiceDefaults
     - Seeder
 
+ui:
+  mode: dark  # dark | light
+  # Optional semantic role colors. Supported palette names: blue, green, yellow, orange, pink, purple, gray, red.
+  semantic:
+    presentation: blue      # Api/Web/Host/Gateway projects
+    application: green      # Application projects
+    domain: yellow          # Domain/Core projects
+    infrastructure: orange  # Infrastructure projects
+    dataAccess: pink        # DataAccess/Persistence/Database/Storage projects
+    tooling: purple         # CLI/Console/Tools/Seeder/Migrator projects
+    tests: gray             # Tests/Test/Spec projects
+  # Optional per-project overrides. Keys may be exact project names or wildcard patterns.
+  mappings:
+    SlnxMermaid.CLI: purple
+    "*Tests*": gray
+    SlnxMermaid.Core:
+      fill: "#141414"
+      stroke: "#90CAF9"
+      color: "#FFFFFF"
+
 naming:
   stripPrefix: SlnxMermaid_
   aliases:

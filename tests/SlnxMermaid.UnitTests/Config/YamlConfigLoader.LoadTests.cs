@@ -21,6 +21,22 @@ public class YamlConfigLoaderLoadTests
         Assert.Equal("S", result.Naming.Aliases["Sample"]);
     }
 
+
+    [Fact]
+    public void Load_WhenUiConfigExists_ShouldDeserializeSemanticAndMappings()
+    {
+        var path = GetConfigPath("ui-config.yml");
+
+        var result = YamlConfigLoader.Load(path);
+
+        Assert.Equal("light", result.Ui.Mode);
+        Assert.Equal("red", result.Ui.Semantic["application"]);
+        Assert.Equal("blue", result.Ui.Mappings["MinimalApi"]);
+        Assert.Equal("gray", result.Ui.Mappings["*Model*"]);
+        Assert.NotNull(result.Ui.Mappings["Application"]);
+        Assert.NotNull(result.Ui.Mappings["Infrastructure"]);
+    }
+
     [Fact]
     public void Load_WhenIncludeTransitiveDependenciesIsMissing_ShouldUseDefaultFalse()
     {
