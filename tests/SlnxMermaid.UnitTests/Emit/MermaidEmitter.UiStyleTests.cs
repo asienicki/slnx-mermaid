@@ -1,3 +1,4 @@
+﻿using System.Reflection;
 using SlnxMermaid.Core.Config;
 using SlnxMermaid.Core.Emit;
 using SlnxMermaid.Core.Filtering;
@@ -271,6 +272,70 @@ public class MermaidEmitterUiStyleTests
         Assert.Contains("class Application cls_green", result);
         Assert.Contains("class MyApp_Application cls_green", result);
         Assert.True(result.IndexOf("classDef", StringComparison.Ordinal) < result.IndexOf("class Application", StringComparison.Ordinal));
+    }
+
+
+    [Fact]
+    public void Emit_WithUiAndNoVisibleNodes_ShouldLogWarningAndReturnGraphHeaderOnly()
+    {
+        var output = new StringWriter();
+        var originalOutput = Console.Out;
+        try
+        {
+            Console.SetOut(output);
+
+            var result = Emit([], new UiConfig());
+
+            Assert.Equal($"graph TD{Environment.NewLine}", result);
+            Assert.Contains("[WARNING]: No visible nodes to process. Check your filters and inputs.", output.ToString());
+        }
+        finally
+        {
+            Console.SetOut(originalOutput);
+        }
+    }
+
+    [Fact]
+    public void Emit_WhenCustomStyleClassNamesCollide_ShouldAddDeterministicSuffix()
+    {
+        var ui = new UiConfig
+        {
+            Mappings =
+            {
+                ["Application"] = new Dictionary<string, object>
+                {
+                    ["fill"] = "#141414",
+                    ["stroke"] = "#111111"
+                },
+                ["MyApp.Application"] = new Dictionary<string, object>
+                {
+                    ["fill"] = "#141414",
+                    ["stroke"] = "#222222"
+                }
+            }
+        };
+
+        var result = Emit([Node("Application"), Node("MyApp.Application")], ui);
+
+        Assert.Contains("classDef cls_green_custom_141414 fill:#141414,stroke:#111111,color:#FFFFFF", result);
+        Assert.Contains("classDef cls_green_custom_141414_2 fill:#141414,stroke:#222222,color:#FFFFFF", result);
+        Assert.Contains("class Application cls_green_custom_141414", result);
+        Assert.Contains("class MyApp_Application cls_green_custom_141414_2", result);
+    }
+
+    [Theory]
+    [InlineData("Blue/Green", "blue_green")]
+    [InlineData("Zażółć-😀-123", "za_123")]
+    [InlineData("😀☃", "style")]
+    public void SanitizeClassToken_WhenInputContainsUnsupportedCharacters_ShouldKeepOnlyAsciiTokens(
+        string value,
+        string expected)
+    {
+        var method = typeof(MermaidEmitter).GetMethod("SanitizeClassToken", BindingFlags.NonPublic | BindingFlags.Static);
+
+        var result = method!.Invoke(null, [value]);
+
+        Assert.Equal(expected, result);
     }
 
     private static string Emit(IEnumerable<ProjectNode> nodes, UiConfig ui) =>
