@@ -64,6 +64,55 @@ public class MermaidEmitterUiStyleTests
     }
 
     [Fact]
+    public void Emit_WhenWildcardMappingMatchesCaseSensitiveProjectName_ShouldUseMappedPaletteColor()
+    {
+        var ui = new UiConfig
+        {
+            Mappings =
+            {
+                ["*App*"] = "yellow"
+            }
+        };
+
+        var result = Emit([Node("MyApp.Api")], ui);
+
+        Assert.Contains("classDef cls_yellow fill:#F9A825,stroke:#FFF59D,color:#000000", result);
+        Assert.Contains("class MyApp_Api cls_yellow", result);
+    }
+
+    [Fact]
+    public void Emit_WhenWildcardMappingDiffersByCase_ShouldNotMatch()
+    {
+        var ui = new UiConfig
+        {
+            Mappings =
+            {
+                ["*App*"] = "yellow"
+            }
+        };
+
+        var result = Emit([Node("sample.application")], ui);
+
+        Assert.DoesNotContain("classDef cls_yellow fill:#F9A825,stroke:#FFF59D,color:#000000", result);
+    }
+
+    [Fact]
+    public void Emit_WhenExactMappingDiffersByCase_ShouldNotMatch()
+    {
+        var ui = new UiConfig
+        {
+            Mappings =
+            {
+                ["MinimalApi"] = "red"
+            }
+        };
+
+        var result = Emit([Node("minimalapi")], ui);
+
+        Assert.DoesNotContain("classDef cls_red fill:#B71C1C,stroke:#EF9A9A,color:#FFFFFF", result);
+    }
+
+    [Fact]
     public void Emit_WhenExactAndWildcardMappingsMatch_ShouldPreferExactMapping()
     {
         var ui = new UiConfig

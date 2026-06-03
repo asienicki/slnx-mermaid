@@ -25,7 +25,7 @@ From an opened solution (`.sln` / `.slnx`), the extension triggers diagram gener
 
 ## Configuration behavior
 
-The extension uses the same project configuration approach as the CLI workflow (solution + output + filters + naming) so teams can keep one architecture standard regardless of entry point.
+The extension uses the same project configuration approach as the CLI workflow (solution, diagram, filters, UI colors, naming, and output) so teams can keep one architecture standard regardless of entry point. If `slnx-mermaid.yml` is missing in the solution directory, the first VSIX run creates a complete starter configuration with sample values.
 
 ## VSIX packaging note
 

@@ -37,10 +37,11 @@ ui:
     dataAccess: pink        # DataAccess/Persistence/Database/Storage projects
     tooling: purple         # CLI/Console/Tools/Seeder/Migrator projects
     tests: gray             # Tests/Test/Spec projects
-  # Optional per-project overrides. Keys may be exact project names or wildcard patterns.
+  # Optional per-project overrides. Keys may be exact project names or wildcard patterns. Matching is case-sensitive.
   mappings:
     SlnxMermaid.CLI: purple
     "*Tests*": gray
+    "*App*": yellow
     SlnxMermaid.Core:
       fill: "#141414"
       stroke: "#90CAF9"
@@ -99,7 +100,7 @@ Supported palette colors are `blue`, `green`, `yellow`, `orange`, `pink`, `purpl
 | `tests` | `Tests`, `Test`, `Spec`, `Specs` | `gray` |
 
 ### `ui.mappings`
-Defines per-project color overrides. Mapping keys may be exact project names or wildcard patterns with `*`. Exact project names win over wildcard matches; if several wildcard patterns match, the most specific pattern wins.
+Defines per-project color overrides. Mapping keys may be exact project names or wildcard patterns with `*`. Matching is case-sensitive, so `*App*` matches `MyApp.Api` but not `myapp.api`. Exact project names win over wildcard matches; if several wildcard patterns match, the most specific pattern wins.
 
 Mapping values can be:
 

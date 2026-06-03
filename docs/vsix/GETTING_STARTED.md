@@ -33,7 +33,7 @@ It helps visualize project dependencies and architecture directly inside Visual 
 ## Configuration
 
 The extension uses the same `slnx-mermaid.yml` configuration model as the CLI.
-You can keep one shared config in the solution directory (output path, filters, naming).
+You can keep one shared config in the solution directory (solution path, diagram settings, filters, UI colors, naming, and output path). If the file is missing, the first VSIX run creates a complete starter configuration with sample values.
 
 ## Output
 

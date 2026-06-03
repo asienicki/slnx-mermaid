@@ -192,7 +192,7 @@ public sealed class MermaidNodeStyleResolver
             if (entry.Key.IndexOf('*') >= 0)
                 continue;
 
-            if (string.Equals(entry.Key, projectName, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(entry.Key, projectName, StringComparison.Ordinal))
             {
                 key = entry.Key;
                 value = entry.Value;
@@ -213,7 +213,7 @@ public sealed class MermaidNodeStyleResolver
         var match = _ui.Mappings
             .Where(entry => entry.Key.IndexOf('*') >= 0 && WildcardMatches(entry.Key, projectName))
             .OrderByDescending(entry => Specificity(entry.Key))
-            .ThenBy(entry => entry.Key, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(entry => entry.Key, StringComparer.Ordinal)
             .FirstOrDefault();
 
         if (match.Key == null)
@@ -287,7 +287,7 @@ public sealed class MermaidNodeStyleResolver
     private static bool WildcardMatches(string pattern, string value)
     {
         var regex = "^" + Regex.Escape(pattern).Replace("\\*", ".*") + "$";
-        return Regex.IsMatch(value, regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        return Regex.IsMatch(value, regex, RegexOptions.CultureInvariant);
     }
 
     private static int Specificity(string pattern)
