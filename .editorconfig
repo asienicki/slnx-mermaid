@@ -119,12 +119,15 @@ generated_code = true
 
 [src/SlnxMermaid.Core/**/*.cs]
 csharp_style_namespace_declarations = block_scoped:suggestion
+csharp_indent_namespace_contents = false
 
 [src/SlnxMermaidVsix/**/*.cs]
 csharp_style_namespace_declarations = block_scoped:suggestion
+csharp_indent_namespace_contents = true
 
 [src/SlnxMermaid.CLI/**/*.cs]
-csharp_style_namespace_declarations = file_scoped:suggestion
+csharp_style_namespace_declarations = block_scoped:suggestion
+csharp_indent_namespace_contents = true
 
 [src/SlnxMermaid.Configuration/**/*.cs]
 csharp_style_namespace_declarations = file_scoped:suggestion
@@ -135,7 +138,7 @@ csharp_style_namespace_declarations = file_scoped:suggestion
 [tests/**/*.cs]
 csharp_style_namespace_declarations = file_scoped:suggestion
 
-[*.{csproj,props,targets,xml,resx,vsixmanifest,vsct,axaml}]
+[*.{csproj,props,targets,xml,resx,vsixmanifest,vsct,axaml,slnx}]
 indent_style = space
 indent_size = 2
 
