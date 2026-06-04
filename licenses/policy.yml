@@ -51,3 +51,9 @@ exceptions:
     license: "BSD-3-Clause"
     source: https://www.nuget.org/packages/Avalonia.Angle.Windows.Natives/2.1.27548.20260419/License
     rationale: "Avalonia desktop native dependency. NuGet publishes a license file matching BSD-3-Clause terms."
+
+  Avalonia.Remote.Protocol:
+    version: "12.0.4"
+    license: "MIT"
+    source: https://www.nuget.org/packages/Avalonia.Remote.Protocol/12.0.4/License
+    rationale: "Avalonia package metadata declares MIT using a license tag with attributes; the CI license parser requires an explicit exception for that form."
