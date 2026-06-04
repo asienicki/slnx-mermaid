@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:SlnxMermaid.Gui.Avalonia.ViewModels.Form"
+             xmlns:views="clr-namespace:SlnxMermaid.Gui.Avalonia.Views"
+             x:Class="SlnxMermaid.Gui.Avalonia.Views.MainView">
+  <UserControl.DataTemplates>
+    <DataTemplate DataType="{x:Type vm:TextFieldViewModel}"><views:TextFieldView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:BooleanFieldViewModel}"><views:BooleanFieldView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:EnumFieldViewModel}"><views:EnumFieldView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:NumericFieldViewModel}"><views:NumericFieldView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:ObjectFieldViewModel}"><views:ObjectFieldView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:DictionaryFieldViewModel}"><views:DictionaryFieldView /></DataTemplate>
+    <DataTemplate DataType="{x:Type vm:ListFieldViewModel}"><views:ListFieldView /></DataTemplate>
+  </UserControl.DataTemplates>
+
+  <Grid RowDefinitions="Auto,*,160" ColumnDefinitions="*,*" Margin="12">
+    <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+      <TextBox Width="360" Watermark="Configuration path" Text="{Binding ConfigPath, UpdateSourceTrigger=PropertyChanged}" />
+      <Button Content="Load" Command="{Binding LoadConfigCommand}" />
+      <Button Content="Save" Command="{Binding SaveConfigCommand}" />
+      <Button Content="Validate" Command="{Binding ValidateConfigCommand}" />
+      <Button Content="Copy YAML" Command="{Binding CopyYamlCommand}" />
+      <TextBlock Text="{Binding ValidationStatus}" VerticalAlignment="Center" FontWeight="Bold" />
+    </StackPanel>
+
+    <Border Grid.Row="1" Grid.Column="0" BorderBrush="#33000000" BorderThickness="1" Padding="8" Margin="0,0,8,8">
+      <views:DynamicConfigurationFormView />
+    </Border>
+
+    <Border Grid.Row="1" Grid.Column="1" BorderBrush="#33000000" BorderThickness="1" Padding="8" Margin="0,0,0,8">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Text="YAML preview" FontWeight="Bold" Margin="0,0,0,8" />
+        <TextBox Grid.Row="1" Text="{Binding YamlPreview}" AcceptsReturn="True" IsReadOnly="True" FontFamily="Consolas" />
+      </Grid>
+    </Border>
+
+    <Border Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="#33000000" BorderThickness="1" Padding="8">
+      <Grid RowDefinitions="Auto,*">
+        <TextBlock Text="Validation errors" FontWeight="Bold" />
+        <ListBox Grid.Row="1" ItemsSource="{Binding ValidationErrors}" />
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

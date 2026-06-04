@@ -104,6 +104,10 @@
     <Content Include="Resources\MermaidCommand.png" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\SlnxMermaid.Configuration\SlnxMermaid.Configuration.csproj">
+      <Project>{2f030ee3-00e5-4d81-b37f-3a7bf18c8a58}</Project>
+      <Name>SlnxMermaid.Configuration</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SlnxMermaid.Core\SlnxMermaid.Core.csproj">
       <Project>{d5badfcd-044d-4ead-b30a-699167eac31b}</Project>
       <Name>SlnxMermaid.Core</Name>
