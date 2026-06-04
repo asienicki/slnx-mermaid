@@ -1,5 +1,6 @@
 using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
+using SlnxMermaid.Gui.Avalonia.Services;
 
 namespace SlnxMermaid.Gui.Avalonia.ViewModels.Form;
 
