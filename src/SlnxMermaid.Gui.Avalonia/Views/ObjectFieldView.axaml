@@ -1,0 +1,10 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="SlnxMermaid.Gui.Avalonia.Views.ObjectFieldView">
+  <Expander Header="{Binding DisplayName}" IsExpanded="True" Margin="0,0,0,10">
+    <StackPanel Margin="12,8,0,0">
+      <TextBlock Text="{Binding Description}" Opacity="0.7" FontSize="12" />
+      <ItemsControl ItemsSource="{Binding Fields}" />
+    </StackPanel>
+  </Expander>
+</UserControl>
