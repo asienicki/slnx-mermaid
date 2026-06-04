@@ -1,0 +1,38 @@
+name: CI-dotnet-format
+
+on:
+  workflow_call:
+    inputs:
+      dotnet_version:
+        type: string
+        default: 10.0.x
+
+jobs:
+  dotnet-format:
+    name: Check .NET formatting
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ inputs.dotnet_version }}
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore SlnxMermaid.slnx
+
+      - name: Verify formatting
+        run: dotnet format SlnxMermaid.slnx --no-restore --verify-no-changes --verbosity diagnostic
