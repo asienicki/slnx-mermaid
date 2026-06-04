@@ -23,6 +23,9 @@ jobs:
   CI-build-linux-net10:
     uses: ./.github/workflows/CI-build-linux-net10.yml
 
+  CI-dotnet-format:
+    uses: ./.github/workflows/CI-dotnet-format.yml
+
   CI-check-mermaid:
     needs: CI-build-linux-net10
     if: github.event_name != 'schedule'

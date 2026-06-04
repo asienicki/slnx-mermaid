@@ -4,25 +4,25 @@ using System.Linq;
 
 namespace SlnxMermaid.Core.Filtering
 {
-public sealed class ProjectFilter
-{
-    private readonly string[] _excluded;
-
-    public ProjectFilter(IEnumerable<string> excluded)
+    public sealed class ProjectFilter
     {
-        _excluded = excluded?
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .ToArray();
-    }
+        private readonly string[] _excluded;
 
-    public bool IsAllowed(string projectId)
-    {
-        if (_excluded == null)
+        public ProjectFilter(IEnumerable<string> excluded)
         {
-            return true;
+            _excluded = excluded?
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToArray();
         }
 
-        return  _excluded.All(x => projectId.IndexOf(x, StringComparison.OrdinalIgnoreCase) < 0);
+        public bool IsAllowed(string projectId)
+        {
+            if (_excluded == null)
+            {
+                return true;
+            }
+
+            return _excluded.All(x => projectId.IndexOf(x, StringComparison.OrdinalIgnoreCase) < 0);
+        }
     }
-}
 }

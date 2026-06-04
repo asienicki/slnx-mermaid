@@ -11,5 +11,5 @@ namespace SlnxMermaid.Core.Exceptions
             FilePath = filePath;
         }
     }
-    
+
 }
