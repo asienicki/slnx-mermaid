@@ -11,9 +11,6 @@ on:
 permissions:
   contents: read
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   CI-branch-merge-guard:
     if: github.event_name == 'pull_request'

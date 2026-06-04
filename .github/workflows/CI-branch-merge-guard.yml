@@ -3,9 +3,6 @@ name: CI-branch-merge-guard
 on:
   workflow_call:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   guard:
     runs-on: ubuntu-latest

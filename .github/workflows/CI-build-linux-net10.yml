@@ -7,9 +7,6 @@ on:
         type: string
         default: 10.0.x
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -71,7 +68,7 @@ jobs:
             nuget-${{ runner.os }}-
 
       - name: Download build outputs
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: build-outputs
           path: .
