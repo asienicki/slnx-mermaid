@@ -58,6 +58,14 @@ jobs:
     uses: ./.github/workflows/CI-license-check.yml
     secrets: inherit
 
+  CI-nuget-vulnerability-check:
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    uses: ./.github/workflows/CI-nuget-vulnerability-check.yml
+    secrets: inherit
+
   CI-codeql:
     permissions:
       contents: read

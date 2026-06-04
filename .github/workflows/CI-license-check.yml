@@ -119,6 +119,7 @@ jobs:
 
           while IFS=$'\t' read -r NAME VERSION; do
             LICENSE=""
+            NUSPEC=""
 
             echo "→ $NAME $VERSION"
 
@@ -137,22 +138,36 @@ jobs:
               continue
             fi
 
+            LOWER_NAME="${NAME,,}"
             NUPKG=".licenses/$NAME.$VERSION.nupkg"
             TMP=".licenses/tmp/$NAME.$VERSION"
             mkdir -p "$TMP"
 
-            URL="https://api.nuget.org/v3-flatcontainer/${NAME,,}/$VERSION/${NAME,,}.$VERSION.nupkg"
+            CACHED_PACKAGE_DIR="$HOME/.nuget/packages/$LOWER_NAME/$VERSION"
+            CACHED_NUSPEC="$CACHED_PACKAGE_DIR/$LOWER_NAME.nuspec"
+            CACHED_NUPKG="$CACHED_PACKAGE_DIR/$LOWER_NAME.$VERSION.nupkg"
+            URL="https://api.nuget.org/v3-flatcontainer/$LOWER_NAME/$VERSION/$LOWER_NAME.$VERSION.nupkg"
 
-            if ! curl -fsSL "$URL" -o "$NUPKG"; then
-              LICENSE="UNKNOWN"
+            if [[ -f "$CACHED_NUSPEC" ]]; then
+              NUSPEC="$CACHED_NUSPEC"
             else
-              unzip -qq -o "$NUPKG" '*.nuspec' -d "$TMP" || true
-              NUSPEC=$(ls "$TMP"/*.nuspec 2>/dev/null | head -n 1)
+              if [[ -f "$CACHED_NUPKG" ]]; then
+                cp "$CACHED_NUPKG" "$NUPKG"
+              elif ! curl --retry 3 --retry-all-errors --connect-timeout 20 -fsSL "$URL" -o "$NUPKG"; then
+                LICENSE="UNKNOWN"
+              fi
 
+              if [[ -z "$LICENSE" ]]; then
+                unzip -qq -o "$NUPKG" '*.nuspec' -d "$TMP" || true
+                NUSPEC=$(find "$TMP" -maxdepth 1 -name '*.nuspec' -print -quit)
+              fi
+            fi
+
+            if [[ -z "$LICENSE" ]]; then
               if [[ -z "${NUSPEC:-}" ]]; then
                 LICENSE="UNKNOWN"
               else
-                LICENSE=$(sed -nE 's:.*<(licenseExpression|license)>([^<]+)<.*:\2:p' "$NUSPEC")
+                LICENSE=$(sed -nE 's:.*<licenseExpression>([^<]+)</licenseExpression>.*:\1:p; s:.*<license([^>]*)?>([^<]+)</license>.*:\2:p' "$NUSPEC" | head -n 1)
                 [[ -z "$LICENSE" ]] && LICENSE=$(sed -nE 's:.*<licenseUrl>([^<]+)<.*:\1:p' "$NUSPEC")
                 LICENSE=${LICENSE:-UNKNOWN}
               fi
