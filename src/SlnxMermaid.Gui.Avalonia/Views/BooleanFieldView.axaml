@@ -1,0 +1,8 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="SlnxMermaid.Gui.Avalonia.Views.BooleanFieldView">
+  <StackPanel Margin="0,0,0,10">
+    <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding Value}" />
+    <TextBlock Text="{Binding Description}" Opacity="0.7" FontSize="12" />
+  </StackPanel>
+</UserControl>

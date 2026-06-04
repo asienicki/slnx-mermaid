@@ -1,0 +1,15 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="SlnxMermaid.Gui.Avalonia.Views.DictionaryFieldView">
+  <Expander Header="{Binding DisplayName}" IsExpanded="True" Margin="0,0,0,10">
+    <StackPanel Margin="12,8,0,0">
+      <TextBlock Text="{Binding Description}" Opacity="0.7" FontSize="12" />
+      <DataGrid ItemsSource="{Binding Entries}" AutoGenerateColumns="False" MinHeight="120">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Key" Binding="{Binding Key}" />
+          <DataGridTextColumn Header="Value" Binding="{Binding Value}" />
+        </DataGrid.Columns>
+      </DataGrid>
+    </StackPanel>
+  </Expander>
+</UserControl>

@@ -1,0 +1,10 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="SlnxMermaid.Gui.Avalonia.Views.NumericFieldView">
+  <StackPanel Margin="0,0,0,10">
+    <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" />
+    <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Watermark="number" />
+    <TextBlock Text="{Binding ValidationMessage}" Foreground="Red" FontSize="12" />
+    <TextBlock Text="{Binding Description}" Opacity="0.7" FontSize="12" />
+  </StackPanel>
+</UserControl>
