@@ -13,7 +13,8 @@ namespace SlnxMermaid.Core.Emit
         private const string ExpectedHexMessage = "Expected #RRGGBB.";
         private const string Black = "#000000";
         private const string White = "#FFFFFF";
-        private static readonly Regex HexRegex = new Regex("^#[0-9a-fA-F]{6}$", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+        private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(1);
+        private static readonly Regex HexRegex = new Regex("^#[0-9a-fA-F]{6}$", RegexOptions.Compiled, RegexTimeout);
         private static readonly string[] FallbackColorOrder = { "blue", "green", "yellow", "orange", "pink", "purple", "gray", "red" };
 
         private readonly UiConfig _ui;
@@ -79,8 +80,8 @@ namespace SlnxMermaid.Core.Emit
 
         private MermaidNodeResolvedStyle ApplyStyleMapping(object value, MermaidNodeStyle baseStyle, string baseColorName, string projectName)
         {
-            var values = ToStringObjectDictionary(value);
-            if (values == null)
+            Dictionary<string, object> values;
+            if (!TryGetStringObjectDictionary(value, out values))
                 throw new InvalidOperationException("Invalid mapping value type for project '" + projectName + "'. Use a palette name, hex value, or style object.");
 
             string fill = null;
@@ -178,8 +179,8 @@ namespace SlnxMermaid.Core.Emit
                 return;
             }
 
-            var values = ToStringObjectDictionary(value);
-            if (values == null)
+            Dictionary<string, object> values;
+            if (!TryGetStringObjectDictionary(value, out values))
                 throw new InvalidOperationException("Invalid mapping value type for mapping '" + key + "'. Use a palette name, hex value, or style object.");
 
             foreach (var entry in values)
@@ -313,7 +314,7 @@ namespace SlnxMermaid.Core.Emit
         private static bool WildcardMatches(string pattern, string value)
         {
             var regex = "^" + Regex.Escape(pattern).Replace("\\*", ".*") + "$";
-            return Regex.IsMatch(value, regex, RegexOptions.CultureInvariant);
+            return Regex.IsMatch(value, regex, RegexOptions.CultureInvariant, RegexTimeout);
         }
 
         private static int Specificity(string pattern)
@@ -336,21 +337,27 @@ namespace SlnxMermaid.Core.Emit
             return value.Trim().ToUpperInvariant();
         }
 
-        private static Dictionary<string, object> ToStringObjectDictionary(object value)
+        private static bool TryGetStringObjectDictionary(object value, out Dictionary<string, object> result)
         {
             var typed = value as Dictionary<string, object>;
             if (typed != null)
-                return typed;
+            {
+                result = typed;
+                return true;
+            }
 
             var dictionary = value as IDictionary;
             if (dictionary == null)
-                return null;
+            {
+                result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                return false;
+            }
 
-            var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
             foreach (DictionaryEntry entry in dictionary)
                 result[Convert.ToString(entry.Key, CultureInfo.InvariantCulture)] = entry.Value;
 
-            return result;
+            return true;
         }
 
         private static MermaidNodeStyle AutoStyle(string fill)
