@@ -33,12 +33,15 @@ dotnet tool install --global slnx-mermaid
 slnx-mermaid --config slnx-mermaid.yml
 ```
 
+The CLI reads the configured `.sln` or `.slnx`, analyzes project references, and writes a Markdown file containing a fenced Mermaid graph to `output.file`. Relative `solution` and `output.file` paths are resolved from the configuration file location.
+
 ## Fast start (VSIX)
 
 1. Install the extension from Visual Studio Marketplace.
 2. Open a `.sln` / `.slnx` solution in Visual Studio.
 3. Right-click the solution node in Solution Explorer.
 4. Run the **SLNX Mermaid** command.
+5. If `slnx-mermaid.yml` is missing next to the solution, the extension creates a starter config before generation.
 
 ## License
 

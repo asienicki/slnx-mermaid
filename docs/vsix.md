@@ -5,11 +5,11 @@ title: VSIX Guide
 
 # VSIX Guide (Visual Studio Extension)
 
-The VSIX endpoint lets you generate Mermaid diagrams directly from Visual Studio.
+The VSIX endpoint lets you generate Mermaid diagrams directly from Visual Studio. It uses the same core generator as the CLI.
 
 ## What it does
 
-From an opened solution (`.sln` / `.slnx`), the extension triggers diagram generation and writes Mermaid output, equivalent in purpose to the CLI endpoint.
+From an opened solution (`.sln` / `.slnx`), the extension creates or loads `slnx-mermaid.yml` in the solution directory, analyzes project references, writes the configured Markdown output file, and opens it in Visual Studio.
 
 ## Installation
 
@@ -21,11 +21,11 @@ From an opened solution (`.sln` / `.slnx`), the extension triggers diagram gener
 1. Open a solution in Visual Studio.
 2. In Solution Explorer, right-click the solution node.
 3. Run the **SLNX Mermaid** command.
-4. Open the generated Mermaid markdown file.
+4. The extension writes the configured Mermaid markdown file and opens it automatically.
 
 ## Configuration behavior
 
-The extension uses the same project configuration approach as the CLI workflow (solution, diagram, filters, UI colors, naming, and output) so teams can keep one architecture standard regardless of entry point. If `slnx-mermaid.yml` is missing in the solution directory, the first VSIX run creates a complete starter configuration with sample values.
+The extension uses the same project configuration approach as the CLI workflow (solution, diagram, filters, UI colors, naming, and output) so teams can keep one architecture standard regardless of entry point. It always looks for `slnx-mermaid.yml` next to the loaded solution. If that file is missing, the first VSIX run creates a complete starter configuration with sample values and opens it.
 
 ## VSIX packaging note
 

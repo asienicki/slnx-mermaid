@@ -5,7 +5,7 @@ title: Configuration Reference
 
 # Configuration Reference
 
-SLNX Mermaid uses YAML configuration.
+SLNX Mermaid uses YAML configuration. The same model is used by the CLI and by the Visual Studio extension.
 
 ## Example
 
@@ -13,7 +13,7 @@ SLNX Mermaid uses YAML configuration.
 solution: SlnxMermaid.slnx
 
 diagram:
-  direction: TD   # TD (top-down) | LR (left-right)
+  direction: TD   # Passed to Mermaid graph direction; common values: TD, LR, BT, RL
   includeTransitiveDependencies: false  # false = direct only | true = direct + indirect
   orderDependenciesByDepth: true  # false = legacy alphabetical edge order | true = dependency-depth order
 
@@ -37,12 +37,13 @@ ui:
     dataAccess: pink        # DataAccess/Persistence/Database/Storage projects
     tooling: purple         # CLI/Console/Tools/Seeder/Migrator projects
     tests: gray             # Tests/Test/Spec projects
-  # Optional per-project overrides. Keys may be exact project names or wildcard patterns. Matching is case-sensitive.
+  # Optional per-project overrides. Keys use normalized project ids: project file names without extension,
+  # with dots and hyphens replaced by underscores. Wildcards use * and are case-sensitive.
   mappings:
-    SlnxMermaid.CLI: purple
+    SlnxMermaid_CLI: purple
     "*Tests*": gray
     "*App*": yellow
-    SlnxMermaid.Core:
+    SlnxMermaid_Core:
       fill: "#141414"
       stroke: "#90CAF9"
       color: "#FFFFFF"
@@ -51,7 +52,7 @@ naming:
   stripPrefix: SlnxMermaid_
   aliases:
     Core: CORE
-    CLI: Command Line Interface
+    CLI: CommandLineInterface
 
 output:
   file: docs/architecture/{date}-dependency-graph-mermaid.md
@@ -60,11 +61,18 @@ output:
 ## Sections
 
 ### `solution`
-Path to `.sln` / `.slnx` file.
+Path to a `.sln` or `.slnx` file.
+
+The generator first tries MSBuild project graph analysis. If project evaluation fails with an MSBuild project-file error, it falls back to parsing the solution file directly and reading project references from project XML.
+
+Supported project references in the fallback parser:
+
+- `.slnx`: `<Project Path="..." />` entries
+- `.sln`: `csproj`, `fsproj`, and `vbproj` project entries
+- project files: `ProjectReference` items
 
 ### `diagram.direction`
-- `TD` (top-down)
-- `LR` (left-right)
+Value emitted after Mermaid `graph`, for example `TD` or `LR`. The tool does not validate this field beyond passing the value through to Mermaid.
 
 ### `diagram.includeTransitiveDependencies`
 - `false` (default): include only direct project references.
@@ -76,7 +84,9 @@ Path to `.sln` / `.slnx` file.
 - `false`: preserve the legacy alphabetical Mermaid edge order.
 
 ### `filters.exclude`
-Project name patterns to omit from the graph.
+Case-insensitive substring filters applied to normalized project ids before edges and styles are emitted. These are not glob patterns: `Tests` excludes any normalized project id containing `tests`, while `*Tests*` would be treated as a literal substring containing asterisks.
+
+Normalized project ids are project file names without extension, with dots and hyphens replaced by underscores. For example, `SlnxMermaid.CLI.csproj` becomes `SlnxMermaid_CLI`.
 
 ### `ui.mode`
 Chooses the built-in diagram color palette. Supported values are:
@@ -85,7 +95,7 @@ Chooses the built-in diagram color palette. Supported values are:
 - `light`
 
 ### `ui.semantic`
-Overrides colors assigned automatically to semantic project roles detected from project names.
+Overrides colors assigned automatically to semantic project roles detected from normalized project ids.
 
 Supported palette colors are `blue`, `green`, `yellow`, `orange`, `pink`, `purple`, `gray`, and `red`. The built-in roles are:
 
@@ -99,8 +109,12 @@ Supported palette colors are `blue`, `green`, `yellow`, `orange`, `pink`, `purpl
 | `tooling` | `Seeder`, `Migrator`, `Tools`, `Tool`, `CLI`, `Console` | `purple` |
 | `tests` | `Tests`, `Test`, `Spec`, `Specs` | `gray` |
 
+Semantic role keys are case-insensitive. Color names are resolved in the active palette selected by `ui.mode`.
+
 ### `ui.mappings`
-Defines per-project color overrides. Mapping keys may be exact project names or wildcard patterns with `*`. Matching is case-sensitive, so `*App*` matches `MyApp.Api` but not `myapp.api`. Exact project names win over wildcard matches; if several wildcard patterns match, the most specific pattern wins.
+Defines per-project color overrides. Mapping keys use normalized project ids, not display names after `naming.stripPrefix` or `naming.aliases`.
+
+Keys may be exact ids or wildcard patterns with `*`. Matching is case-sensitive, so `*App*` matches `MyApp_Api` but not `myapp_api`. Exact ids win over wildcard matches; if several wildcard patterns match, the most specific pattern wins.
 
 Mapping values can be:
 
@@ -108,14 +122,20 @@ Mapping values can be:
 - a fill color in `#RRGGBB` format
 - a style object with `fill`, `stroke`, and/or `color` fields in `#RRGGBB` format
 
+If a single hex value is used, it is treated as the fill color. Text and stroke colors are chosen automatically unless the project has a semantic base style.
+
 ### `naming.stripPrefix`
-Removes repeated prefix from project names in diagram output.
+Removes a repeated prefix from normalized project ids in diagram output.
+
+Example: with `stripPrefix: SlnxMermaid_`, `SlnxMermaid_Core` is emitted as `Core`.
 
 ### `naming.aliases`
-Maps project names to documentation-friendly labels.
+Maps transformed output names to Mermaid node ids. Aliases are applied after project id normalization and after `stripPrefix`.
+
+Prefer Mermaid-safe aliases made of letters, digits, and underscores. The emitter writes aliases as node ids, not quoted labels, so spaces or punctuation can make the Mermaid output invalid.
 
 ### `output.file`
-Target output path for generated Mermaid markdown.
+Target output path for generated Mermaid markdown. The file contains a fenced Markdown code block with `mermaid` as the language.
 
 ## Placeholder support
 
@@ -127,7 +147,7 @@ Target output path for generated Mermaid markdown.
 
 Both `solution` and `output.file` support:
 
-- relative paths (resolved from config location)
+- relative paths (resolved from the configuration file location)
 - absolute paths
 
 Forward slashes are recommended for cross-platform compatibility.
