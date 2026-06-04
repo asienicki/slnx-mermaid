@@ -12,7 +12,7 @@ public sealed class ConfigurationFormBuilderTests
         var config = new TestConfiguration();
         var fields = new ConfigurationFormBuilder().Build(config);
 
-        Assert.IsType<EnumFieldViewModel>(Assert.Single(fields.Where(field => field.Name == nameof(TestConfiguration.Mode))));
+        Assert.IsType<EnumFieldViewModel>(Assert.Single(fields, field => field.Name == nameof(TestConfiguration.Mode)));
     }
 
     [Fact]

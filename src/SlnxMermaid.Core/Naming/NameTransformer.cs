@@ -5,38 +5,38 @@ using System.Collections.Generic;
 
 namespace SlnxMermaid.Core.Naming
 {
-public sealed class NameTransformer
-{
-    private readonly string _stripPrefix;
-    private readonly Dictionary<string, string> _aliases;
-
-    public NameTransformer(NamingConfig namingConfig)
+    public sealed class NameTransformer
     {
-        _stripPrefix = namingConfig.StripPrefix.PrepareToDisplayOnMermaidDiagram();
-        _aliases = namingConfig.Aliases;
-    }
+        private readonly string _stripPrefix;
+        private readonly Dictionary<string, string> _aliases;
 
-    public string Transform(string rawName)
-    {
-        var name = NormalizeKnownAcronymCasing(rawName.PrepareToDisplayOnMermaidDiagram());
-
-        if (!string.IsNullOrEmpty(_stripPrefix) &&
-            name.StartsWith(_stripPrefix, StringComparison.Ordinal))
+        public NameTransformer(NamingConfig namingConfig)
         {
-            name = name.Substring(_stripPrefix.Length);
+            _stripPrefix = namingConfig.StripPrefix.PrepareToDisplayOnMermaidDiagram();
+            _aliases = namingConfig.Aliases;
         }
 
-        return _aliases != null && 
-               _aliases.TryGetValue(name, out var alias)
-                ? alias
-                : name;
-    }
+        public string Transform(string rawName)
+        {
+            var name = NormalizeKnownAcronymCasing(rawName.PrepareToDisplayOnMermaidDiagram());
 
-    private static string NormalizeKnownAcronymCasing(string name)
-    {
-        return string.IsNullOrEmpty(name)
-            ? name
-            : name.Replace("APi", "Api");
+            if (!string.IsNullOrEmpty(_stripPrefix) &&
+                name.StartsWith(_stripPrefix, StringComparison.Ordinal))
+            {
+                name = name.Substring(_stripPrefix.Length);
+            }
+
+            return _aliases != null &&
+                   _aliases.TryGetValue(name, out var alias)
+                    ? alias
+                    : name;
+        }
+
+        private static string NormalizeKnownAcronymCasing(string name)
+        {
+            return string.IsNullOrEmpty(name)
+                ? name
+                : name.Replace("APi", "Api");
+        }
     }
-}
 }

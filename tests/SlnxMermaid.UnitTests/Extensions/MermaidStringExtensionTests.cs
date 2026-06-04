@@ -9,7 +9,7 @@ namespace SlnxMermaid.UnitTests.Extensions
             [Theory]
             [InlineData(null, "")]
             [InlineData("", "")]
-            public void Returns_empty_for_null_or_empty(string input, string expected)
+            public void Returns_empty_for_null_or_empty(string? input, string expected)
             {
                 // act
                 var result = input.ConvertToAllowedMermaidString();
@@ -62,7 +62,7 @@ namespace SlnxMermaid.UnitTests.Extensions
             [InlineData(null)]
             [InlineData("")]
             [InlineData("   ")]
-            public void Returns_empty_for_null_or_whitespace_path(string input)
+            public void Returns_empty_for_null_or_whitespace_path(string? input)
             {
                 var result = input.PrepareToDisplayOnMermaidDiagram();
 

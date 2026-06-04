@@ -1,14 +1,14 @@
 ﻿namespace SlnxMermaid.Core.Emit
 {
-internal sealed class LegacyEdge
-{
-    internal LegacyEdge(string from, string to)
+    internal sealed class LegacyEdge
     {
-        From = from;
-        To = to;
-    }
+        internal LegacyEdge(string from, string to)
+        {
+            From = from;
+            To = to;
+        }
 
-    internal string From { get; }
-    internal string To { get; }
-}
+        internal string From { get; }
+        internal string To { get; }
+    }
 }
