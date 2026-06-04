@@ -12,6 +12,8 @@ namespace SlnxMermaid.Core.Emit
 {
     public sealed class MermaidEmitter
     {
+        private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(1);
+
         private readonly NameTransformer _naming;
         private readonly ProjectFilter _filter;
 
@@ -106,9 +108,9 @@ namespace SlnxMermaid.Core.Emit
             var usedClassNames = new HashSet<string>(StringComparer.Ordinal);
             var assignments = new List<KeyValuePair<string, string>>();
 
-            foreach (var node in visibleNodes)
+            foreach (var nodeId in visibleNodes.Select(node => node.Id))
             {
-                var resolved = resolver.Resolve(node.Id);
+                var resolved = resolver.Resolve(nodeId);
                 string className;
                 if (!classNamesByStyle.TryGetValue(resolved.Style, out className))
                 {
@@ -117,7 +119,7 @@ namespace SlnxMermaid.Core.Emit
                     classDefinitions.Add(new KeyValuePair<string, MermaidNodeStyle>(className, resolved.Style));
                 }
 
-                assignments.Add(new KeyValuePair<string, string>(_naming.Transform(node.Id), className));
+                assignments.Add(new KeyValuePair<string, string>(_naming.Transform(nodeId), className));
             }
 
             if (assignments.Count == 0)
@@ -179,7 +181,7 @@ namespace SlnxMermaid.Core.Emit
 
             // Mermaid class names generated here are intentionally limited to ASCII lowercase letters,
             // digits, and underscores so the emitted classDef/class references remain parser-friendly.
-            var sanitized = Regex.Replace(value.ToLowerInvariant(), "[^a-z0-9_]+", "_").Trim('_');
+            var sanitized = Regex.Replace(value.ToLowerInvariant(), "[^a-z0-9_]+", "_", RegexOptions.None, RegexTimeout).Trim('_');
             return string.IsNullOrEmpty(sanitized) ? "style" : sanitized;
         }
 

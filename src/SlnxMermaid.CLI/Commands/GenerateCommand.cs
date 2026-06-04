@@ -34,15 +34,16 @@ public sealed class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
         var nodes = SolutionGraphAnalyzer.Analyze(config);
 
-        var naming = new NameTransformer(config.Naming);
+        var naming = new NameTransformer(config.Naming ?? new NamingConfig());
 
-        var filter = new ProjectFilter(config.Filters.Exclude);
+        var filters = config.Filters ?? new FilterConfig();
+        var filter = new ProjectFilter(filters.Exclude);
 
         var emitter = new MermaidEmitter(naming, filter);
 
         var mermaid = emitter.Emit(nodes, config);
 
-        await HandleResult(config.Output.File, mermaid, AnsiConsole.MarkupLine, cancellationToken);
+        await HandleResult(config.Output?.File, mermaid, AnsiConsole.MarkupLine, cancellationToken);
 
         return 0;
     }

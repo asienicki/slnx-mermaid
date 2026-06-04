@@ -10,7 +10,11 @@ namespace SlnxMermaid.Core.Emit
 {
     public sealed class MermaidNodeStyleResolver
     {
-        private static readonly Regex HexRegex = new Regex("^#[0-9a-fA-F]{6}$", RegexOptions.Compiled);
+        private const string ExpectedHexMessage = "Expected #RRGGBB.";
+        private const string Black = "#000000";
+        private const string White = "#FFFFFF";
+        private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(1);
+        private static readonly Regex HexRegex = new Regex("^#[0-9a-fA-F]{6}$", RegexOptions.Compiled, RegexTimeout);
         private static readonly string[] FallbackColorOrder = { "blue", "green", "yellow", "orange", "pink", "purple", "gray", "red" };
 
         private readonly UiConfig _ui;
@@ -47,28 +51,37 @@ namespace SlnxMermaid.Core.Emit
         {
             var text = value as string;
             if (text != null)
+                return ApplyTextMapping(text, baseStyle, baseColorName);
+
+            return ApplyStyleMapping(value, baseStyle, baseColorName, projectName);
+        }
+
+        private MermaidNodeResolvedStyle ApplyTextMapping(string text, MermaidNodeStyle baseStyle, string baseColorName)
+        {
+            var trimmedText = text.Trim();
+            if (LooksLikeHex(trimmedText) && !IsHex(trimmedText))
+                throw new InvalidOperationException("Invalid hex value '" + trimmedText + "'. " + ExpectedHexMessage);
+
+            if (IsHex(trimmedText))
             {
-                text = text.Trim();
-                if (LooksLikeHex(text) && !IsHex(text))
-                    throw new InvalidOperationException("Invalid hex value '" + text + "'. Expected #RRGGBB.");
-
-                if (IsHex(text))
-                {
-                    var style = baseStyle != null
-                        ? baseStyle.With(NormalizeHex(text), null, null)
-                        : AutoStyle(NormalizeHex(text));
-                    return new MermaidNodeResolvedStyle(style, baseColorName, true);
-                }
-
-                MermaidNodeStyle paletteStyle;
-                if (!_palette.TryGet(text, out paletteStyle))
-                    throw new InvalidOperationException("Unknown palette color name '" + text + "'.");
-
-                return new MermaidNodeResolvedStyle(paletteStyle, text.ToLowerInvariant(), false);
+                var normalizedHex = NormalizeHex(trimmedText);
+                var style = baseStyle != null
+                    ? baseStyle.With(normalizedHex, null, null)
+                    : AutoStyle(normalizedHex);
+                return new MermaidNodeResolvedStyle(style, baseColorName, true);
             }
 
-            var values = ToStringObjectDictionary(value);
-            if (values == null)
+            MermaidNodeStyle paletteStyle;
+            if (!_palette.TryGet(trimmedText, out paletteStyle))
+                throw new InvalidOperationException("Unknown palette color name '" + trimmedText + "'.");
+
+            return new MermaidNodeResolvedStyle(paletteStyle, trimmedText.ToLowerInvariant(), false);
+        }
+
+        private MermaidNodeResolvedStyle ApplyStyleMapping(object value, MermaidNodeStyle baseStyle, string baseColorName, string projectName)
+        {
+            Dictionary<string, object> values;
+            if (!TryGetStringObjectDictionary(value, out values))
                 throw new InvalidOperationException("Invalid mapping value type for project '" + projectName + "'. Use a palette name, hex value, or style object.");
 
             string fill = null;
@@ -78,26 +91,38 @@ namespace SlnxMermaid.Core.Emit
             foreach (var entry in values)
             {
                 var field = entry.Key;
-                if (!string.Equals(field, "fill", StringComparison.OrdinalIgnoreCase)
-                    && !string.Equals(field, "stroke", StringComparison.OrdinalIgnoreCase)
-                    && !string.Equals(field, "color", StringComparison.OrdinalIgnoreCase))
-                    throw new InvalidOperationException("Invalid or unsupported style field '" + field + "'. Allowed fields are fill, stroke, and color.");
-
-                var fieldValue = entry.Value as string;
-                if (fieldValue == null || !IsHex(fieldValue.Trim()))
-                    throw new InvalidOperationException("Invalid hex value for style field '" + field + "'. Expected #RRGGBB.");
+                var normalizedValue = GetNormalizedStyleFieldValue(field, entry.Value);
 
                 if (string.Equals(field, "fill", StringComparison.OrdinalIgnoreCase))
-                    fill = NormalizeHex(fieldValue);
+                    fill = normalizedValue;
                 else if (string.Equals(field, "stroke", StringComparison.OrdinalIgnoreCase))
-                    stroke = NormalizeHex(fieldValue);
+                    stroke = normalizedValue;
                 else
-                    color = NormalizeHex(fieldValue);
+                    color = normalizedValue;
             }
 
             var resolvedBase = baseStyle ?? (fill != null ? AutoStyle(fill) : ResolveFallback(projectName));
             var resolved = resolvedBase.With(fill, stroke, color);
             return new MermaidNodeResolvedStyle(resolved, baseColorName ?? FallbackColorName(projectName), fill != null || stroke != null || color != null);
+        }
+
+        private static string GetNormalizedStyleFieldValue(string field, object value)
+        {
+            EnsureSupportedStyleField(field);
+
+            var fieldValue = value as string;
+            if (fieldValue == null || !IsHex(fieldValue.Trim()))
+                throw new InvalidOperationException("Invalid hex value for style field '" + field + "'. " + ExpectedHexMessage);
+
+            return NormalizeHex(fieldValue);
+        }
+
+        private static void EnsureSupportedStyleField(string field)
+        {
+            if (!string.Equals(field, "fill", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(field, "stroke", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(field, "color", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Invalid or unsupported style field '" + field + "'. Allowed fields are fill, stroke, and color.");
         }
 
         private static Dictionary<string, string> BuildSemanticMap(Dictionary<string, string> configured)
@@ -150,34 +175,38 @@ namespace SlnxMermaid.Core.Emit
             var text = value as string;
             if (text != null)
             {
-                text = text.Trim();
-                if (LooksLikeHex(text) && !IsHex(text))
-                    throw new InvalidOperationException("Invalid hex value '" + text + "' for mapping '" + key + "'. Expected #RRGGBB.");
-
-                if (IsHex(text))
-                    return;
-
-                if (!_palette.TryGet(text, out _))
-                    throw new InvalidOperationException("Unknown palette color name '" + text + "' for mapping '" + key + "'.");
-
+                ValidateTextMapping(key, text);
                 return;
             }
 
-            var values = ToStringObjectDictionary(value);
-            if (values == null)
+            Dictionary<string, object> values;
+            if (!TryGetStringObjectDictionary(value, out values))
                 throw new InvalidOperationException("Invalid mapping value type for mapping '" + key + "'. Use a palette name, hex value, or style object.");
 
             foreach (var entry in values)
-            {
-                if (!string.Equals(entry.Key, "fill", StringComparison.OrdinalIgnoreCase)
-                    && !string.Equals(entry.Key, "stroke", StringComparison.OrdinalIgnoreCase)
-                    && !string.Equals(entry.Key, "color", StringComparison.OrdinalIgnoreCase))
-                    throw new InvalidOperationException("Invalid or unsupported style field '" + entry.Key + "'. Allowed fields are fill, stroke, and color.");
+                ValidateStyleField(key, entry.Key, entry.Value);
+        }
 
-                var fieldValue = entry.Value as string;
-                if (fieldValue == null || !IsHex(fieldValue.Trim()))
-                    throw new InvalidOperationException("Invalid hex value for style field '" + entry.Key + "' in mapping '" + key + "'. Expected #RRGGBB.");
-            }
+        private void ValidateTextMapping(string key, string text)
+        {
+            var trimmedText = text.Trim();
+            if (LooksLikeHex(trimmedText) && !IsHex(trimmedText))
+                throw new InvalidOperationException("Invalid hex value '" + trimmedText + "' for mapping '" + key + "'. " + ExpectedHexMessage);
+
+            if (IsHex(trimmedText))
+                return;
+
+            if (!_palette.TryGet(trimmedText, out _))
+                throw new InvalidOperationException("Unknown palette color name '" + trimmedText + "' for mapping '" + key + "'.");
+        }
+
+        private static void ValidateStyleField(string key, string field, object value)
+        {
+            EnsureSupportedStyleField(field);
+
+            var fieldValue = value as string;
+            if (fieldValue == null || !IsHex(fieldValue.Trim()))
+                throw new InvalidOperationException("Invalid hex value for style field '" + field + "' in mapping '" + key + "'. " + ExpectedHexMessage);
         }
 
         private bool TryGetExactMapping(string projectName, out string key, out object value)
@@ -224,7 +253,7 @@ namespace SlnxMermaid.Core.Emit
             return true;
         }
 
-        private string DetectRole(string projectName)
+        private static string DetectRole(string projectName)
         {
             var roles = new List<KeyValuePair<string, string[]>>
         {
@@ -238,19 +267,17 @@ namespace SlnxMermaid.Core.Emit
         };
 
             var segments = SplitSegments(projectName);
-            foreach (var role in roles)
-            {
-                if (role.Value.Any(term => segments.Any(segment => string.Equals(segment, term, StringComparison.OrdinalIgnoreCase))))
-                    return role.Key;
-            }
+            var segmentMatch = roles
+                .Where(role => role.Value.Any(term => segments.Any(segment => string.Equals(segment, term, StringComparison.OrdinalIgnoreCase))))
+                .Select(role => role.Key)
+                .FirstOrDefault();
+            if (segmentMatch != null)
+                return segmentMatch;
 
-            foreach (var role in roles)
-            {
-                if (role.Value.Any(term => projectName.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0))
-                    return role.Key;
-            }
-
-            return null;
+            return roles
+                .Where(role => role.Value.Any(term => projectName.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0))
+                .Select(role => role.Key)
+                .FirstOrDefault();
         }
 
         private static IEnumerable<string> SplitSegments(string projectName)
@@ -263,7 +290,7 @@ namespace SlnxMermaid.Core.Emit
             return _palette.Get(FallbackColorName(projectName));
         }
 
-        private string FallbackColorName(string projectName)
+        private static string FallbackColorName(string projectName)
         {
             var hash = StableHash(projectName ?? string.Empty);
             return FallbackColorOrder[hash % FallbackColorOrder.Length];
@@ -287,7 +314,7 @@ namespace SlnxMermaid.Core.Emit
         private static bool WildcardMatches(string pattern, string value)
         {
             var regex = "^" + Regex.Escape(pattern).Replace("\\*", ".*") + "$";
-            return Regex.IsMatch(value, regex, RegexOptions.CultureInvariant);
+            return Regex.IsMatch(value, regex, RegexOptions.CultureInvariant, RegexTimeout);
         }
 
         private static int Specificity(string pattern)
@@ -310,26 +337,32 @@ namespace SlnxMermaid.Core.Emit
             return value.Trim().ToUpperInvariant();
         }
 
-        private static Dictionary<string, object> ToStringObjectDictionary(object value)
+        private static bool TryGetStringObjectDictionary(object value, out Dictionary<string, object> result)
         {
             var typed = value as Dictionary<string, object>;
             if (typed != null)
-                return typed;
+            {
+                result = typed;
+                return true;
+            }
 
             var dictionary = value as IDictionary;
             if (dictionary == null)
-                return null;
+            {
+                result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                return false;
+            }
 
-            var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
             foreach (DictionaryEntry entry in dictionary)
                 result[Convert.ToString(entry.Key, CultureInfo.InvariantCulture)] = entry.Value;
 
-            return result;
+            return true;
         }
 
         private static MermaidNodeStyle AutoStyle(string fill)
         {
-            var readable = IsLight(fill) ? "#000000" : "#FFFFFF";
+            var readable = IsLight(fill) ? Black : White;
             var stroke = readable;
             return new MermaidNodeStyle(fill, stroke, readable);
         }
