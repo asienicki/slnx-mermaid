@@ -13,11 +13,13 @@ The CLI endpoint is distributed as a .NET global tool and runs the same generati
 dotnet tool install --global slnx-mermaid
 ```
 
-Verify the tool is available:
+Verify the tool is available and print the generated help text:
 
 ```bash
 slnx-mermaid --help
 ```
+
+`--help` is handled by Spectre.Console.Cli as a built-in help option for the configured default command.
 
 ## Basic usage
 
@@ -40,8 +42,7 @@ The command loads the YAML configuration, resolves relative paths from the confi
 | Option            | Description                           |
 | ----------------- | ------------------------------------- |
 | `--config <path>` | Path to a specific configuration file |
-| `--version`       | Show tool version                     |
-| `--help`          | Show help information                 |
+| `-h`, `--help`    | Show help information                 |
 
 ## Configuration file resolution
 
