@@ -47,7 +47,7 @@ exceptions:
     license: "MIT"
 
   Avalonia.Angle.Windows.Natives:
-    version: "2.1.25547.20250602"
+    version: "2.1.27548.20260419"
     license: "BSD-3-Clause"
-    source: https://www.nuget.org/packages/Avalonia.Angle.Windows.Natives/2.1.25547.20250602/License
-    rationale: "Transitive Avalonia desktop native dependency. NuGet publishes a license file matching BSD-3-Clause terms, but the package metadata is reported by the license scanner as deprecated licenseUrl/unclassified. Approved manually."
+    source: https://www.nuget.org/packages/Avalonia.Angle.Windows.Natives/2.1.27548.20260419/License
+    rationale: "Avalonia desktop native dependency. NuGet publishes a license file matching BSD-3-Clause terms."
