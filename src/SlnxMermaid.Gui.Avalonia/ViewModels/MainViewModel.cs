@@ -88,10 +88,19 @@ public sealed partial class MainViewModel : ObservableObject
     {
         YamlPreview = Configuration.ToYaml();
         ValidationErrors.Clear();
-        var result = _validator.Validate(Configuration);
+        var validationBaseDirectory = ResolveConfigBaseDirectory(ConfigPath);
+        var result = _validator.Validate(Configuration, validationBaseDirectory);
         foreach (var error in result.Errors)
             ValidationErrors.Add(error);
 
         ValidationStatus = result.IsValid ? "Valid" : $"Invalid ({result.Errors.Count})";
+    }
+
+    private static string ResolveConfigBaseDirectory(string? configPath)
+    {
+        if (string.IsNullOrWhiteSpace(configPath))
+            return Directory.GetCurrentDirectory();
+
+        return Path.GetDirectoryName(Path.GetFullPath(configPath)) ?? Directory.GetCurrentDirectory();
     }
 }

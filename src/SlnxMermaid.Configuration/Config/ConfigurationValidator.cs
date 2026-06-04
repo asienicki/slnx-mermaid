@@ -7,12 +7,12 @@ namespace SlnxMermaid.Core.Config;
 
 public interface IConfigurationValidator
 {
-    ConfigurationValidationResult Validate(SlnxMermaidConfig config);
+    ConfigurationValidationResult Validate(SlnxMermaidConfig config, string? baseDirectory = null);
 }
 
 public sealed class ConfigurationValidator : IConfigurationValidator
 {
-    public ConfigurationValidationResult Validate(SlnxMermaidConfig config)
+    public ConfigurationValidationResult Validate(SlnxMermaidConfig config, string? baseDirectory = null)
     {
         var errors = new List<string>();
 
@@ -24,8 +24,12 @@ public sealed class ConfigurationValidator : IConfigurationValidator
 
         if (string.IsNullOrWhiteSpace(config.Solution))
             errors.Add("Solution path is required.");
-        else if (!File.Exists(config.Solution))
-            errors.Add($"Solution file does not exist: {config.Solution}");
+        else
+        {
+            var solutionPath = ResolvePath(config.Solution!, baseDirectory);
+            if (!File.Exists(solutionPath))
+                errors.Add($"Solution file does not exist: {config.Solution}");
+        }
 
         if (config.Ui != null)
         {
@@ -42,6 +46,14 @@ public sealed class ConfigurationValidator : IConfigurationValidator
             ValidateDictionaryKeys(config.Naming.Aliases, "Naming.Aliases", errors);
 
         return new ConfigurationValidationResult(errors);
+    }
+
+    private static string ResolvePath(string path, string? baseDirectory)
+    {
+        if (Path.IsPathRooted(path) || string.IsNullOrWhiteSpace(baseDirectory))
+            return Path.GetFullPath(path);
+
+        return Path.GetFullPath(Path.Combine(baseDirectory, path));
     }
 
     private static void ValidateDictionaryKeys(IDictionary? dictionary, string path, ICollection<string> errors)

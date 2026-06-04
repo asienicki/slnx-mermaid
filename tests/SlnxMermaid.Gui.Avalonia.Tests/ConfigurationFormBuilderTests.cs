@@ -34,6 +34,25 @@ public sealed class ConfigurationFormBuilderTests
     }
 
     [Fact]
+    public void Build_WhenSolutionProperty_ShouldCreateFilePathFieldViewModel()
+    {
+        var fields = new ConfigurationFormBuilder().Build(new SlnxMermaidConfig());
+
+        Assert.IsType<FilePathFieldViewModel>(fields.Single(field => field.Name == nameof(SlnxMermaidConfig.Solution)));
+    }
+
+    [Fact]
+    public void Build_WhenDiagramDirectionProperty_ShouldCreateChoiceFieldViewModel()
+    {
+        var diagram = new DiagramConfig { Direction = null };
+        var fields = new ConfigurationFormBuilder().Build(diagram);
+        var direction = Assert.IsType<ChoiceFieldViewModel>(fields.Single(field => field.Name == nameof(DiagramConfig.Direction)));
+
+        Assert.Equal(new[] { "TD", "LR", "BT", "RL" }, direction.Values);
+        Assert.Equal("TD", diagram.Direction);
+    }
+
+    [Fact]
     public void Build_WhenPropertyIsBool_ShouldCreateBooleanFieldViewModel()
     {
         var fields = new ConfigurationFormBuilder().Build(new TestConfiguration());
@@ -70,7 +89,7 @@ public sealed class ConfigurationFormBuilderTests
     {
         var config = new SlnxMermaidConfig { Solution = "./sample.slnx" };
         var fields = new ConfigurationFormBuilder().Build(config);
-        var solution = Assert.IsType<TextFieldViewModel>(fields.Single(field => field.Name == nameof(SlnxMermaidConfig.Solution)));
+        var solution = Assert.IsType<FilePathFieldViewModel>(fields.Single(field => field.Name == nameof(SlnxMermaidConfig.Solution)));
 
         solution.Value = "./changed.slnx";
         var yaml = config.ToYaml();
@@ -79,12 +98,68 @@ public sealed class ConfigurationFormBuilderTests
     }
 
     [Fact]
+    public void ListField_AddItem_ShouldUpdateSourceList()
+    {
+        var filters = new FilterConfig();
+        var field = Assert.IsType<ListFieldViewModel>(new ConfigurationFormBuilder().Build(filters).Single(item => item.Name == nameof(FilterConfig.Exclude)));
+
+        field.NewItemValue = "Tests";
+        field.AddItemCommand.Execute(null);
+
+        Assert.Contains("Tests", filters.Exclude);
+    }
+
+    [Fact]
+    public void DictionaryField_AddEntry_ShouldUpdateSourceDictionary()
+    {
+        var naming = new NamingConfig();
+        var field = Assert.IsType<DictionaryFieldViewModel>(new ConfigurationFormBuilder().Build(naming).Single(item => item.Name == nameof(NamingConfig.Aliases)));
+
+        field.NewEntryKey = "Long.Project.Name";
+        field.NewEntryValue = "Short";
+        field.AddEntryCommand.Execute(null);
+
+        Assert.Equal("Short", naming.Aliases["Long.Project.Name"]);
+    }
+
+    [Fact]
+    public void DictionaryField_AddEntry_ShouldIgnoreBlankKeysAndUpdateDuplicateKeys()
+    {
+        var naming = new NamingConfig();
+        var field = Assert.IsType<DictionaryFieldViewModel>(new ConfigurationFormBuilder().Build(naming).Single(item => item.Name == nameof(NamingConfig.Aliases)));
+
+        field.NewEntryKey = " ";
+        field.NewEntryValue = "Ignored";
+        field.AddEntryCommand.Execute(null);
+
+        field.NewEntryKey = "Project";
+        field.NewEntryValue = "One";
+        field.AddEntryCommand.Execute(null);
+        field.NewEntryKey = "Project";
+        field.NewEntryValue = "Two";
+        field.AddEntryCommand.Execute(null);
+
+        Assert.Single(field.Entries);
+        Assert.Equal("Two", naming.Aliases["Project"]);
+    }
+
+    [Fact]
+    public void Build_WhenOutputFileIsEmpty_ShouldPopulateGuiDefaultValue()
+    {
+        var output = new OutputConfig();
+        var field = Assert.IsType<TextFieldViewModel>(new ConfigurationFormBuilder().Build(output).Single(item => item.Name == nameof(OutputConfig.File)));
+
+        Assert.Equal("dependency-graph-mermaid.md", field.Value);
+        Assert.Equal("dependency-graph-mermaid.md", output.File);
+    }
+
+    [Fact]
     public void GuiAssembly_ShouldNotDeclareConfigurationModelDuplicates()
     {
         var guiAssembly = typeof(ConfigurationFormBuilder).Assembly;
         var duplicatedModels = guiAssembly.GetTypes()
             .Where(type => type.Namespace != null)
-            .Where(type => type.Namespace.Contains("Config", StringComparison.OrdinalIgnoreCase))
+            .Where(type => type.Namespace!.Contains("Config", StringComparison.OrdinalIgnoreCase))
             .Where(type => !type.Name.EndsWith("ViewModel", StringComparison.Ordinal))
             .Where(type => type.Name.EndsWith("Configuration", StringComparison.Ordinal) || type.Name.EndsWith("Config", StringComparison.Ordinal))
             .ToArray();

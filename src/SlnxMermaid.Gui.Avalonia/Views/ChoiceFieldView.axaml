@@ -1,10 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="SlnxMermaid.Gui.Avalonia.Views.NumericFieldView">
+             x:Class="SlnxMermaid.Gui.Avalonia.Views.ChoiceFieldView">
   <StackPanel Margin="0,0,0,10">
     <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" />
-    <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="number" />
-    <TextBlock Text="{Binding ValidationMessage}" Foreground="Red" FontSize="12" />
+    <ComboBox ItemsSource="{Binding Values}" SelectedItem="{Binding SelectedValue}" MinWidth="140" />
     <TextBlock Text="{Binding Description}" Opacity="0.7" FontSize="12" />
   </StackPanel>
 </UserControl>

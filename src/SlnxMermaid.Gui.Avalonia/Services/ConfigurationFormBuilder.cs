@@ -39,7 +39,21 @@ public sealed class ConfigurationFormBuilder : IConfigurationFormBuilder
         var description = property.GetCustomAttribute<ConfigurationDescriptionAttribute>()?.Description ?? string.Empty;
 
         if (effectiveType == typeof(string))
+        {
+            if (owner is OutputConfig && string.Equals(name, nameof(OutputConfig.File), StringComparison.Ordinal) && string.IsNullOrWhiteSpace(value?.ToString()))
+            {
+                value = "dependency-graph-mermaid.md";
+                property.SetValue(owner, value);
+            }
+
+            if (owner is SlnxMermaidConfig && string.Equals(name, nameof(SlnxMermaidConfig.Solution), StringComparison.Ordinal))
+                return new FilePathFieldViewModel(name, displayName, description, valueType, value?.ToString(), owner, property);
+
+            if (owner is DiagramConfig && string.Equals(name, nameof(DiagramConfig.Direction), StringComparison.Ordinal))
+                return new ChoiceFieldViewModel(name, displayName, description, valueType, new[] { "TD", "LR", "BT", "RL" }, value?.ToString(), owner, property);
+
             return new TextFieldViewModel(name, displayName, description, valueType, value?.ToString(), owner, property);
+        }
 
         if (effectiveType == typeof(bool))
             return new BooleanFieldViewModel(name, displayName, description, valueType, value is true, owner, property);

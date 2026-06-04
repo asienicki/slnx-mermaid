@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace SlnxMermaid.Gui.Avalonia.ViewModels.Form;
 
-public sealed class DictionaryFieldViewModel : FormFieldViewModel
+public sealed partial class DictionaryFieldViewModel : FormFieldViewModel
 {
     private readonly IDictionary? _sourceDictionary;
 
@@ -24,6 +26,45 @@ public sealed class DictionaryFieldViewModel : FormFieldViewModel
 
     public ObservableCollection<DictionaryEntryViewModel> Entries { get; }
 
+    [ObservableProperty]
+    private string? newEntryKey;
+
+    [ObservableProperty]
+    private string? newEntryValue;
+
+    [ObservableProperty]
+    private DictionaryEntryViewModel? selectedEntry;
+
+    [RelayCommand]
+    private void AddEntry()
+    {
+        if (string.IsNullOrWhiteSpace(NewEntryKey))
+            return;
+
+        var existing = Entries.FirstOrDefault(entry => string.Equals(entry.Key, NewEntryKey, StringComparison.Ordinal));
+        if (existing != null)
+        {
+            existing.Value = NewEntryValue ?? string.Empty;
+        }
+        else
+        {
+            Entries.Add(CreateEntry(NewEntryKey, NewEntryValue ?? string.Empty));
+        }
+
+        NewEntryKey = string.Empty;
+        NewEntryValue = string.Empty;
+    }
+
+    [RelayCommand]
+    private void RemoveSelectedEntry()
+    {
+        if (SelectedEntry == null)
+            return;
+
+        Entries.Remove(SelectedEntry);
+        SelectedEntry = null;
+    }
+
     private DictionaryEntryViewModel CreateEntry(string key, object? value)
     {
         var entry = new DictionaryEntryViewModel(key, value);
@@ -33,12 +74,6 @@ public sealed class DictionaryFieldViewModel : FormFieldViewModel
 
     private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        if (e.NewItems != null)
-        {
-            foreach (DictionaryEntryViewModel entry in e.NewItems)
-                entry.PropertyChanged += (_, _) => SyncToSource();
-        }
-
         SyncToSource();
     }
 

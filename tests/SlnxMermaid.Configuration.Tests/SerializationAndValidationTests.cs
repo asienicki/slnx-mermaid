@@ -37,4 +37,24 @@ public sealed class SerializationAndValidationTests
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, error => error.Contains("Solution path is required", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void Validate_WhenSolutionIsRelative_ShouldResolveItAgainstBaseDirectory()
+    {
+        var baseDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(baseDirectory);
+        var solutionPath = Path.Combine(baseDirectory, "Sample.slnx");
+        File.WriteAllText(solutionPath, string.Empty);
+
+        try
+        {
+            var result = new ConfigurationValidator().Validate(new SlnxMermaidConfig { Solution = "Sample.slnx" }, baseDirectory);
+
+            Assert.True(result.IsValid);
+        }
+        finally
+        {
+            Directory.Delete(baseDirectory, recursive: true);
+        }
+    }
 }

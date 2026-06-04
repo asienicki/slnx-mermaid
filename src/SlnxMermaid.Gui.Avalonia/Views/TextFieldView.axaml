@@ -3,7 +3,7 @@
              x:Class="SlnxMermaid.Gui.Avalonia.Views.TextFieldView">
   <StackPanel Margin="0,0,0,10">
     <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" />
-    <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Watermark="{Binding Description}" />
+    <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{Binding Description}" />
     <TextBlock Text="{Binding Description}" Opacity="0.7" FontSize="12" />
   </StackPanel>
 </UserControl>
