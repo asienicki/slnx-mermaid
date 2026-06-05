@@ -59,6 +59,8 @@ GitHub Actions workflows live in `.github/workflows/`. The main CI paths include
 
 Use concise imperative commit summaries, often followed by a PR number when GitHub adds one, such as `Harden MermaidEmitter validation and style output (#83)`. Keep commits focused on one behavior or documentation change. Pull requests should include a clear description, linked issue when applicable, test evidence, and screenshots or generated Mermaid output when UI, VSIX, or diagram rendering changes.
 
+When opening pull requests into `master`, use only these source branch prefixes: `feature/` for new features, `fix/` for bug fixes, and `codex/` for Codex-generated changes. Do not use `feat/`, `docs/`, `ci/`, or other prefixes for PRs targeting `master`, because the merge guard blocks them.
+
 ## Security & Configuration Tips
 
 Do not commit Marketplace tokens, Sonar tokens, NuGet API keys, local secrets, or user-specific IDE settings. Use `slnx-mermaid.yml` for sample configuration and keep generated output paths predictable and relative. When touching VSIX publication, remember Marketplace publishing depends on the `VS_MARKETPLACE_TOKEN` repository secret and should be run from the configured CD workflow on `master`.
