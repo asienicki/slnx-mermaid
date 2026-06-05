@@ -37,10 +37,10 @@ jobs:
           case "$BASE" in
 
             master)
-              if [[ "$HEAD" =~ ^feat/.* || "$HEAD" =~ ^fix/.* || "$HEAD" =~ ^codex/.* ]]; then
+              if [[ "$HEAD" =~ ^feature/.* || "$HEAD" =~ ^feat/.* || "$HEAD" =~ ^fix/.* || "$HEAD" =~ ^codex/.* ]]; then
                 exit 0
               fi
-              fail "Into **master** allowed only from **feat/***, **fix/*** or **codex/***."
+              fail "Into **master** allowed only from **feature/***, **feat/***, **fix/*** or **codex/***."
               ;;
 
             *)
