@@ -7,8 +7,9 @@ jobs:
   guard:
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
       contents: read
+      issues: write
+      pull-requests: read
 
     steps:
       - name: Enforce branch merge rules
@@ -23,11 +24,38 @@ jobs:
 
           fail() {
             local message="$1"
+            local marker='<!-- branch-merge-guard -->'
+            local existing_comment_id
+            local body
 
             echo "❌ $message"
 
-            gh api repos/$REPO/issues/$PR_NUMBER/comments \
-              -f body="🚫 **Merge blocked**\n\n$message"
+            body=$(printf '%s\n' \
+              "$marker" \
+              '## 🚫 Merge blocked' \
+              '' \
+              "This pull request targets **$BASE**, but its source branch **$HEAD** does not match the required naming rules." \
+              '' \
+              'Allowed source branch prefixes for **master**:' \
+              '' \
+              '- `feat/` — new features' \
+              '- `fix/` — bug fixes' \
+              '- `codex/` — Codex-generated changes' \
+              '' \
+              'Please rename or recreate the branch with one of the allowed prefixes, then update the pull request.')
+
+            existing_comment_id=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" \
+              --jq '.[] | select(.user.type == "Bot" and (.body // "" | contains("<!-- branch-merge-guard -->"))) | .id' \
+              | head -n 1)
+
+            if [[ -n "$existing_comment_id" ]]; then
+              gh api "repos/$REPO/issues/comments/$existing_comment_id" \
+                --method PATCH \
+                -f body="$body"
+            else
+              gh api "repos/$REPO/issues/$PR_NUMBER/comments" \
+                -f body="$body"
+            fi
 
             exit 1
           }

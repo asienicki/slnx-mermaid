@@ -16,7 +16,8 @@ jobs:
     if: github.event_name == 'pull_request'
     permissions:
       contents: read
-      pull-requests: write
+      issues: write
+      pull-requests: read
     uses: ./.github/workflows/CI-branch-merge-guard.yml
     secrets: inherit
 
