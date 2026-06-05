@@ -1,10 +1,12 @@
+using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Collections;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace SlnxMermaid.Gui.Avalonia.ViewModels.Form;
 
-public sealed class ListFieldViewModel : FormFieldViewModel
+public sealed partial class ListFieldViewModel : FormFieldViewModel
 {
     private readonly IList? _sourceList;
 
@@ -23,6 +25,29 @@ public sealed class ListFieldViewModel : FormFieldViewModel
     }
 
     public ObservableCollection<object?> Items { get; }
+
+    [ObservableProperty]
+    private string? newItemValue;
+
+    [ObservableProperty]
+    private object? selectedItem;
+
+    [RelayCommand]
+    private void AddItem()
+    {
+        Items.Add(NewItemValue ?? string.Empty);
+        NewItemValue = string.Empty;
+    }
+
+    [RelayCommand]
+    private void RemoveSelectedItem()
+    {
+        if (SelectedItem == null)
+            return;
+
+        Items.Remove(SelectedItem);
+        SelectedItem = null;
+    }
 
     private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {

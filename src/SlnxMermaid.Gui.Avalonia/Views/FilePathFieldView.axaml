@@ -1,0 +1,12 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="SlnxMermaid.Gui.Avalonia.Views.FilePathFieldView">
+  <StackPanel Margin="0,0,0,10">
+    <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" />
+    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+      <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{Binding Description}" />
+      <Button Grid.Column="1" Content="Browse..." Click="ChooseFile" />
+    </Grid>
+    <TextBlock Text="{Binding Description}" Opacity="0.7" FontSize="12" />
+  </StackPanel>
+</UserControl>
