@@ -3,7 +3,8 @@
 ![Last Commit](https://img.shields.io/github/last-commit/asienicki/slnx-mermaid)
 ![PRs](https://img.shields.io/github/issues-pr/asienicki/slnx-mermaid)
 [![NuGet](https://img.shields.io/nuget/v/slnx-mermaid.svg)](https://www.nuget.org/packages/slnx-mermaid/)
-[![Version](https://img.shields.io/visual-studio-marketplace/v/SharpCode.slnxmermaid?label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=SharpCode.slnxmermaid)
+[![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-17.3.4.0-blue?logo=visualstudio)](https://marketplace.visualstudio.com/items?itemName=SharpCode.slnxmermaid)
+[![VS Marketplace RC](https://img.shields.io/badge/VS%20Marketplace%20RC-17.3.5.0-orange?logo=visualstudio)](https://marketplace.visualstudio.com/items?itemName=SharpCode.slnxmermaid-rc)
 [![architecture](https://img.shields.io/github/actions/workflow/status/asienicki/slnx-mermaid/CI-check-mermaid.yml?branch=master&label=architecture&style=flat-square)](https://github.com/asienicki/slnx-mermaid/actions/workflows/CI-check-mermaid.yml)
 [![CodeQL](https://img.shields.io/github/actions/workflow/status/asienicki/slnx-mermaid/CI-codeql.yml?label=codeql&style=flat-square)](https://github.com/asienicki/slnx-mermaid/actions/workflows/CI-codeql.yml)
 
