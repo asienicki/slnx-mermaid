@@ -73,6 +73,25 @@ src\SlnxMermaid.CLI\bin\Debug\net10.0\SlnxMermaid.CLI.exe --config slnx-mermaid.
 
 ---
 
+## Required GitHub configuration
+
+To publish `SharpCode.slnxmermaid` in Visual Studio Marketplace, configure:
+
+1. **Marketplace PAT token**
+   - Generate a Visual Studio Marketplace PAT with permission to manage the publisher.
+   - Save it in repository secrets as `VS_MARKETPLACE_TOKEN`.
+
+2. **Workflow permissions**
+   - In GitHub repository open **Settings → Actions → General**.
+   - Ensure GitHub Actions are enabled for this repository.
+
+3. **Triggering rules**
+   - Run CD from branch `master` (the workflow gates publishing on `refs/heads/master`).
+
+> Note: VSIX publication uses `VsixPublisher.exe` on `windows-latest` runners.
+
+---
+
 ## Notes
 
 * Always provide `--config` when running from Visual Studio unless the config file is copied to the output directory.
