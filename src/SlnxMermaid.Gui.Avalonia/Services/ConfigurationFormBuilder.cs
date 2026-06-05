@@ -65,7 +65,7 @@ public sealed class ConfigurationFormBuilder : IConfigurationFormBuilder
             return new NumericFieldViewModel(name, displayName, description, valueType, Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture), owner, property);
 
         if (typeof(IDictionary).IsAssignableFrom(effectiveType))
-            return new DictionaryFieldViewModel(name, displayName, description, valueType, EnsureDictionary(owner, property, value));
+            return new DictionaryFieldViewModel(name, displayName, description, valueType, EnsureDictionary(owner, property, value), IsColorDictionary(owner, name));
 
         if (typeof(IList).IsAssignableFrom(effectiveType))
             return new ListFieldViewModel(name, displayName, description, valueType, EnsureList(owner, property, value));
@@ -73,6 +73,10 @@ public sealed class ConfigurationFormBuilder : IConfigurationFormBuilder
         var nested = EnsureNestedObject(owner, property, value, effectiveType);
         return new ObjectFieldViewModel(name, displayName, description, valueType, BuildObjectFields(nested));
     }
+
+    private static bool IsColorDictionary(object owner, string name) => owner is UiConfig
+        && (string.Equals(name, nameof(UiConfig.Semantic), StringComparison.Ordinal)
+            || string.Equals(name, nameof(UiConfig.Mappings), StringComparison.Ordinal));
 
     private static IDictionary? EnsureDictionary(object owner, PropertyInfo property, object? value)
     {

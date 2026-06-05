@@ -123,6 +123,26 @@ public sealed class ConfigurationFormBuilderTests
     }
 
     [Fact]
+    public void Build_WhenUiColorDictionary_ShouldExposePaletteAndCustomHexEditing()
+    {
+        var ui = new UiConfig { Semantic = new Dictionary<string, string> { ["application"] = "#112233" } };
+        var field = Assert.IsType<DictionaryFieldViewModel>(new ConfigurationFormBuilder().Build(ui).Single(item => item.Name == nameof(UiConfig.Semantic)));
+
+        Assert.True(field.UsesColorEditor);
+        Assert.Contains("blue", field.ColorChoices);
+        Assert.Contains("custom", field.ColorChoices);
+        Assert.Equal("custom", field.Entries.Single().SelectedColor);
+        Assert.Equal("#112233", field.Entries.Single().CustomHexColor);
+
+        field.NewEntryKey = "presentation";
+        field.NewEntryValue = "custom";
+        field.NewEntryCustomHexColor = "#445566";
+        field.AddEntryCommand.Execute(null);
+
+        Assert.Equal("#445566", ui.Semantic!["presentation"]);
+    }
+
+    [Fact]
     public void DictionaryField_AddEntry_ShouldIgnoreBlankKeysAndUpdateDuplicateKeys()
     {
         var naming = new NamingConfig();

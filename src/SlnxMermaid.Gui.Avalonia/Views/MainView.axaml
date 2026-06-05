@@ -15,7 +15,7 @@
     <DataTemplate DataType="{x:Type vm:ListFieldViewModel}"><views:ListFieldView /></DataTemplate>
   </UserControl.DataTemplates>
 
-  <Grid RowDefinitions="Auto,*,Auto,160" ColumnDefinitions="*,*" Margin="12">
+  <Grid RowDefinitions="Auto,*,Auto,160" ColumnDefinitions="2*,*" Margin="12">
     <Border Grid.Row="0" Grid.ColumnSpan="2" BorderBrush="#33000000" BorderThickness="1" Padding="8" Margin="0,0,0,8">
       <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
         <Image Source="avares://SlnxMermaid.Gui.Avalonia/Assets/logo.png" Width="40" Height="40" Stretch="Uniform" />
@@ -37,7 +37,9 @@
     <Border Grid.Row="1" Grid.Column="1" BorderBrush="#33000000" BorderThickness="1" Padding="8" Margin="0,0,0,8">
       <Grid RowDefinitions="Auto,*">
         <TextBlock Text="YAML preview" FontWeight="Bold" Margin="0,0,0,8" />
-        <TextBox Grid.Row="1" Text="{Binding YamlPreview}" AcceptsReturn="True" IsReadOnly="True" FontFamily="Consolas" />
+        <Border Grid.Row="1" Background="#1E1E1E" Padding="8">
+          <views:YamlPreviewView Text="{Binding YamlPreview}" />
+        </Border>
       </Grid>
     </Border>
 

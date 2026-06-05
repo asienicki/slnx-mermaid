@@ -27,6 +27,12 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<FormFieldViewModel> Fields { get; } = new();
 
+    public ObservableCollection<FormFieldViewModel> PrimaryFields { get; } = new();
+
+    public ObservableCollection<FormFieldViewModel> LeftColumnFields { get; } = new();
+
+    public ObservableCollection<FormFieldViewModel> RightColumnFields { get; } = new();
+
     public ObservableCollection<string> ValidationErrors { get; } = new();
 
     [ObservableProperty]
@@ -77,10 +83,21 @@ public sealed partial class MainViewModel : ObservableObject
     private void RebuildForm()
     {
         Fields.Clear();
+        PrimaryFields.Clear();
+        LeftColumnFields.Clear();
+        RightColumnFields.Clear();
+
         foreach (var field in _formBuilder.Build(Configuration))
         {
             field.FieldChanged += (_, _) => ValidateAndPreview();
             Fields.Add(field);
+
+            if (field.Name == nameof(SlnxMermaidConfig.Solution))
+                PrimaryFields.Add(field);
+            else if (field.Name == nameof(SlnxMermaidConfig.Diagram) || field.Name == nameof(SlnxMermaidConfig.Filters))
+                LeftColumnFields.Add(field);
+            else
+                RightColumnFields.Add(field);
         }
     }
 

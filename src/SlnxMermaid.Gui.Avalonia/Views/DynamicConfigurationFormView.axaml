@@ -1,7 +1,13 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="SlnxMermaid.Gui.Avalonia.Views.DynamicConfigurationFormView">
-  <ScrollViewer>
-    <ItemsControl ItemsSource="{Binding Fields}" />
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+    <StackPanel Spacing="12">
+      <ItemsControl ItemsSource="{Binding PrimaryFields}" />
+      <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+        <ItemsControl ItemsSource="{Binding LeftColumnFields}" />
+        <ItemsControl Grid.Column="1" ItemsSource="{Binding RightColumnFields}" />
+      </Grid>
+    </StackPanel>
   </ScrollViewer>
 </UserControl>

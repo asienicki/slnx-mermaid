@@ -57,4 +57,12 @@ public sealed class SerializationAndValidationTests
             Directory.Delete(baseDirectory, recursive: true);
         }
     }
+
+    [Fact]
+    public void Validate_WhenSolutionValueLooksLikeConfigFile_ShouldNotReportMissingSolutionFile()
+    {
+        var result = new ConfigurationValidator().Validate(new SlnxMermaidConfig { Solution = "slnx-mermaid.yml" });
+
+        Assert.DoesNotContain(result.Errors, error => error.Contains("Solution file does not exist", StringComparison.Ordinal));
+    }
 }

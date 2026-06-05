@@ -24,7 +24,7 @@ public sealed class ConfigurationValidator : IConfigurationValidator
 
         if (string.IsNullOrWhiteSpace(config.Solution))
             errors.Add("Solution path is required.");
-        else
+        else if (LooksLikeSolutionPath(config.Solution!))
         {
             var solutionPath = ResolvePath(config.Solution!, baseDirectory);
             if (!File.Exists(solutionPath))
@@ -46,6 +46,13 @@ public sealed class ConfigurationValidator : IConfigurationValidator
             ValidateDictionaryKeys(config.Naming.Aliases, "Naming.Aliases", errors);
 
         return new ConfigurationValidationResult(errors);
+    }
+
+    private static bool LooksLikeSolutionPath(string path)
+    {
+        var extension = Path.GetExtension(path);
+        return string.Equals(extension, ".sln", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".slnx", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ResolvePath(string path, string? baseDirectory)
