@@ -52,3 +52,21 @@ exceptions:
     source: https://www.nuget.org/packages/Avalonia.Angle.Windows.Natives/2.1.27548.20260419/License
     rationale: "Avalonia desktop native dependency. NuGet publishes a license file matching BSD-3-Clause terms."
 
+  Json.More.Net:
+    version: "3.0.1"
+    license: "MIT"
+    source: https://github.com/json-everything/json-everything
+    rationale: "NuGet package uses OSMFEULA.txt for binary distribution, whose text states the project source is licensed under MIT. Approved for schema validation test dependency."
+
+  JsonPointer.Net:
+    version: "7.0.1"
+    license: "MIT"
+    source: https://github.com/json-everything/json-everything
+    rationale: "NuGet package uses OSMFEULA.txt for binary distribution, whose text states the project source is licensed under MIT. Approved as JsonSchema.Net dependency."
+
+  JsonSchema.Net:
+    version: "9.2.1"
+    license: "MIT"
+    source: https://github.com/json-everything/json-everything
+    rationale: "NuGet package uses OSMFEULA.txt for binary distribution, whose text states the project source is licensed under MIT. Approved for configuration schema validation tests."
+

@@ -1,12 +1,16 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Schema;
+using SlnxMermaid.Core.Config;
 using YamlDotNet.Serialization;
 
 namespace SlnxMermaid.Configuration.Tests;
 
 public sealed class SchemaValidationTests
 {
+    private static readonly Lazy<JsonSchema> ConfigurationSchema = new(() =>
+        JsonSchema.FromText(File.ReadAllText(GetRepositoryPath("schemas", "slnx-mermaid.schema.json"))));
+
     [Fact]
     public void GeneratedSchema_ShouldMatchCommittedSchema()
     {
@@ -21,7 +25,7 @@ public sealed class SchemaValidationTests
         var schemaText = File.ReadAllText(GetRepositoryPath("schemas", "slnx-mermaid.schema.json"));
 
         Assert.NotNull(JsonNode.Parse(schemaText));
-        Assert.NotNull(JsonSchema.FromText(schemaText));
+        Assert.NotNull(ConfigurationSchema.Value);
     }
 
     [Fact]
@@ -82,13 +86,15 @@ public sealed class SchemaValidationTests
 
     private static EvaluationResults ValidateYaml(string yaml)
     {
-        var schemaText = File.ReadAllText(GetRepositoryPath("schemas", "slnx-mermaid.schema.json"));
-        var schema = JsonSchema.FromText(schemaText);
-        var yamlObject = new DeserializerBuilder().Build().Deserialize<object>(yaml);
+        var schema = ConfigurationSchema.Value;
+        var yamlObject = new DeserializerBuilder()
+            .WithAttemptingUnquotedStringTypeDeserialization()
+            .Build()
+            .Deserialize<object>(yaml);
         var json = JsonSerializer.Serialize(ConvertYamlValue(yamlObject));
-        var node = JsonNode.Parse(json);
+        using var document = JsonDocument.Parse(json);
 
-        return schema.Evaluate(node, new EvaluationOptions { OutputFormat = OutputFormat.List });
+        return schema.Evaluate(document.RootElement, new EvaluationOptions { OutputFormat = OutputFormat.List });
     }
 
     private static object? ConvertYamlValue(object? value)
@@ -127,6 +133,6 @@ public sealed class SchemaValidationTests
 
     private static string FormatErrors(EvaluationResults results)
     {
-        return $"Schema validation failed: {results}";
+        return "Schema validation failed: " + JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
     }
 }
