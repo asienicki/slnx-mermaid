@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - master
+      - "feature/**"
+      - "fix/**"
+      - "codex/**"
   schedule:
     - cron: '0 3 * * 0'
 
