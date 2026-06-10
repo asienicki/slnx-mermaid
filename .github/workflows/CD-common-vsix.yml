@@ -11,12 +11,13 @@ on:
         type: string
 
 jobs:
-  build:
+  build-and-publish:
     runs-on: windows-latest
 
     env:
       VS_MARKETPLACE_PUBLISHER_ID: SharpCode
       VS_MARKETPLACE_AUTHOR_DISPLAY_NAME: "Sharp Code"
+      VS_MARKETPLACE_INTERNAL_NAME: ${{ inputs.channel == 'rc' && 'slnxmermaid-rc' || 'slnxmermaid' }}
 
     steps:
       - uses: actions/checkout@v6
@@ -103,30 +104,6 @@ jobs:
       - name: Build VSIX
         run: msbuild SlnxMermaidVisualStudio.slnx /t:Build /p:Configuration=Release /p:DeployExtension=false
 
-      - name: Upload VSIX artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: vsix-${{ inputs.channel }}-package
-          path: src/SlnxMermaidVsix/bin/**/*.vsix
-
-  publish:
-    needs: build
-    runs-on: windows-latest
-
-    env:
-      VS_MARKETPLACE_PUBLISHER_ID: SharpCode
-      VS_MARKETPLACE_INTERNAL_NAME: ${{ inputs.channel == 'rc' && 'slnxmermaid-rc' || 'slnxmermaid' }}
-
-    steps:
-      - uses: actions/checkout@v6
-      - uses: microsoft/setup-msbuild@v2
-
-      - name: Download VSIX artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: vsix-${{ inputs.channel }}-package
-          path: vsix
-
       - name: Locate VsixPublisher
         id: vsixpublisher
         shell: pwsh
@@ -191,8 +168,8 @@ jobs:
             throw "Missing VS_MARKETPLACE_TOKEN secret"
           }
 
-          $vsixPath = (Get-ChildItem vsix -Filter *.vsix -Recurse | Select-Object -First 1).FullName
-          if ([string]::IsNullOrWhiteSpace($vsixPath)) { throw "VSIX not found under ./vsix" }
+          $vsixPath = (Get-ChildItem src/SlnxMermaidVsix/bin -Filter *.vsix -Recurse | Select-Object -First 1).FullName
+          if ([string]::IsNullOrWhiteSpace($vsixPath)) { throw "VSIX not found under src/SlnxMermaidVsix/bin" }
 
           & "${{ steps.vsixpublisher.outputs.path }}" publish `
             -payload $vsixPath `

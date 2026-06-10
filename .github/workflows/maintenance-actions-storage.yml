@@ -1,0 +1,36 @@
+name: Maintenance - Actions storage
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 2 * * 0'
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup:
+    name: Delete stored artifacts and caches
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete all workflow artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --paginate \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/actions/artifacts?per_page=100" \
+            --jq '.artifacts[].id' \
+          | while read -r artifact_id; do
+              gh api --method DELETE "/repos/${{ github.repository }}/actions/artifacts/$artifact_id"
+            done
+
+      - name: Delete all Actions caches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh cache list --repo "${{ github.repository }}" --limit 10000 --json id --jq '.[].id' \
+          | while read -r cache_id; do
+              gh cache delete "$cache_id" --repo "${{ github.repository }}"
+            done

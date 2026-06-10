@@ -21,12 +21,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Download coverage artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: coverage
-          path: coverage
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
@@ -48,6 +42,14 @@ jobs:
 
       - name: Build (Sonar)
         run: dotnet build SlnxMermaid.slnx
+
+      - name: Test with coverage (Sonar)
+        run: |
+          dotnet test SlnxMermaid.slnx \
+            --no-build \
+            /p:CollectCoverage=true \
+            /p:CoverletOutput=$(pwd)/coverage/coverage \
+            /p:CoverletOutputFormat=opencover
 
       - name: Sonar End
         env:
