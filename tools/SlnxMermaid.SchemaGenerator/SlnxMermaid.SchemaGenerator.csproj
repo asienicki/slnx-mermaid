@@ -4,8 +4,14 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <SchemaOutputPath>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../schemas/slnx-mermaid.schema.json'))</SchemaOutputPath>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/SlnxMermaid.Configuration/SlnxMermaid.Configuration.csproj" />
   </ItemGroup>
+  <Target Name="GenerateSlnxMermaidConfigurationSchema"
+          AfterTargets="Build"
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(BuildingSolutionFile)' == 'true'">
+    <Exec Command="dotnet &quot;$(TargetPath)&quot; &quot;$(SchemaOutputPath)&quot;" />
+  </Target>
 </Project>

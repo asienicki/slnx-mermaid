@@ -154,10 +154,12 @@ Forward slashes are recommended for cross-platform compatibility.
 
 ## JSON Schema generation
 
-`schemas/slnx-mermaid.schema.json` is generated from the shared configuration classes in `SlnxMermaid.Configuration` and their schema metadata attributes. Do not edit the generated JSON directly. After changing a configuration property, description, default, allowed value, or validation constraint, regenerate it with:
+`schemas/slnx-mermaid.schema.json` is generated from the shared configuration classes in `SlnxMermaid.Configuration` and their schema metadata attributes. Do not edit the generated JSON directly.
+
+A normal build of `SlnxMermaid.slnx` builds the `SlnxMermaid.SchemaGenerator` project and automatically regenerates the schema after that project is compiled. The generator writes the file only when its contents changed. To regenerate the schema without building the full solution, run:
 
 ```bash
 dotnet run --project tools/SlnxMermaid.SchemaGenerator
 ```
 
-Tests compare the generated output with the committed schema to prevent drift. The repository's `.vscode/settings.json` associates the generated schema with `slnx-mermaid.yml` and `slnx-mermaid.yaml`.
+Commit the regenerated schema together with configuration-model changes. CI builds the solution and then checks that the schema has no uncommitted diff; tests also compare the generated output with the committed file. The repository's `.vscode/settings.json` associates the generated schema with `slnx-mermaid.yml` and `slnx-mermaid.yaml`.

@@ -44,13 +44,15 @@ Install the Red Hat YAML extension for VS Code to enable JSON Schema-based assis
 - `slnx-mermaid.yml`
 - `slnx-mermaid.yaml`
 
-The schema provides autocomplete, validation, enum suggestions, defaults, and field descriptions for the supported configuration options. It is generated from the shared configuration model and its metadata; after changing the model, regenerate the checked-in schema with:
+The schema provides autocomplete, validation, enum suggestions, defaults, and field descriptions for the supported configuration options. It is generated from the shared configuration model and its metadata.
+
+Building `SlnxMermaid.slnx` automatically regenerates the checked-in schema through the `SlnxMermaid.SchemaGenerator` project, so no separate regeneration command is needed during the normal workflow. To regenerate only the schema, run:
 
 ```bash
 dotnet run --project tools/SlnxMermaid.SchemaGenerator
 ```
 
-The configuration test suite verifies that the committed schema is identical to the generated output, so model and schema drift fails CI.
+Commit the regenerated schema together with model changes. CI verifies that a solution build leaves `schemas/slnx-mermaid.schema.json` unchanged, and the configuration test suite also compares it with generated output.
 
 ## Fast start (VSIX)
 
