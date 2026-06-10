@@ -4,6 +4,7 @@ on:
   workflow_call:
 
 permissions:
+  actions: write
   contents: read
   pages: write
   id-token: write
@@ -33,8 +34,18 @@ jobs:
           destination: ./_site
 
       - name: Upload artifact
+        id: upload
         uses: actions/upload-pages-artifact@v3
+        with:
+          retention-days: 1
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Delete deployed Pages artifact
+        if: always() && steps.upload.outputs.artifact_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact_id }}
+        run: gh api --method DELETE "repos/${{ github.repository }}/actions/artifacts/$ARTIFACT_ID"
