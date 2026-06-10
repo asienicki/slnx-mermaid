@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SlnxMermaid.Core.Config;
 
 namespace SlnxMermaid.Gui.Avalonia.ViewModels.Form;
 
@@ -37,18 +38,7 @@ public sealed partial class DictionaryFieldViewModel : FormFieldViewModel
 
     public bool UsesColorEditor { get; }
 
-    public IReadOnlyList<string> ColorChoices { get; } = new[]
-    {
-        "blue",
-        "green",
-        "yellow",
-        "orange",
-        "pink",
-        "purple",
-        "gray",
-        "red",
-        "custom"
-    };
+    public IReadOnlyList<string> ColorChoices { get; } = UiPalette.Names.Concat(new[] { "custom" }).ToArray();
 
     [ObservableProperty]
     private string? newEntryKey;

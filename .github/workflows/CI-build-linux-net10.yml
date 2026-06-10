@@ -36,6 +36,9 @@ jobs:
       - name: Build
         run: dotnet build SlnxMermaid.slnx --no-restore
 
+      - name: Verify generated configuration schema is committed
+        run: git diff --exit-code -- schemas/slnx-mermaid.schema.json
+
       - name: Upload build outputs
         uses: actions/upload-artifact@v4
         with:

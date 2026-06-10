@@ -1,0 +1,41 @@
+solution: ../SlnxMermaid.slnx
+
+diagram:
+  direction: LR
+  includeTransitiveDependencies: false
+  orderDependenciesByDepth: true
+
+filters:
+  exclude:
+    - Tests
+    - AppHost
+    - ServiceDefaults
+    - Seeder
+
+ui:
+  mode: dark
+  semantic:
+    presentation: blue
+    application: green
+    domain: yellow
+    infrastructure: orange
+    dataAccess: pink
+    tooling: purple
+    tests: gray
+  mappings:
+    SlnxMermaid_CLI: purple
+    SlnxMermaid_Core:
+      fill: "#141414"
+      stroke: "#90CAF9"
+      color: "#FFFFFF"
+    "*Tests*": gray
+    "*Model*": "#37474F"
+
+naming:
+  stripPrefix: SlnxMermaid_
+  aliases:
+    Core: CORE
+    CLI: CommandLineInterface
+
+output:
+  file: ../docs/architecture/dependency-graph-mermaid.md
