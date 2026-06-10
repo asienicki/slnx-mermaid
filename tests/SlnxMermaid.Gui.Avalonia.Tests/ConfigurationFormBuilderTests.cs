@@ -53,6 +53,15 @@ public sealed class ConfigurationFormBuilderTests
     }
 
     [Fact]
+    public void Build_WhenUiModeProperty_ShouldUseAllowedValuesFromConfigurationMetadata()
+    {
+        var fields = new ConfigurationFormBuilder().Build(new UiConfig());
+        var mode = Assert.IsType<ChoiceFieldViewModel>(fields.Single(field => field.Name == nameof(UiConfig.Mode)));
+
+        Assert.Equal(new[] { "dark", "light" }, mode.Values);
+    }
+
+    [Fact]
     public void Build_WhenPropertyIsBool_ShouldCreateBooleanFieldViewModel()
     {
         var fields = new ConfigurationFormBuilder().Build(new TestConfiguration());

@@ -36,6 +36,22 @@ slnx-mermaid --config slnx-mermaid.yml
 
 The CLI reads the configured `.sln` or `.slnx`, analyzes project references, and writes a Markdown file containing a fenced Mermaid graph to `output.file`. Relative `solution` and `output.file` paths are resolved from the configuration file location.
 
+
+## YAML IntelliSense
+
+Install the Red Hat YAML extension for VS Code to enable JSON Schema-based assistance for `slnx-mermaid.yml`. The repository includes a JSON Schema at [`schemas/slnx-mermaid.schema.json`](schemas/slnx-mermaid.schema.json), and VS Code uses [`.vscode/settings.json`](.vscode/settings.json) to associate it with:
+
+- `slnx-mermaid.yml`
+- `slnx-mermaid.yaml`
+
+The schema provides autocomplete, validation, enum suggestions, defaults, and field descriptions for the supported configuration options. It is generated from the shared configuration model and its metadata; after changing the model, regenerate the checked-in schema with:
+
+```bash
+dotnet run --project tools/SlnxMermaid.SchemaGenerator
+```
+
+The configuration test suite verifies that the committed schema is identical to the generated output, so model and schema drift fails CI.
+
 ## Fast start (VSIX)
 
 1. Install the extension from Visual Studio Marketplace.

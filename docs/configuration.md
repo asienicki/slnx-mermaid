@@ -151,3 +151,13 @@ Both `solution` and `output.file` support:
 - absolute paths
 
 Forward slashes are recommended for cross-platform compatibility.
+
+## JSON Schema generation
+
+`schemas/slnx-mermaid.schema.json` is generated from the shared configuration classes in `SlnxMermaid.Configuration` and their schema metadata attributes. Do not edit the generated JSON directly. After changing a configuration property, description, default, allowed value, or validation constraint, regenerate it with:
+
+```bash
+dotnet run --project tools/SlnxMermaid.SchemaGenerator
+```
+
+Tests compare the generated output with the committed schema to prevent drift. The repository's `.vscode/settings.json` associates the generated schema with `slnx-mermaid.yml` and `slnx-mermaid.yaml`.

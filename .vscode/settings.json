@@ -1,0 +1,8 @@
+{
+  "yaml.schemas": {
+    "./schemas/slnx-mermaid.schema.json": [
+      "slnx-mermaid.yml",
+      "slnx-mermaid.yaml"
+    ]
+  }
+}

@@ -2,7 +2,7 @@ using System;
 
 namespace SlnxMermaid.Core.Config;
 
-[AttributeUsage(AttributeTargets.Property)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Property)]
 public sealed class ConfigurationDescriptionAttribute : Attribute
 {
     public ConfigurationDescriptionAttribute(string description) => Description = description;

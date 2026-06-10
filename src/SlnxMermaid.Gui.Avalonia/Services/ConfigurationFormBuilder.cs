@@ -49,8 +49,9 @@ public sealed class ConfigurationFormBuilder : IConfigurationFormBuilder
             if (owner is SlnxMermaidConfig && string.Equals(name, nameof(SlnxMermaidConfig.Solution), StringComparison.Ordinal))
                 return new FilePathFieldViewModel(name, displayName, description, valueType, value?.ToString(), owner, property);
 
-            if (owner is DiagramConfig && string.Equals(name, nameof(DiagramConfig.Direction), StringComparison.Ordinal))
-                return new ChoiceFieldViewModel(name, displayName, description, valueType, new[] { "TD", "LR", "BT", "RL" }, value?.ToString(), owner, property);
+            var allowedValues = property.GetCustomAttribute<ConfigurationAllowedValuesAttribute>()?.Values;
+            if (allowedValues != null)
+                return new ChoiceFieldViewModel(name, displayName, description, valueType, allowedValues, value?.ToString(), owner, property);
 
             return new TextFieldViewModel(name, displayName, description, valueType, value?.ToString(), owner, property);
         }
