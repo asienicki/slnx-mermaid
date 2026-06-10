@@ -15,7 +15,7 @@ permissions:
   packages: write
 
 jobs:
-  build:
+  build-test-and-publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -30,42 +30,15 @@ jobs:
         run: dotnet build SlnxMermaid.slnx -c Release /p:Version=${{ inputs.version }}
 
       - name: Test
-        run: dotnet test SlnxMermaid.slnx -c Release /p:Version=${{ inputs.version }}
-
-  pack:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '10.0.x'
+        run: dotnet test SlnxMermaid.slnx -c Release --no-build /p:Version=${{ inputs.version }}
 
       - name: Pack CLI only
         run: |
           dotnet pack src/SlnxMermaid.CLI/SlnxMermaid.CLI.csproj \
             -c Release \
+            --no-build \
             /p:Version=${{ inputs.version }} \
             -o ./nupkg
-
-      - name: Upload NuGet package
-        uses: actions/upload-artifact@v4
-        with:
-          name: nuget-${{ inputs.channel }}-package
-          path: ./nupkg/*.nupkg
-
-  publish:
-    needs: pack
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download NuGet package
-        uses: actions/download-artifact@v8
-        with:
-          name: nuget-${{ inputs.channel }}-package
-          path: ./nupkg
 
       - name: Publish to NuGet
         env:
