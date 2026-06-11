@@ -1,0 +1,142 @@
+name: CI-sample-configuration-coverage
+
+on:
+  workflow_call:
+    inputs:
+      python_version:
+        type: string
+        default: "3.x"
+
+concurrency:
+  group: sample-configuration-coverage-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sample-configuration-coverage:
+    name: Validate sample configuration coverage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Install validation dependencies
+        run: python -m pip install --upgrade jsonschema pyyaml
+
+      - name: Validate sample YAML covers schema properties
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          import yaml
+          from jsonschema import Draft7Validator
+
+          schema_path = Path("slnx-mermaid.schema.json")
+          sample_path = Path("slnx-mermaid.yml")
+
+          if not schema_path.is_file():
+              print(f"Schema coverage validation failed: missing {schema_path}.")
+              raise SystemExit(1)
+
+          if not sample_path.is_file():
+              print(f"Schema coverage validation failed: missing {sample_path}.")
+              raise SystemExit(1)
+
+          schema = json.loads(schema_path.read_text(encoding="utf-8-sig"))
+          documents = list(yaml.safe_load_all(sample_path.read_text(encoding="utf-8-sig")))
+          if len(documents) != 1 or documents[0] is None:
+              print(f"Schema coverage validation failed: {sample_path} must contain exactly one non-empty YAML document.")
+              raise SystemExit(1)
+
+          sample = documents[0]
+          validation_errors = sorted(Draft7Validator(schema).iter_errors(sample), key=lambda error: list(error.path))
+          if validation_errors:
+              print(f"Schema coverage validation failed: {sample_path} is not valid against {schema_path}.")
+              for error in validation_errors:
+                  location = ".".join(str(part) for part in error.path) or "<root>"
+                  print(f"- {location}: {error.message}")
+              raise SystemExit(1)
+
+          definitions = schema.get("definitions", {})
+
+          def resolve_ref(schema_node):
+              ref = schema_node.get("$ref") if isinstance(schema_node, dict) else None
+              if not ref:
+                  return schema_node
+              prefix = "#/definitions/"
+              if not ref.startswith(prefix):
+                  raise ValueError(f"Unsupported schema reference: {ref}")
+              return definitions[ref[len(prefix):]]
+
+          def has_path(document, parts):
+              current = document
+              for part in parts:
+                  if not isinstance(current, dict) or part not in current:
+                      return False
+                  current = current[part]
+              return True
+
+          required_paths = []
+          root_properties = schema.get("properties", {})
+          for root_name, root_schema in root_properties.items():
+              required_paths.append((root_name,))
+              resolved = resolve_ref(root_schema)
+              for child_name in resolved.get("properties", {}):
+                  required_paths.append((root_name, child_name))
+
+          missing_paths = [".".join(path) for path in required_paths if not has_path(sample, path)]
+
+          # Some schema shapes are represented by dynamic object values rather than
+          # fixed property names. Require the sample to demonstrate every supported
+          # ui.mappings value shape so schema changes stay visible in the checked-in
+          # example configuration.
+          mapping_values = []
+          ui = sample.get("ui") if isinstance(sample, dict) else None
+          if isinstance(ui, dict):
+              mappings = ui.get("mappings")
+              if isinstance(mappings, dict):
+                  mapping_values = list(mappings.values())
+
+          has_named_color_mapping = any(isinstance(value, str) and not value.startswith("#") for value in mapping_values)
+          has_hex_color_mapping = any(isinstance(value, str) and value.startswith("#") for value in mapping_values)
+          object_mappings = [value for value in mapping_values if isinstance(value, dict)]
+          has_object_mapping = bool(object_mappings)
+          style_properties = sorted(definitions.get("UiStyleConfig", {}).get("properties", {}))
+          missing_style_properties = [
+              prop
+              for prop in style_properties
+              if not any(prop in mapping for mapping in object_mappings)
+          ]
+
+          missing_coverage = []
+          missing_coverage.extend(missing_paths)
+          if not has_named_color_mapping:
+              missing_coverage.append("ui.mappings.<project>: named palette color string")
+          if not has_hex_color_mapping:
+              missing_coverage.append("ui.mappings.<project>: #RRGGBB color string")
+          if not has_object_mapping:
+              missing_coverage.append("ui.mappings.<project>: object style override")
+          missing_coverage.extend(f"ui.mappings.<project>.{prop}" for prop in missing_style_properties)
+
+          if missing_coverage:
+              print("Sample configuration coverage validation failed.")
+              print(f"Schema: {schema_path}")
+              print(f"Sample: {sample_path}")
+              print("Missing schema coverage:")
+              for item in missing_coverage:
+                  print(f"- {item}")
+              raise SystemExit(1)
+
+          print("Sample configuration coverage validation passed.")
+          print(f"Schema: {schema_path}")
+          print(f"Sample: {sample_path}")
+          print("Result: PASS")
+          PY
