@@ -49,6 +49,7 @@ Keep documentation changes aligned with the affected surface:
 
 - CLI behavior: update `docs/cli.md` and, when relevant, `README.md`.
 - Configuration schema or validation behavior: update `docs/configuration.md` and sample `slnx-mermaid.yml`.
+- Sample configuration changes: keep `examples/slnx-mermaid.yml` valid against `schemas/slnx-mermaid.schema.json`; CI has a dedicated sample configuration schema check.
 - VSIX behavior: update `docs/vsix.md` and `docs/vsix/`.
 - GUI behavior: update `src/SlnxMermaid.Gui.Avalonia/README.md` when architecture or editor behavior changes.
 - Architecture diagram generation: update `docs/architecture/dependency-graph-mermaid.md` or generated Mermaid output only when intentionally changing the diagram.

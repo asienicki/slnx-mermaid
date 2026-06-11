@@ -1,0 +1,58 @@
+name: CI-sample-configuration-schema
+
+on:
+  workflow_call:
+    inputs:
+      python_version:
+        type: string
+        default: "3.x"
+
+concurrency:
+  group: sample-configuration-schema-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sample-configuration-schema:
+    name: Validate sample configuration
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Install validation dependencies
+        run: python -m pip install --upgrade jsonschema pyyaml
+
+      - name: Validate sample YAML against schema
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          import yaml
+          from jsonschema import Draft7Validator
+
+          schema_path = Path("schemas/slnx-mermaid.schema.json")
+          sample_path = Path("examples/slnx-mermaid.yml")
+
+          schema = json.loads(schema_path.read_text(encoding="utf-8-sig"))
+          sample = yaml.safe_load(sample_path.read_text(encoding="utf-8-sig"))
+
+          validator = Draft7Validator(schema)
+          errors = sorted(validator.iter_errors(sample), key=lambda error: list(error.path))
+          if errors:
+              print(f"{sample_path} does not conform to {schema_path}:")
+              for error in errors:
+                  location = ".".join(str(part) for part in error.path) or "<root>"
+                  print(f"- {location}: {error.message}")
+              raise SystemExit(1)
+
+          print(f"{sample_path} conforms to {schema_path}.")
+          PY
