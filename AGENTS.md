@@ -17,10 +17,12 @@ This repository contains a .NET solution for generating Mermaid dependency diagr
 
 - `dotnet restore SlnxMermaid.slnx`: restore dependencies for CLI, core, configuration, GUI, and tests.
 - `dotnet build SlnxMermaid.slnx --no-restore`: build the main cross-platform solution after restore.
+- Building `SlnxMermaid.Configuration` or `SlnxMermaid.slnx` regenerates `schemas/slnx-mermaid.schema.json`; commit the regenerated file when the configuration model or schema metadata changes.
 - `dotnet test SlnxMermaid.slnx --no-build`: run all tests in the main solution after building.
 - `dotnet test SlnxMermaid.slnx /p:CollectCoverage=true /p:CoverletOutput=coverage/coverage /p:CoverletOutputFormat=opencover`: run tests with Coverlet coverage output compatible with CI/Sonar flows.
 - `dotnet run --project src/SlnxMermaid.CLI -- --config slnx-mermaid.yml`: run the CLI against the repository sample config.
 - `dotnet run --project src/SlnxMermaid.Gui.Avalonia/SlnxMermaid.Gui.Avalonia.csproj`: run the Avalonia configuration editor.
+- `dotnet run --project tools/SlnxMermaid.SchemaGenerator`: optional manual schema regeneration; CI verifies that the committed schema matches this output.
 - `dotnet build SlnxMermaidVisualStudio.slnx`: build the VSIX solution from a Visual Studio-capable environment.
 
 ## Coding Style & Naming Conventions
@@ -33,7 +35,9 @@ Keep paths relative to the repository root and avoid machine-specific absolute p
 
 ## Testing Guidelines
 
-Tests use xUnit with `Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, and Coverlet. Add focused tests near the behavior being changed:
+Tests use xUnit with `Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, and Coverlet. All tests must stay in a single test project: `tests/SlnxMermaid.UnitTests/SlnxMermaid.UnitTests.csproj`. Do not create separate configuration, Avalonia, CLI, or integration test projects.
+
+Add focused tests near the behavior being changed:
 
 - Core, CLI, graph, emitter, filtering, naming, command, configuration model, validation, serialization, and Avalonia dynamic form tests belong in `tests/SlnxMermaid.UnitTests/`.
 

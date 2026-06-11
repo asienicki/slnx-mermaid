@@ -1,0 +1,44 @@
+name: CI-configuration-schema
+
+on:
+  workflow_call:
+    inputs:
+      dotnet_version:
+        type: string
+        default: 10.0.x
+
+concurrency:
+  group: configuration-schema-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  configuration-schema:
+    name: Verify configuration schema
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ inputs.dotnet_version }}
+
+      - name: Restore
+        run: dotnet restore SlnxMermaid.slnx
+
+      - name: Regenerate schema
+        run: dotnet run --project tools/SlnxMermaid.SchemaGenerator
+
+      - name: Verify committed schema
+        run: |
+          if git diff --quiet -- schemas/slnx-mermaid.schema.json; then
+            echo "Configuration schema is up to date."
+          else
+            echo "::error title=Configuration schema outdated::Run dotnet build SlnxMermaid.slnx or dotnet run --project tools/SlnxMermaid.SchemaGenerator and commit schemas/slnx-mermaid.schema.json."
+            git diff -- schemas/slnx-mermaid.schema.json
+            exit 1
+          fi

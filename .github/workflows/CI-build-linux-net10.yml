@@ -28,9 +28,6 @@ jobs:
       - name: Build
         run: dotnet build SlnxMermaid.slnx --no-restore
 
-      - name: Verify generated configuration schema is committed
-        run: git diff --exit-code -- schemas/slnx-mermaid.schema.json
-
       - name: Test (xUnit)
         run: |
           dotnet test SlnxMermaid.slnx \

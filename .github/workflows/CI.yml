@@ -30,6 +30,10 @@ jobs:
   CI-dotnet-format:
     uses: ./.github/workflows/CI-dotnet-format.yml
 
+  CI-configuration-schema:
+    if: github.event_name != 'schedule'
+    uses: ./.github/workflows/CI-configuration-schema.yml
+
   CI-check-mermaid:
     needs: CI-build-linux-net10
     if: github.event_name != 'schedule'
