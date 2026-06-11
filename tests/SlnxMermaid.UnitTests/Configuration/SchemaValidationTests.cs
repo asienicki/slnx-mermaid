@@ -5,7 +5,7 @@ using NJsonSchema.Validation;
 using SlnxMermaid.Core.Config;
 using YamlDotNet.Serialization;
 
-namespace SlnxMermaid.Configuration.Tests;
+namespace SlnxMermaid.UnitTests.Configuration;
 
 public sealed class SchemaValidationTests
 {

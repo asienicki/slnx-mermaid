@@ -9,9 +9,7 @@ This repository contains a .NET solution for generating Mermaid dependency diagr
 - `src/SlnxMermaid.CLI/`: `slnx-mermaid` dotnet tool entry point, Spectre.Console command wiring, and CLI package assets.
 - `src/SlnxMermaid.Gui.Avalonia/`: Avalonia desktop configuration editor. It must use the shared configuration model instead of defining UI-specific config copies.
 - `src/SlnxMermaidVsix/`: Visual Studio extension package, command, workflow services, resources, and VSIX manifest. This is included in `SlnxMermaidVisualStudio.slnx`, not the main solution.
-- `tests/SlnxMermaid.UnitTests/`: core and CLI xUnit tests, organized by feature area, with YAML fixtures in `TestData/Config/`.
-- `tests/SlnxMermaid.Configuration.Tests/`: configuration serialization and validation tests.
-- `tests/SlnxMermaid.Gui.Avalonia.Tests/`: Avalonia view-model/form-builder tests for the dynamic configuration editor.
+- `tests/SlnxMermaid.UnitTests/`: all xUnit tests, organized by feature area, with YAML fixtures in `TestData/Config/`.
 - `docs/`: user documentation for CLI, VSIX, configuration, architecture diagrams, and GitHub Pages.
 - `assets/` and `src/SlnxMermaid.CLI/Assets/`: repository and package visual assets.
 
@@ -37,9 +35,7 @@ Keep paths relative to the repository root and avoid machine-specific absolute p
 
 Tests use xUnit with `Microsoft.NET.Test.Sdk`, `xunit.runner.visualstudio`, and Coverlet. Add focused tests near the behavior being changed:
 
-- Core, CLI, graph, emitter, filtering, naming, and command tests belong in `tests/SlnxMermaid.UnitTests/`.
-- Configuration model, validation, and serialization tests belong in `tests/SlnxMermaid.Configuration.Tests/`.
-- Avalonia dynamic form, field view-model, and shared-model integration tests belong in `tests/SlnxMermaid.Gui.Avalonia.Tests/`.
+- Core, CLI, graph, emitter, filtering, naming, command, configuration model, validation, serialization, and Avalonia dynamic form tests belong in `tests/SlnxMermaid.UnitTests/`.
 
 Follow the existing naming style, such as `TypeOrFeature.MethodOrScenarioTests.cs` or concise feature test names already used in the target test project. Place reusable fixtures under `tests/SlnxMermaid.UnitTests/TestData/` when they are shared with existing tests, and ensure fixture files are copied to output when needed.
 

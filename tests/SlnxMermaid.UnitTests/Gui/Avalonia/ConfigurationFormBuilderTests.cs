@@ -2,7 +2,7 @@ using SlnxMermaid.Core.Config;
 using SlnxMermaid.Gui.Avalonia.Services;
 using SlnxMermaid.Gui.Avalonia.ViewModels.Form;
 
-namespace SlnxMermaid.Gui.Avalonia.Tests;
+namespace SlnxMermaid.UnitTests.Gui.Avalonia;
 
 public sealed class ConfigurationFormBuilderTests
 {
