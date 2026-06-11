@@ -4,5 +4,6 @@ graph TD
     CommandLineInterface --> CORE
     CORE --> Configuration
     Gui_Avalonia --> Configuration
+    SchemaGenerator --> Configuration
 
 ```
