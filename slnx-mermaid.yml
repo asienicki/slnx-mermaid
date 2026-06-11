@@ -31,6 +31,7 @@ ui:
   # Optional per-project overrides. Keys use normalized project ids (file name without extension, dots/hyphens as underscores). Wildcards are case-sensitive.
   mappings:
     SlnxMermaid_CLI: purple
+    SlnxMermaid_Configuration: "#4FC3F7"
     "*Tests*": gray
     "*App*": yellow
     SlnxMermaid_Core:
