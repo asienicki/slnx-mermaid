@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using NJsonSchema;
 using NJsonSchema.Validation;
+using SlnxMermaid.Core.Config;
 using YamlDotNet.Serialization;
 
 namespace SlnxMermaid.Configuration.Tests;
@@ -85,7 +86,10 @@ public sealed class SchemaValidationTests
     {
         var schemaText = File.ReadAllText(GetRepositoryPath("schemas", "slnx-mermaid.schema.json"));
         var schema = await JsonSchema.FromJsonAsync(schemaText);
-        var yamlObject = new DeserializerBuilder().Build().Deserialize<object>(yaml);
+        var yamlObject = new DeserializerBuilder()
+            .WithAttemptingUnquotedStringTypeDeserialization()
+            .Build()
+            .Deserialize<object>(yaml);
         var json = JsonSerializer.Serialize(ConvertYamlValue(yamlObject));
 
         return schema.Validate(json);
