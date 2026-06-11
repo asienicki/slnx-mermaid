@@ -2,8 +2,7 @@ namespace SlnxMermaid.Core.Config;
 
 public sealed class DiagramConfig
 {
-    [ConfigurationDescription("Mermaid graph direction: top-down (TD), left-to-right (LR), bottom-to-top (BT), or right-to-left (RL).")]
-    [ConfigurationAllowedValues("TD", "LR", "BT", "RL")]
+    [ConfigurationDescription("Value emitted after Mermaid graph. Common values are TD, LR, BT, and RL; other Mermaid-supported values are passed through unchanged.")]
     public string? Direction { get; set; } = "TD";
 
     [ConfigurationDescription("When true, include both direct and indirect project dependencies. When false, include only direct project dependencies.")]

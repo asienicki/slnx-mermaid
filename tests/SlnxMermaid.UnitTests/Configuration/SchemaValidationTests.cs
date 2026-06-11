@@ -37,7 +37,7 @@ public sealed class SchemaValidationTests
     }
 
     [Fact]
-    public async Task Validate_WhenDiagramDirectionIsInvalid_ShouldFail()
+    public async Task Validate_WhenDiagramDirectionUsesCustomMermaidValue_ShouldPass()
     {
         const string yaml = """
             solution: Sample.slnx
@@ -49,7 +49,7 @@ public sealed class SchemaValidationTests
 
         var errors = await ValidateYaml(yaml);
 
-        Assert.NotEmpty(errors);
+        Assert.Empty(errors);
     }
 
     [Fact]

@@ -42,14 +42,11 @@ public sealed class ConfigurationFormBuilderTests
     }
 
     [Fact]
-    public void Build_WhenDiagramDirectionProperty_ShouldCreateChoiceFieldViewModel()
+    public void Build_WhenDiagramDirectionProperty_ShouldCreateTextFieldViewModel()
     {
-        var diagram = new DiagramConfig { Direction = null };
-        var fields = new ConfigurationFormBuilder().Build(diagram);
-        var direction = Assert.IsType<ChoiceFieldViewModel>(fields.Single(field => field.Name == nameof(DiagramConfig.Direction)));
+        var fields = new ConfigurationFormBuilder().Build(new DiagramConfig());
 
-        Assert.Equal(new[] { "TD", "LR", "BT", "RL" }, direction.Values);
-        Assert.Equal("TD", diagram.Direction);
+        Assert.IsType<TextFieldViewModel>(fields.Single(field => field.Name == nameof(DiagramConfig.Direction)));
     }
 
     [Fact]

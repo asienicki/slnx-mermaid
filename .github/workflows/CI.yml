@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  pull_request:
   push:
     branches:
       - master
@@ -14,6 +15,15 @@ permissions:
   contents: read
 
 jobs:
+  CI-branch-merge-guard:
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    uses: ./.github/workflows/CI-branch-merge-guard.yml
+    secrets: inherit
+
   CI-build-linux-net10:
     uses: ./.github/workflows/CI-build-linux-net10.yml
 

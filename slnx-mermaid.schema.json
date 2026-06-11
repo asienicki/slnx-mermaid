@@ -42,14 +42,8 @@
       "additionalProperties": false,
       "properties": {
         "direction": {
-          "description": "Mermaid graph direction: top-down (TD), left-to-right (LR), bottom-to-top (BT), or right-to-left (RL).",
+          "description": "Value emitted after Mermaid graph. Common values are TD, LR, BT, and RL; other Mermaid-supported values are passed through unchanged.",
           "type": "string",
-          "enum": [
-            "TD",
-            "LR",
-            "BT",
-            "RL"
-          ],
           "default": "TD"
         },
         "includeTransitiveDependencies": {
