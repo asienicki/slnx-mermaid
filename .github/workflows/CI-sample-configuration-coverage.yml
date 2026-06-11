@@ -76,37 +76,47 @@ jobs:
                   raise ValueError(f"Unsupported schema reference: {ref}")
               return definitions[ref[len(prefix):]]
 
-          def has_path(document, parts):
+          def path_label(parts):
+              return ".".join(parts)
+
+          def value_at(document, parts):
               current = document
               for part in parts:
                   if not isinstance(current, dict) or part not in current:
-                      return False
+                      return None
                   current = current[part]
-              return True
+              return current
 
-          required_paths = []
-          root_properties = schema.get("properties", {})
-          for root_name, root_schema in root_properties.items():
-              required_paths.append((root_name,))
-              resolved = resolve_ref(root_schema)
-              for child_name in resolved.get("properties", {}):
-                  required_paths.append((root_name, child_name))
+          def collect_fixed_property_paths(schema_node, prefix=()):
+              resolved = resolve_ref(schema_node)
+              paths = []
+              for property_name, property_schema in resolved.get("properties", {}).items():
+                  property_path = prefix + (property_name,)
+                  paths.append(property_path)
+                  paths.extend(collect_fixed_property_paths(property_schema, property_path))
+              return paths
 
-          missing_paths = [".".join(path) for path in required_paths if not has_path(sample, path)]
+          fixed_property_paths = collect_fixed_property_paths(schema)
+          missing_coverage = [
+              path_label(path)
+              for path in fixed_property_paths
+              if value_at(sample, path) is None
+          ]
 
-          # Some schema shapes are represented by dynamic object values rather than
-          # fixed property names. Require the sample to demonstrate every supported
-          # ui.mappings value shape so schema changes stay visible in the checked-in
-          # example configuration.
-          mapping_values = []
-          ui = sample.get("ui") if isinstance(sample, dict) else None
-          if isinstance(ui, dict):
-              mappings = ui.get("mappings")
-              if isinstance(mappings, dict):
-                  mapping_values = list(mappings.values())
+          # Dynamic object values are not fixed YAML keys, so they need explicit
+          # shape checks. This keeps the sample useful when schema branches such
+          # as ui.mappings add new supported value shapes.
+          ui_mappings = value_at(sample, ("ui", "mappings"))
+          mapping_values = list(ui_mappings.values()) if isinstance(ui_mappings, dict) else []
 
-          has_named_color_mapping = any(isinstance(value, str) and not value.startswith("#") for value in mapping_values)
-          has_hex_color_mapping = any(isinstance(value, str) and value.startswith("#") for value in mapping_values)
+          has_named_color_mapping = any(
+              isinstance(value, str) and not value.startswith("#")
+              for value in mapping_values
+          )
+          has_hex_color_mapping = any(
+              isinstance(value, str) and value.startswith("#")
+              for value in mapping_values
+          )
           object_mappings = [value for value in mapping_values if isinstance(value, dict)]
           has_object_mapping = bool(object_mappings)
           style_properties = sorted(definitions.get("UiStyleConfig", {}).get("properties", {}))
@@ -116,8 +126,6 @@ jobs:
               if not any(prop in mapping for mapping in object_mappings)
           ]
 
-          missing_coverage = []
-          missing_coverage.extend(missing_paths)
           if not has_named_color_mapping:
               missing_coverage.append("ui.mappings.<project>: named palette color string")
           if not has_hex_color_mapping:
@@ -131,7 +139,7 @@ jobs:
               print(f"Schema: {schema_path}")
               print(f"Sample: {sample_path}")
               print("Missing schema coverage:")
-              for item in missing_coverage:
+              for item in sorted(set(missing_coverage)):
                   print(f"- {item}")
               raise SystemExit(1)
 
