@@ -14,7 +14,9 @@ public sealed class SchemaValidationTests
     {
         var committedSchema = File.ReadAllText(GetRepositoryPath("slnx-mermaid.schema.json"));
 
-        Assert.Equal(ConfigurationSchemaGenerator.Generate(), committedSchema);
+        Assert.Equal(
+            NormalizeLineEndings(ConfigurationSchemaGenerator.Generate()),
+            NormalizeLineEndings(committedSchema));
     }
 
     [Fact]
@@ -81,6 +83,8 @@ public sealed class SchemaValidationTests
 
         Assert.NotEmpty(errors);
     }
+
+    private static string NormalizeLineEndings(string value) => value.Replace("\r\n", "\n", StringComparison.Ordinal);
 
     private static async Task<ICollection<ValidationError>> ValidateYaml(string yaml)
     {
