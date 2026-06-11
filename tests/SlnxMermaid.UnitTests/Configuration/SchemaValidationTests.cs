@@ -12,7 +12,7 @@ public sealed class SchemaValidationTests
     [Fact]
     public void GeneratedSchema_ShouldMatchCommittedSchema()
     {
-        var committedSchema = File.ReadAllText(GetRepositoryPath("schemas", "slnx-mermaid.schema.json"));
+        var committedSchema = File.ReadAllText(GetRepositoryPath("slnx-mermaid.schema.json"));
 
         Assert.Equal(ConfigurationSchemaGenerator.Generate(), committedSchema);
     }
@@ -20,7 +20,7 @@ public sealed class SchemaValidationTests
     [Fact]
     public async Task SchemaFile_ShouldBeValidJsonSchema()
     {
-        var schemaText = File.ReadAllText(GetRepositoryPath("schemas", "slnx-mermaid.schema.json"));
+        var schemaText = File.ReadAllText(GetRepositoryPath("slnx-mermaid.schema.json"));
 
         Assert.NotNull(JsonNode.Parse(schemaText));
         Assert.NotNull(await JsonSchema.FromJsonAsync(schemaText));
@@ -84,7 +84,7 @@ public sealed class SchemaValidationTests
 
     private static async Task<ICollection<ValidationError>> ValidateYaml(string yaml)
     {
-        var schemaText = File.ReadAllText(GetRepositoryPath("schemas", "slnx-mermaid.schema.json"));
+        var schemaText = File.ReadAllText(GetRepositoryPath("slnx-mermaid.schema.json"));
         var schema = await JsonSchema.FromJsonAsync(schemaText);
         var yamlObject = new DeserializerBuilder()
             .WithAttemptingUnquotedStringTypeDeserialization()

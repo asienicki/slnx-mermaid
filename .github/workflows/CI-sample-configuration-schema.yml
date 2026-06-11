@@ -39,8 +39,8 @@ jobs:
           import yaml
           from jsonschema import Draft7Validator
 
-          schema_path = Path("schemas/slnx-mermaid.schema.json")
-          sample_path = Path("examples/slnx-mermaid.yml")
+          schema_path = Path("slnx-mermaid.schema.json")
+          sample_path = Path("slnx-mermaid.yml")
 
           schema = json.loads(schema_path.read_text(encoding="utf-8-sig"))
           sample = yaml.safe_load(sample_path.read_text(encoding="utf-8-sig"))

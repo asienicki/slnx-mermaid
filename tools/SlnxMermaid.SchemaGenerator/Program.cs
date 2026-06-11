@@ -3,7 +3,7 @@ using SlnxMermaid.Core.Config;
 var repositoryRoot = FindRepositoryRoot(AppContext.BaseDirectory);
 var outputPath = args.Length > 0
     ? Path.GetFullPath(args[0], Directory.GetCurrentDirectory())
-    : Path.Combine(repositoryRoot, "schemas", "slnx-mermaid.schema.json");
+    : Path.Combine(repositoryRoot, "slnx-mermaid.schema.json");
 var generatedSchema = ConfigurationSchemaGenerator.Generate();
 
 if (File.Exists(outputPath) && File.ReadAllText(outputPath) == generatedSchema)

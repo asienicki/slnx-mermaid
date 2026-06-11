@@ -154,7 +154,7 @@ Forward slashes are recommended for cross-platform compatibility.
 
 ## JSON Schema generation
 
-`schemas/slnx-mermaid.schema.json` is generated from the shared configuration classes in `SlnxMermaid.Configuration` and their schema metadata attributes. Do not edit the generated JSON directly.
+`slnx-mermaid.schema.json` is generated from the shared configuration classes in `SlnxMermaid.Configuration` and their schema metadata attributes. Do not edit the generated JSON directly.
 
 A normal build of `SlnxMermaid.slnx` builds the `SlnxMermaid.SchemaGenerator` project and automatically regenerates the schema after that project is compiled. The generator writes the file only when its contents changed. To regenerate the schema without building the full solution, run:
 

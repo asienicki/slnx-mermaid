@@ -17,7 +17,7 @@ This repository contains a .NET solution for generating Mermaid dependency diagr
 
 - `dotnet restore SlnxMermaid.slnx`: restore dependencies for CLI, core, configuration, GUI, and tests.
 - `dotnet build SlnxMermaid.slnx --no-restore`: build the main cross-platform solution after restore.
-- Building `SlnxMermaid.Configuration` or `SlnxMermaid.slnx` regenerates `schemas/slnx-mermaid.schema.json`; commit the regenerated file when the configuration model or schema metadata changes.
+- Building `SlnxMermaid.Configuration` or `SlnxMermaid.slnx` regenerates `slnx-mermaid.schema.json`; commit the regenerated file when the configuration model or schema metadata changes.
 - `dotnet test SlnxMermaid.slnx --no-build`: run all tests in the main solution after building.
 - `dotnet test SlnxMermaid.slnx /p:CollectCoverage=true /p:CoverletOutput=coverage/coverage /p:CoverletOutputFormat=opencover`: run tests with Coverlet coverage output compatible with CI/Sonar flows.
 - `dotnet run --project src/SlnxMermaid.CLI -- --config slnx-mermaid.yml`: run the CLI against the repository sample config.
@@ -49,7 +49,7 @@ Keep documentation changes aligned with the affected surface:
 
 - CLI behavior: update `docs/cli.md` and, when relevant, `README.md`.
 - Configuration schema or validation behavior: update `docs/configuration.md` and sample `slnx-mermaid.yml`.
-- Sample configuration changes: keep `examples/slnx-mermaid.yml` valid against `schemas/slnx-mermaid.schema.json`; CI has a dedicated sample configuration schema check.
+- Sample configuration changes: keep `slnx-mermaid.yml` valid against `slnx-mermaid.schema.json`; CI has a dedicated sample configuration schema check.
 - VSIX behavior: update `docs/vsix.md` and `docs/vsix/`.
 - GUI behavior: update `src/SlnxMermaid.Gui.Avalonia/README.md` when architecture or editor behavior changes.
 - Architecture diagram generation: update `docs/architecture/dependency-graph-mermaid.md` or generated Mermaid output only when intentionally changing the diagram.

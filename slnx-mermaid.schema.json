@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://raw.githubusercontent.com/asienicki/slnx-mermaid/master/schemas/slnx-mermaid.schema.json",
+  "$id": "https://raw.githubusercontent.com/asienicki/slnx-mermaid/master/slnx-mermaid.schema.json",
   "title": "slnx-mermaid configuration",
   "description": "Configuration for generating Mermaid dependency diagrams from .sln and .slnx files.",
   "type": "object",

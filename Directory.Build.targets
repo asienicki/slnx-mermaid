@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <SlnxMermaidRepositoryRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</SlnxMermaidRepositoryRoot>
-    <SlnxMermaidSchemaOutputPath>$(SlnxMermaidRepositoryRoot)schemas/slnx-mermaid.schema.json</SlnxMermaidSchemaOutputPath>
+    <SlnxMermaidSchemaOutputPath>$(SlnxMermaidRepositoryRoot)slnx-mermaid.schema.json</SlnxMermaidSchemaOutputPath>
   </PropertyGroup>
 
   <Target Name="GenerateSlnxMermaidConfigurationSchema"

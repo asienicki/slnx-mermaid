@@ -10,7 +10,7 @@ namespace SlnxMermaid.Core.Config;
 
 public static class ConfigurationSchemaGenerator
 {
-    public const string SchemaId = "https://raw.githubusercontent.com/asienicki/slnx-mermaid/master/schemas/slnx-mermaid.schema.json";
+    public const string SchemaId = "https://raw.githubusercontent.com/asienicki/slnx-mermaid/master/slnx-mermaid.schema.json";
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {

@@ -35,10 +35,10 @@ jobs:
 
       - name: Verify committed schema
         run: |
-          if git diff --quiet -- schemas/slnx-mermaid.schema.json; then
+          if git diff --quiet -- slnx-mermaid.schema.json; then
             echo "Configuration schema is up to date."
           else
-            echo "::error title=Configuration schema outdated::Run dotnet build SlnxMermaid.slnx or dotnet run --project tools/SlnxMermaid.SchemaGenerator and commit schemas/slnx-mermaid.schema.json."
-            git diff -- schemas/slnx-mermaid.schema.json
+            echo "::error title=Configuration schema outdated::Run dotnet build SlnxMermaid.slnx or dotnet run --project tools/SlnxMermaid.SchemaGenerator and commit slnx-mermaid.schema.json."
+            git diff -- slnx-mermaid.schema.json
             exit 1
           fi
