@@ -1,5 +1,6 @@
 using SlnxMermaid.Core.Config;
 using SlnxMermaid.Gui.Avalonia.Services;
+using SlnxMermaid.Gui.Avalonia.ViewModels;
 using SlnxMermaid.Gui.Avalonia.ViewModels.Form;
 
 namespace SlnxMermaid.UnitTests.Gui.Avalonia;
@@ -193,6 +194,37 @@ public sealed class ConfigurationFormBuilderTests
         Assert.Empty(duplicatedModels);
     }
 
+    [Fact]
+    public void MainViewModel_ShouldExposeTopLevelConfigurationSectionsAsTabs()
+    {
+        var viewModel = new MainViewModel(new ConfigurationFormBuilder(), new ConfigurationValidator(), new NoOpClipboardService());
+
+        Assert.Collection(
+            viewModel.Sections,
+            section =>
+            {
+                Assert.Equal("General", section.Header);
+                Assert.Contains(section.Fields, field => field.Name == nameof(SlnxMermaidConfig.Solution));
+            },
+            section => Assert.Equal("Diagram", section.Header),
+            section => Assert.Equal("Filters", section.Header),
+            section => Assert.Equal("Naming", section.Header),
+            section => Assert.Equal("Output", section.Header),
+            section => Assert.Equal("UI", section.Header));
+    }
+
+    [Fact]
+    public void MainViewModel_WhenTabbedFieldChanges_ShouldUpdateYamlPreview()
+    {
+        var viewModel = new MainViewModel(new ConfigurationFormBuilder(), new ConfigurationValidator(), new NoOpClipboardService());
+        var outputSection = viewModel.Sections.Single(section => section.Name == nameof(SlnxMermaidConfig.Output));
+        var outputFile = Assert.IsType<TextFieldViewModel>(outputSection.Fields.Single(field => field.Name == nameof(OutputConfig.File)));
+
+        outputFile.Value = "docs/new-output.md";
+
+        Assert.Contains("file: docs/new-output.md", viewModel.YamlPreview);
+    }
+
     private sealed class TestConfiguration
     {
         public string? Name { get; set; }
@@ -214,5 +246,10 @@ public sealed class ConfigurationFormBuilderTests
         Light,
         Dark,
         System
+    }
+
+    private sealed class NoOpClipboardService : IClipboardService
+    {
+        public Task SetTextAsync(string text) => Task.CompletedTask;
     }
 }

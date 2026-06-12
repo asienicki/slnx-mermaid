@@ -27,6 +27,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<FormFieldViewModel> Fields { get; } = new();
 
+    public ObservableCollection<ConfigurationSectionViewModel> Sections { get; } = new();
+
     public ObservableCollection<FormFieldViewModel> PrimaryFields { get; } = new();
 
     public ObservableCollection<FormFieldViewModel> LeftColumnFields { get; } = new();
@@ -86,11 +88,27 @@ public sealed partial class MainViewModel : ObservableObject
         PrimaryFields.Clear();
         LeftColumnFields.Clear();
         RightColumnFields.Clear();
+        Sections.Clear();
+
+        var generalFields = new List<FormFieldViewModel>();
 
         foreach (var field in _formBuilder.Build(Configuration))
         {
             field.FieldChanged += (_, _) => ValidateAndPreview();
             Fields.Add(field);
+
+            if (field is ObjectFieldViewModel objectField)
+            {
+                Sections.Add(new ConfigurationSectionViewModel(
+                    objectField.Name,
+                    GetSectionHeader(objectField),
+                    objectField.Description,
+                    objectField.Fields));
+            }
+            else
+            {
+                generalFields.Add(field);
+            }
 
             if (field.Name == nameof(SlnxMermaidConfig.Solution))
                 PrimaryFields.Add(field);
@@ -98,6 +116,15 @@ public sealed partial class MainViewModel : ObservableObject
                 LeftColumnFields.Add(field);
             else
                 RightColumnFields.Add(field);
+        }
+
+        if (generalFields.Count > 0)
+        {
+            Sections.Insert(0, new ConfigurationSectionViewModel(
+                "General",
+                "General",
+                "Core configuration file settings.",
+                generalFields));
         }
     }
 
@@ -112,6 +139,11 @@ public sealed partial class MainViewModel : ObservableObject
 
         ValidationStatus = result.IsValid ? "Valid" : $"Invalid ({result.Errors.Count})";
     }
+
+    private static string GetSectionHeader(ObjectFieldViewModel field) =>
+        string.Equals(field.Name, nameof(SlnxMermaidConfig.Ui), StringComparison.Ordinal)
+            ? "UI"
+            : field.DisplayName;
 
     private static string ResolveConfigBaseDirectory(string? configPath)
     {
