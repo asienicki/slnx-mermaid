@@ -32,7 +32,7 @@ public class SlnxMermaidConfigExtensionsNormalizeTests
 
         Assert.Same(config, result);
         Assert.Equal(expectedSolution, config.Solution);
-        Assert.Equal(expectedOutput, config.Output.File);
+        Assert.Equal(expectedOutput, config.Output!.File);
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public class SlnxMermaidConfigExtensionsNormalizeTests
         config.Normalize("slnx-mermaid.yml");
 
         Assert.Equal("   ", config.Solution);
-        Assert.Equal("", config.Output.File);
+        Assert.Equal("", config.Output!.File);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class SlnxMermaidConfigExtensionsNormalizeTests
 
         config.Normalize("slnx-mermaid.yml");
 
-        Assert.NotNull(config.Output.File);
+        Assert.NotNull(config.Output!.File);
         Assert.DoesNotContain("{date}", config.Output.File);
         Assert.Contains("diagram-", config.Output.File, StringComparison.Ordinal);
         Assert.EndsWith(".md", config.Output.File, StringComparison.Ordinal);
