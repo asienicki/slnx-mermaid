@@ -132,7 +132,7 @@ jobs:
                 echo -e "$NAME\t$VERSION\t$EX_LICENSE\tDISALLOWED" >> "$RESULTS"
                 FAIL=1
               else
-                echo "::notice::Exception applied for $NAME $VERSION ($EX_LICENSE)"
+                echo "Exception applied for $NAME $VERSION ($EX_LICENSE)"
                 echo -e "$NAME\t$VERSION\t$EX_LICENSE\tEXCEPTION" >> "$RESULTS"
               fi
               continue
