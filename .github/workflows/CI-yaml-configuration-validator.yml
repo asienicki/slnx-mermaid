@@ -1,4 +1,4 @@
-name: CI-sample-configuration
+name: CI-yaml-configuration-validator
 
 on:
   workflow_call:
@@ -8,12 +8,12 @@ on:
         default: "3.x"
 
 concurrency:
-  group: sample-configuration-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  group: yaml-configuration-validator-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  sample-configuration:
-    name: Validate sample configuration
+  yaml-configuration-validator:
+    name: Validate YAML configuration
     runs-on: ubuntu-latest
     permissions:
       contents: read

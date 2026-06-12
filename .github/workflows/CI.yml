@@ -31,9 +31,9 @@ jobs:
     if: github.event_name != 'schedule'
     uses: ./.github/workflows/CI-configuration-schema.yml
 
-  CI-sample-configuration:
+  CI-yaml-configuration-validator:
     if: github.event_name != 'schedule'
-    uses: ./.github/workflows/CI-sample-configuration.yml
+    uses: ./.github/workflows/CI-yaml-configuration-validator.yml
 
   CI-check-mermaid:
     needs: CI-build-linux-net10
