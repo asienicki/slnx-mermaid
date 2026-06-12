@@ -15,7 +15,7 @@
     <DataTemplate DataType="{x:Type vm:ListFieldViewModel}"><views:ListFieldView /></DataTemplate>
   </UserControl.DataTemplates>
 
-  <Grid RowDefinitions="Auto,*,Auto,160" ColumnDefinitions="2*,*" Margin="12">
+  <Grid RowDefinitions="Auto,*,Auto,Auto" ColumnDefinitions="2*,*" Margin="12">
     <Border Grid.Row="0" Grid.ColumnSpan="2" BorderBrush="#33000000" BorderThickness="1" Padding="8" Margin="0,0,0,8">
       <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
         <Image Source="avares://SlnxMermaid.Gui.Avalonia/Assets/logo.png" Width="40" Height="40" Stretch="Uniform" />
@@ -50,11 +50,31 @@
       </Grid>
     </Border>
 
-    <Border Grid.Row="3" Grid.ColumnSpan="2" BorderBrush="#33000000" BorderThickness="1" Padding="8">
-      <Grid RowDefinitions="Auto,*">
-        <TextBlock Text="Validation errors" FontWeight="Bold" />
-        <ListBox Grid.Row="1" ItemsSource="{Binding ValidationErrors}" />
-      </Grid>
+    <Border Grid.Row="3"
+            Grid.ColumnSpan="2"
+            BorderBrush="#66C62828"
+            BorderThickness="1"
+            Background="#18C62828"
+            Padding="0"
+            IsVisible="{Binding HasValidationErrors}">
+      <Expander IsExpanded="{Binding IsValidationErrorsExpanded, Mode=TwoWay}">
+        <Expander.Header>
+          <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Margin="8,6">
+            <TextBlock Text="⚠" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1"
+                       Text="{Binding ValidationErrorsSummary}"
+                       VerticalAlignment="Center"
+                       FontWeight="Bold" />
+            <TextBlock Grid.Column="2"
+                       Text="Expand for details"
+                       VerticalAlignment="Center"
+                       Opacity="0.7" />
+          </Grid>
+        </Expander.Header>
+        <ListBox ItemsSource="{Binding ValidationErrors}"
+                 MaxHeight="140"
+                 Margin="8,0,8,8" />
+      </Expander>
     </Border>
   </Grid>
 </UserControl>

@@ -225,6 +225,46 @@ public sealed class ConfigurationFormBuilderTests
         Assert.Contains("file: docs/new-output.md", viewModel.YamlPreview);
     }
 
+    [Fact]
+    public void MainViewModel_WhenValidationHasNoErrors_ShouldHideValidationErrorsBar()
+    {
+        var validator = new MutableConfigurationValidator();
+        var viewModel = new MainViewModel(new ConfigurationFormBuilder(), validator, new NoOpClipboardService());
+
+        Assert.False(viewModel.HasValidationErrors);
+        Assert.False(viewModel.IsValidationErrorsExpanded);
+        Assert.Equal(string.Empty, viewModel.ValidationErrorsSummary);
+    }
+
+    [Fact]
+    public void MainViewModel_WhenValidationHasErrors_ShouldShowCollapsedValidationErrorsBarWithSummary()
+    {
+        var validator = new MutableConfigurationValidator("Missing solution", "Invalid UI mode");
+        var viewModel = new MainViewModel(new ConfigurationFormBuilder(), validator, new NoOpClipboardService());
+
+        Assert.True(viewModel.HasValidationErrors);
+        Assert.False(viewModel.IsValidationErrorsExpanded);
+        Assert.Equal("2 validation errors", viewModel.ValidationErrorsSummary);
+        Assert.Equal(new[] { "Missing solution", "Invalid UI mode" }, viewModel.ValidationErrors);
+    }
+
+    [Fact]
+    public void MainViewModel_WhenErrorsAreResolved_ShouldCollapseAndHideValidationErrorsBar()
+    {
+        var validator = new MutableConfigurationValidator("Missing solution");
+        var viewModel = new MainViewModel(new ConfigurationFormBuilder(), validator, new NoOpClipboardService())
+        {
+            IsValidationErrorsExpanded = true
+        };
+
+        validator.Errors = Array.Empty<string>();
+        viewModel.ValidateConfigCommand.Execute(null);
+
+        Assert.False(viewModel.HasValidationErrors);
+        Assert.False(viewModel.IsValidationErrorsExpanded);
+        Assert.Equal(string.Empty, viewModel.ValidationErrorsSummary);
+    }
+
     private sealed class TestConfiguration
     {
         public string? Name { get; set; }
@@ -246,6 +286,13 @@ public sealed class ConfigurationFormBuilderTests
         Light,
         Dark,
         System
+    }
+
+    private sealed class MutableConfigurationValidator(params string[] errors) : IConfigurationValidator
+    {
+        public IReadOnlyList<string> Errors { get; set; } = errors;
+
+        public ConfigurationValidationResult Validate(SlnxMermaidConfig config, string? baseDirectory = null) => new(Errors);
     }
 
     private sealed class NoOpClipboardService : IClipboardService

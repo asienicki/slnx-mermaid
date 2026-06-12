@@ -44,6 +44,15 @@ public sealed partial class MainViewModel : ObservableObject
     private string validationStatus = string.Empty;
 
     [ObservableProperty]
+    private bool hasValidationErrors;
+
+    [ObservableProperty]
+    private bool isValidationErrorsExpanded;
+
+    [ObservableProperty]
+    private string validationErrorsSummary = string.Empty;
+
+    [ObservableProperty]
     private string configPath = "slnx-mermaid.yml";
 
     [RelayCommand]
@@ -54,6 +63,7 @@ public sealed partial class MainViewModel : ObservableObject
             ValidationErrors.Clear();
             ValidationErrors.Add($"File not found: {ConfigPath}");
             ValidationStatus = "Load failed";
+            UpdateValidationErrorsBar();
             return;
         }
 
@@ -138,6 +148,21 @@ public sealed partial class MainViewModel : ObservableObject
             ValidationErrors.Add(error);
 
         ValidationStatus = result.IsValid ? "Valid" : $"Invalid ({result.Errors.Count})";
+        UpdateValidationErrorsBar();
+    }
+
+    private void UpdateValidationErrorsBar()
+    {
+        HasValidationErrors = ValidationErrors.Count > 0;
+        if (!HasValidationErrors)
+            IsValidationErrorsExpanded = false;
+
+        ValidationErrorsSummary = ValidationErrors.Count switch
+        {
+            0 => string.Empty,
+            1 => "1 validation error",
+            _ => $"{ValidationErrors.Count} validation errors"
+        };
     }
 
     private static string GetSectionHeader(ObjectFieldViewModel field) =>
