@@ -27,6 +27,14 @@ jobs:
   CI-dotnet-format:
     uses: ./.github/workflows/CI-dotnet-format.yml
 
+  CI-configuration-schema:
+    if: github.event_name != 'schedule'
+    uses: ./.github/workflows/CI-configuration-schema.yml
+
+  CI-yaml-configuration-validator:
+    if: github.event_name != 'schedule'
+    uses: ./.github/workflows/CI-yaml-configuration-validator.yml
+
   CI-check-mermaid:
     needs: CI-build-linux-net10
     if: github.event_name != 'schedule'
@@ -42,9 +50,7 @@ jobs:
     uses: ./.github/workflows/CI-vsix-build.yml
 
   CI-sonar:
-    if: |
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: CI-build-linux-net10
     uses: ./.github/workflows/CI-sonar.yml
     secrets:

@@ -1,0 +1,205 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/asienicki/slnx-mermaid/master/slnx-mermaid.schema.json",
+  "title": "slnx-mermaid configuration",
+  "description": "Configuration for generating Mermaid dependency diagrams from .sln and .slnx files.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "solution": {
+      "description": "Path to the .sln or .slnx file to analyze. Relative paths are resolved from the configuration file location.",
+      "type": "string",
+      "minLength": 1
+    },
+    "diagram": {
+      "description": "Controls Mermaid graph generation behavior.",
+      "$ref": "#/definitions/DiagramConfig"
+    },
+    "filters": {
+      "description": "Filters that remove projects from the emitted dependency graph.",
+      "$ref": "#/definitions/FilterConfig"
+    },
+    "naming": {
+      "description": "Controls display names and Mermaid node ids after project file names are normalized.",
+      "$ref": "#/definitions/NamingConfig"
+    },
+    "output": {
+      "description": "Controls where generated Mermaid markdown is written.",
+      "$ref": "#/definitions/OutputConfig"
+    },
+    "ui": {
+      "description": "Controls color palette mode, semantic role colors, and per-project style overrides.",
+      "$ref": "#/definitions/UiConfig"
+    }
+  },
+  "required": [
+    "solution",
+    "output"
+  ],
+  "definitions": {
+    "DiagramConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "direction": {
+          "description": "Value emitted after Mermaid graph. Common values are TD, LR, BT, and RL; other Mermaid-supported values are passed through unchanged.",
+          "type": "string",
+          "default": "TD"
+        },
+        "includeTransitiveDependencies": {
+          "description": "When true, include both direct and indirect project dependencies. When false, include only direct project dependencies.",
+          "type": "boolean",
+          "default": false
+        },
+        "orderDependenciesByDepth": {
+          "description": "When true, order emitted dependencies by dependency depth. When false, use the legacy alphabetical edge order.",
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "FilterConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exclude": {
+          "description": "Case-insensitive substrings matched against normalized project ids. Matching projects are excluded from nodes, edges, and styles.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      }
+    },
+    "NamingConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "stripPrefix": {
+          "description": "Prefix removed from normalized project ids before aliases are applied and labels are emitted.",
+          "type": "string"
+        },
+        "aliases": {
+          "description": "Maps transformed project names to explicit Mermaid node ids. Aliases are applied after normalization and stripPrefix.",
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {}
+        }
+      }
+    },
+    "OutputConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "description": "Target Markdown file path for the generated fenced Mermaid diagram. Relative paths are resolved from the configuration file location and may include supported path placeholders.",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "file"
+      ]
+    },
+    "UiConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "description": "Default Mermaid color palette mode used when resolving semantic and fallback styles.",
+          "type": "string",
+          "enum": [
+            "dark",
+            "light"
+          ],
+          "default": "dark"
+        },
+        "semantic": {
+          "description": "Overrides palette colors assigned to semantic project roles detected from normalized project ids.",
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "blue",
+              "green",
+              "yellow",
+              "orange",
+              "pink",
+              "purple",
+              "gray",
+              "red"
+            ]
+          },
+          "default": {}
+        },
+        "mappings": {
+          "description": "Per-project style overrides keyed by normalized project id. Keys may contain * wildcards and are case-sensitive.",
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "blue",
+                  "green",
+                  "yellow",
+                  "orange",
+                  "pink",
+                  "purple",
+                  "gray",
+                  "red"
+                ]
+              },
+              {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$"
+              },
+              {
+                "$ref": "#/definitions/UiStyleConfig"
+              }
+            ]
+          },
+          "default": {}
+        }
+      }
+    },
+    "UiStyleConfig": {
+      "description": "Explicit Mermaid node style fields. Omitted fields inherit from the semantic or fallback base style when possible.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fill": {
+          "description": "Node fill color as #RRGGBB.",
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "stroke": {
+          "description": "Node border color as #RRGGBB.",
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "color": {
+          "description": "Node text color as #RRGGBB.",
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        }
+      }
+    }
+  },
+  "x-generated-by": "dotnet run --project tools/SlnxMermaid.SchemaGenerator"
+}

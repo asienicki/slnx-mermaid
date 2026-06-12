@@ -1,6 +1,6 @@
 using SlnxMermaid.Core.Config;
 
-namespace SlnxMermaid.Configuration.Tests;
+namespace SlnxMermaid.UnitTests.Configuration;
 
 public sealed class SerializationAndValidationTests
 {

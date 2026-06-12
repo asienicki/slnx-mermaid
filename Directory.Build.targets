@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <SlnxMermaidRepositoryRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</SlnxMermaidRepositoryRoot>
+    <SlnxMermaidSchemaOutputPath>$(SlnxMermaidRepositoryRoot)slnx-mermaid.schema.json</SlnxMermaidSchemaOutputPath>
+  </PropertyGroup>
+
+  <Target Name="GenerateSlnxMermaidConfigurationSchema"
+          AfterTargets="Build"
+          Condition="'$(MSBuildProjectName)' == 'SlnxMermaid.Configuration'
+                     and '$(TargetFramework)' == 'net10.0'
+                     and '$(DesignTimeBuild)' != 'true'
+                     and '$(SkipSlnxMermaidSchemaGeneration)' != 'true'">
+    <Exec Command="dotnet run --project &quot;$(SlnxMermaidRepositoryRoot)tools/SlnxMermaid.SchemaGenerator/SlnxMermaid.SchemaGenerator.csproj&quot; --property:SkipSlnxMermaidSchemaGeneration=true -- &quot;$(SlnxMermaidSchemaOutputPath)&quot;" />
+  </Target>
+</Project>

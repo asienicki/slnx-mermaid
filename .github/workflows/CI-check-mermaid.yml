@@ -9,7 +9,7 @@ permissions:
   issues: write
 
 concurrency:
-  group: mermaid-check
+  group: mermaid-check-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

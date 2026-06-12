@@ -2,7 +2,7 @@ using SlnxMermaid.Core.Config;
 using SlnxMermaid.Gui.Avalonia.Services;
 using SlnxMermaid.Gui.Avalonia.ViewModels.Form;
 
-namespace SlnxMermaid.Gui.Avalonia.Tests;
+namespace SlnxMermaid.UnitTests.Gui.Avalonia;
 
 public sealed class ConfigurationFormBuilderTests
 {
@@ -42,14 +42,20 @@ public sealed class ConfigurationFormBuilderTests
     }
 
     [Fact]
-    public void Build_WhenDiagramDirectionProperty_ShouldCreateChoiceFieldViewModel()
+    public void Build_WhenDiagramDirectionProperty_ShouldCreateTextFieldViewModel()
     {
-        var diagram = new DiagramConfig { Direction = null };
-        var fields = new ConfigurationFormBuilder().Build(diagram);
-        var direction = Assert.IsType<ChoiceFieldViewModel>(fields.Single(field => field.Name == nameof(DiagramConfig.Direction)));
+        var fields = new ConfigurationFormBuilder().Build(new DiagramConfig());
 
-        Assert.Equal(new[] { "TD", "LR", "BT", "RL" }, direction.Values);
-        Assert.Equal("TD", diagram.Direction);
+        Assert.IsType<TextFieldViewModel>(fields.Single(field => field.Name == nameof(DiagramConfig.Direction)));
+    }
+
+    [Fact]
+    public void Build_WhenUiModeProperty_ShouldUseAllowedValuesFromConfigurationMetadata()
+    {
+        var fields = new ConfigurationFormBuilder().Build(new UiConfig());
+        var mode = Assert.IsType<ChoiceFieldViewModel>(fields.Single(field => field.Name == nameof(UiConfig.Mode)));
+
+        Assert.Equal(new[] { "dark", "light" }, mode.Values);
     }
 
     [Fact]

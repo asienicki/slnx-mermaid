@@ -15,7 +15,7 @@ namespace SlnxMermaid.Core.Emit
         private const string White = "#FFFFFF";
         private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(1);
         private static readonly Regex HexRegex = new Regex("^#[0-9a-fA-F]{6}$", RegexOptions.Compiled, RegexTimeout);
-        private static readonly string[] FallbackColorOrder = { "blue", "green", "yellow", "orange", "pink", "purple", "gray", "red" };
+        private static readonly string[] FallbackColorOrder = UiPalette.Names.ToArray();
 
         private readonly UiConfig _ui;
         private readonly MermaidPalette _palette;
@@ -129,13 +129,13 @@ namespace SlnxMermaid.Core.Emit
         {
             var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "presentation", "blue" },
-            { "application", "green" },
-            { "domain", "yellow" },
-            { "infrastructure", "orange" },
-            { "dataaccess", "pink" },
-            { "tooling", "purple" },
-            { "tests", "gray" }
+            { "presentation", UiPalette.Blue },
+            { "application", UiPalette.Green },
+            { "domain", UiPalette.Yellow },
+            { "infrastructure", UiPalette.Orange },
+            { "dataaccess", UiPalette.Pink },
+            { "tooling", UiPalette.Purple },
+            { "tests", UiPalette.Gray }
         };
 
             if (configured != null)

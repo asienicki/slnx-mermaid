@@ -1,14 +1,22 @@
-# slnx-mermaid.yml example file
+# Full slnx-mermaid.yml sample file.
+# This file intentionally includes every configuration option exposed by
+# slnx-mermaid.schema.json. CI validates this sample for both schema
+# conformance and schema option coverage, so new options must be added here.
 
+# Path to the .sln or .slnx file to analyze.
+# Relative paths are resolved from the directory containing this file.
 solution: SlnxMermaid.slnx
-#solution: ../slnx-mermaid/SlnxMermaid.slnx
 
 diagram:
-  direction: TD   # TD (top-down) | LR (left-right)
-  includeTransitiveDependencies: false  # false = direct only | true = direct + indirect
-  orderDependenciesByDepth: true  # false = legacy alphabetical edge order | true = dependency-depth order
+  # Mermaid graph direction: TD, LR, BT, or RL.
+  direction: TD
+  # false = direct project references only; true = direct + transitive dependencies.
+  includeTransitiveDependencies: false
+  # false = legacy alphabetical edge order; true = dependency-depth order.
+  orderDependenciesByDepth: true
 
 filters:
+  # Case-insensitive substrings matched against normalized project ids.
   exclude:
     - Tests
     - Dto
@@ -17,34 +25,45 @@ filters:
     - ServiceDefaults
     - Seeder
 
-ui:
-  mode: dark  # dark | light
-  # Optional semantic role colors. Supported palette names: blue, green, yellow, orange, pink, purple, gray, red.
-  semantic:
-    presentation: blue      # Api/Web/Host/Gateway projects
-    application: green      # Application projects
-    domain: yellow          # Domain/Core projects
-    infrastructure: orange  # Infrastructure projects
-    dataAccess: pink        # DataAccess/Persistence/Database/Storage projects
-    tooling: purple         # CLI/Console/Tools/Seeder/Migrator projects
-    tests: gray             # Tests/Test/Spec projects
-  # Optional per-project overrides. Keys use normalized project ids (file name without extension, dots/hyphens as underscores). Wildcards are case-sensitive.
-  mappings:
-    SlnxMermaid_CLI: purple
-    "*Tests*": gray
-    "*App*": yellow
-    SlnxMermaid_Core:
-      fill: "#141414"
-      stroke: "#90CAF9"
-      color: "#FFFFFF"
-
 naming:
+  # Prefix removed from normalized project ids before aliases are applied.
   stripPrefix: SlnxMermaid_
+  # Aliases are applied after normalization and stripPrefix.
   aliases:
     Core: CORE
     CLI: CommandLineInterface
 
 output:
+  # Target Markdown file path for the generated fenced Mermaid diagram.
+  # Relative paths are resolved from the directory containing this file.
+  # Supported placeholders may be used, for example: docs/architecture/{date}-dependency-graph-mermaid.md
   file: docs/architecture/dependency-graph-mermaid.md
-  #file: docs\architecture\dependency-graph-mermaid.md
-  #file: docs\architecture\{date}-dependency-graph-mermaid.md
+
+ui:
+  # Default Mermaid color palette mode: dark or light.
+  mode: dark
+  # Optional semantic role colors.
+  # Supported palette names: blue, green, yellow, orange, pink, purple, gray, red.
+  semantic:
+    presentation: blue
+    application: green
+    domain: yellow
+    infrastructure: orange
+    dataAccess: pink
+    tooling: purple
+    tests: gray
+  # Per-project style overrides keyed by normalized project id.
+  # Keys may contain * wildcards and are case-sensitive.
+  mappings:
+    # Named palette color string.
+    SlnxMermaid_CLI: purple
+    # Hex color string.
+    "*Configuration*": "#4FC3F7"
+    # More named palette examples.
+    "*Tests*": gray
+    "*App*": yellow
+    # Explicit object style override.
+    SlnxMermaid_Core:
+      fill: "#141414"
+      stroke: "#90CAF9"
+      color: "#FFFFFF"
