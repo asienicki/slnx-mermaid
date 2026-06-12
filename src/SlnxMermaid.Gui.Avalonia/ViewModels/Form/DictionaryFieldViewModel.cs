@@ -77,11 +77,19 @@ public sealed partial class DictionaryFieldViewModel : FormFieldViewModel
     [RelayCommand]
     private void RemoveSelectedEntry()
     {
-        if (SelectedEntry == null)
+        RemoveEntry(SelectedEntry);
+        SelectedEntry = null;
+    }
+
+    [RelayCommand]
+    private void RemoveEntry(DictionaryEntryViewModel? entry)
+    {
+        if (entry == null)
             return;
 
-        Entries.Remove(SelectedEntry);
-        SelectedEntry = null;
+        Entries.Remove(entry);
+        if (SelectedEntry == entry)
+            SelectedEntry = null;
     }
 
     partial void OnNewEntryValueChanged(string? value)

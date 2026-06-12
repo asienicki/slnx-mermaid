@@ -42,11 +42,19 @@ public sealed partial class ListFieldViewModel : FormFieldViewModel
     [RelayCommand]
     private void RemoveSelectedItem()
     {
-        if (SelectedItem == null)
+        RemoveItem(SelectedItem);
+        SelectedItem = null;
+    }
+
+    [RelayCommand]
+    private void RemoveItem(object? item)
+    {
+        if (item == null)
             return;
 
-        Items.Remove(SelectedItem);
-        SelectedItem = null;
+        Items.Remove(item);
+        if (Equals(SelectedItem, item))
+            SelectedItem = null;
     }
 
     private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

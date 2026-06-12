@@ -43,11 +43,12 @@ public sealed class ConfigurationFormBuilderTests
     }
 
     [Fact]
-    public void Build_WhenDiagramDirectionProperty_ShouldCreateTextFieldViewModel()
+    public void Build_WhenDiagramDirectionProperty_ShouldUseDirectionChoices()
     {
         var fields = new ConfigurationFormBuilder().Build(new DiagramConfig());
+        var direction = Assert.IsType<ChoiceFieldViewModel>(fields.Single(field => field.Name == nameof(DiagramConfig.Direction)));
 
-        Assert.IsType<TextFieldViewModel>(fields.Single(field => field.Name == nameof(DiagramConfig.Direction)));
+        Assert.Equal(new[] { "TD", "TB", "BT", "LR", "RL" }, direction.Values);
     }
 
     [Fact]
@@ -117,6 +118,18 @@ public sealed class ConfigurationFormBuilderTests
     }
 
     [Fact]
+    public void ListField_RemoveItem_ShouldUpdateSourceList()
+    {
+        var filters = new FilterConfig { Exclude = ["Tests", "Samples"] };
+        var field = Assert.IsType<ListFieldViewModel>(new ConfigurationFormBuilder().Build(filters).Single(item => item.Name == nameof(FilterConfig.Exclude)));
+
+        field.RemoveItemCommand.Execute("Tests");
+
+        Assert.DoesNotContain("Tests", filters.Exclude);
+        Assert.Contains("Samples", filters.Exclude);
+    }
+
+    [Fact]
     public void DictionaryField_AddEntry_ShouldUpdateSourceDictionary()
     {
         var naming = new NamingConfig();
@@ -127,6 +140,17 @@ public sealed class ConfigurationFormBuilderTests
         field.AddEntryCommand.Execute(null);
 
         Assert.Equal("Short", naming.Aliases["Long.Project.Name"]);
+    }
+
+    [Fact]
+    public void DictionaryField_RemoveEntry_ShouldUpdateSourceDictionary()
+    {
+        var naming = new NamingConfig { Aliases = new Dictionary<string, string> { ["Long.Project.Name"] = "Short" } };
+        var field = Assert.IsType<DictionaryFieldViewModel>(new ConfigurationFormBuilder().Build(naming).Single(item => item.Name == nameof(NamingConfig.Aliases)));
+
+        field.RemoveEntryCommand.Execute(field.Entries.Single());
+
+        Assert.Empty(naming.Aliases);
     }
 
     [Fact]

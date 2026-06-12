@@ -5,11 +5,19 @@
     <StackPanel Margin="12,8,0,0" Spacing="6">
       <TextBlock Text="{Binding Description}" Opacity="0.7" FontSize="12" />
       <Grid ColumnDefinitions="*,*,*,Auto" ColumnSpacing="8">
-        <TextBox Text="{Binding NewEntryKey, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Key" />
+        <TextBox Text="{Binding NewEntryKey, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Key">
+          <TextBox.KeyBindings>
+            <KeyBinding Gesture="Enter" Command="{Binding AddEntryCommand}" />
+          </TextBox.KeyBindings>
+        </TextBox>
         <TextBox Grid.Column="1"
                  Text="{Binding NewEntryValue, UpdateSourceTrigger=PropertyChanged}"
                  PlaceholderText="Value"
-                 IsVisible="{Binding !UsesColorEditor}" />
+                 IsVisible="{Binding !UsesColorEditor}">
+          <TextBox.KeyBindings>
+            <KeyBinding Gesture="Enter" Command="{Binding AddEntryCommand}" />
+          </TextBox.KeyBindings>
+        </TextBox>
         <ComboBox Grid.Column="1"
                   ItemsSource="{Binding ColorChoices}"
                   SelectedItem="{Binding NewEntryValue}"
@@ -18,7 +26,11 @@
         <TextBox Grid.Column="2"
                  Text="{Binding NewEntryCustomHexColor, UpdateSourceTrigger=PropertyChanged}"
                  PlaceholderText="#RRGGBB"
-                 IsVisible="{Binding UsesColorEditor}" />
+                 IsVisible="{Binding UsesColorEditor}">
+          <TextBox.KeyBindings>
+            <KeyBinding Gesture="Enter" Command="{Binding AddEntryCommand}" />
+          </TextBox.KeyBindings>
+        </TextBox>
         <Button Grid.Column="3" Content="Add" Command="{Binding AddEntryCommand}" />
       </Grid>
       <DataGrid ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry}" AutoGenerateColumns="False" MinHeight="120">
@@ -39,9 +51,18 @@
               </DataTemplate>
             </DataGridTemplateColumn.CellTemplate>
           </DataGridTemplateColumn>
+          <DataGridTemplateColumn Header="" Width="Auto">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate>
+                <Button Content="🗑"
+                        Command="{Binding $parent[UserControl].DataContext.RemoveEntryCommand}"
+                        CommandParameter="{Binding}"
+                        Padding="6,2" />
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
         </DataGrid.Columns>
       </DataGrid>
-      <Button Content="Remove selected" Command="{Binding RemoveSelectedEntryCommand}" HorizontalAlignment="Left" />
     </StackPanel>
   </Expander>
 </UserControl>
