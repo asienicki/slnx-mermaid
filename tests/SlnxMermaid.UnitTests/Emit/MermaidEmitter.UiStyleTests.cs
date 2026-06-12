@@ -7,6 +7,10 @@ using SlnxMermaid.Core.Naming;
 
 namespace SlnxMermaid.UnitTests.Emit;
 
+// UiConfig.Mappings is nullable to represent omitted YAML sections, but the
+// property initializer creates a dictionary for programmatic test fixtures.
+#pragma warning disable CS8670
+
 public class MermaidEmitterUiStyleTests
 {
     [Fact]
@@ -363,3 +367,5 @@ public class MermaidEmitterUiStyleTests
         return count;
     }
 }
+
+#pragma warning restore CS8670

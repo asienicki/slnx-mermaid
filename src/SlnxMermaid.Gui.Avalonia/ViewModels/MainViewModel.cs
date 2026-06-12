@@ -27,6 +27,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<FormFieldViewModel> Fields { get; } = new();
 
+    public ObservableCollection<ConfigurationSectionViewModel> Sections { get; } = new();
+
     public ObservableCollection<FormFieldViewModel> PrimaryFields { get; } = new();
 
     public ObservableCollection<FormFieldViewModel> LeftColumnFields { get; } = new();
@@ -42,6 +44,15 @@ public sealed partial class MainViewModel : ObservableObject
     private string validationStatus = string.Empty;
 
     [ObservableProperty]
+    private bool hasValidationErrors;
+
+    [ObservableProperty]
+    private bool isValidationErrorsExpanded;
+
+    [ObservableProperty]
+    private string validationErrorsSummary = string.Empty;
+
+    [ObservableProperty]
     private string configPath = "slnx-mermaid.yml";
 
     [RelayCommand]
@@ -52,6 +63,7 @@ public sealed partial class MainViewModel : ObservableObject
             ValidationErrors.Clear();
             ValidationErrors.Add($"File not found: {ConfigPath}");
             ValidationStatus = "Load failed";
+            UpdateValidationErrorsBar();
             return;
         }
 
@@ -86,11 +98,27 @@ public sealed partial class MainViewModel : ObservableObject
         PrimaryFields.Clear();
         LeftColumnFields.Clear();
         RightColumnFields.Clear();
+        Sections.Clear();
+
+        var generalFields = new List<FormFieldViewModel>();
 
         foreach (var field in _formBuilder.Build(Configuration))
         {
             field.FieldChanged += (_, _) => ValidateAndPreview();
             Fields.Add(field);
+
+            if (field is ObjectFieldViewModel objectField)
+            {
+                Sections.Add(new ConfigurationSectionViewModel(
+                    objectField.Name,
+                    GetSectionHeader(objectField),
+                    objectField.Description,
+                    objectField.Fields));
+            }
+            else
+            {
+                generalFields.Add(field);
+            }
 
             if (field.Name == nameof(SlnxMermaidConfig.Solution))
                 PrimaryFields.Add(field);
@@ -98,6 +126,15 @@ public sealed partial class MainViewModel : ObservableObject
                 LeftColumnFields.Add(field);
             else
                 RightColumnFields.Add(field);
+        }
+
+        if (generalFields.Count > 0)
+        {
+            Sections.Insert(0, new ConfigurationSectionViewModel(
+                "General",
+                "General",
+                "Core configuration file settings.",
+                generalFields));
         }
     }
 
@@ -111,7 +148,27 @@ public sealed partial class MainViewModel : ObservableObject
             ValidationErrors.Add(error);
 
         ValidationStatus = result.IsValid ? "Valid" : $"Invalid ({result.Errors.Count})";
+        UpdateValidationErrorsBar();
     }
+
+    private void UpdateValidationErrorsBar()
+    {
+        HasValidationErrors = ValidationErrors.Count > 0;
+        if (!HasValidationErrors)
+            IsValidationErrorsExpanded = false;
+
+        ValidationErrorsSummary = ValidationErrors.Count switch
+        {
+            0 => string.Empty,
+            1 => "1 validation error",
+            _ => $"{ValidationErrors.Count} validation errors"
+        };
+    }
+
+    private static string GetSectionHeader(ObjectFieldViewModel field) =>
+        string.Equals(field.Name, nameof(SlnxMermaidConfig.Ui), StringComparison.Ordinal)
+            ? "UI"
+            : field.DisplayName;
 
     private static string ResolveConfigBaseDirectory(string? configPath)
     {

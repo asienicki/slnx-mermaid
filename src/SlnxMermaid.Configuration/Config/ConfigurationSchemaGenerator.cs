@@ -103,8 +103,8 @@ public static class ConfigurationSchemaGenerator
         var constraint = property.GetCustomAttribute<ConfigurationStringConstraintAttribute>();
         if (constraint?.MinLength > 0)
             schema["minLength"] = constraint.MinLength;
-        if (!string.IsNullOrWhiteSpace(constraint?.Pattern))
-            schema["pattern"] = constraint.Pattern;
+        if (constraint?.Pattern is { } pattern && !string.IsNullOrWhiteSpace(pattern))
+            schema["pattern"] = pattern;
 
         return schema;
     }

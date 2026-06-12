@@ -1,5 +1,6 @@
 using SlnxMermaid.Core.Config;
 using SlnxMermaid.Gui.Avalonia.Services;
+using SlnxMermaid.Gui.Avalonia.ViewModels;
 using SlnxMermaid.Gui.Avalonia.ViewModels.Form;
 
 namespace SlnxMermaid.UnitTests.Gui.Avalonia;
@@ -42,11 +43,12 @@ public sealed class ConfigurationFormBuilderTests
     }
 
     [Fact]
-    public void Build_WhenDiagramDirectionProperty_ShouldCreateTextFieldViewModel()
+    public void Build_WhenDiagramDirectionProperty_ShouldUseDirectionChoices()
     {
         var fields = new ConfigurationFormBuilder().Build(new DiagramConfig());
+        var direction = Assert.IsType<ChoiceFieldViewModel>(fields.Single(field => field.Name == nameof(DiagramConfig.Direction)));
 
-        Assert.IsType<TextFieldViewModel>(fields.Single(field => field.Name == nameof(DiagramConfig.Direction)));
+        Assert.Equal(new[] { "TD", "TB", "BT", "LR", "RL" }, direction.Values);
     }
 
     [Fact]
@@ -116,6 +118,18 @@ public sealed class ConfigurationFormBuilderTests
     }
 
     [Fact]
+    public void ListField_RemoveItem_ShouldUpdateSourceList()
+    {
+        var filters = new FilterConfig { Exclude = ["Tests", "Samples"] };
+        var field = Assert.IsType<ListFieldViewModel>(new ConfigurationFormBuilder().Build(filters).Single(item => item.Name == nameof(FilterConfig.Exclude)));
+
+        field.RemoveItemCommand.Execute("Tests");
+
+        Assert.DoesNotContain("Tests", filters.Exclude);
+        Assert.Contains("Samples", filters.Exclude);
+    }
+
+    [Fact]
     public void DictionaryField_AddEntry_ShouldUpdateSourceDictionary()
     {
         var naming = new NamingConfig();
@@ -126,6 +140,17 @@ public sealed class ConfigurationFormBuilderTests
         field.AddEntryCommand.Execute(null);
 
         Assert.Equal("Short", naming.Aliases["Long.Project.Name"]);
+    }
+
+    [Fact]
+    public void DictionaryField_RemoveEntry_ShouldUpdateSourceDictionary()
+    {
+        var naming = new NamingConfig { Aliases = new Dictionary<string, string> { ["Long.Project.Name"] = "Short" } };
+        var field = Assert.IsType<DictionaryFieldViewModel>(new ConfigurationFormBuilder().Build(naming).Single(item => item.Name == nameof(NamingConfig.Aliases)));
+
+        field.RemoveEntryCommand.Execute(field.Entries.Single());
+
+        Assert.Empty(naming.Aliases);
     }
 
     [Fact]
@@ -193,6 +218,77 @@ public sealed class ConfigurationFormBuilderTests
         Assert.Empty(duplicatedModels);
     }
 
+    [Fact]
+    public void MainViewModel_ShouldExposeTopLevelConfigurationSectionsAsTabs()
+    {
+        var viewModel = new MainViewModel(new ConfigurationFormBuilder(), new ConfigurationValidator(), new NoOpClipboardService());
+
+        Assert.Collection(
+            viewModel.Sections,
+            section =>
+            {
+                Assert.Equal("General", section.Header);
+                Assert.Contains(section.Fields, field => field.Name == nameof(SlnxMermaidConfig.Solution));
+            },
+            section => Assert.Equal("Diagram", section.Header),
+            section => Assert.Equal("Filters", section.Header),
+            section => Assert.Equal("Naming", section.Header),
+            section => Assert.Equal("Output", section.Header),
+            section => Assert.Equal("UI", section.Header));
+    }
+
+    [Fact]
+    public void MainViewModel_WhenTabbedFieldChanges_ShouldUpdateYamlPreview()
+    {
+        var viewModel = new MainViewModel(new ConfigurationFormBuilder(), new ConfigurationValidator(), new NoOpClipboardService());
+        var outputSection = viewModel.Sections.Single(section => section.Name == nameof(SlnxMermaidConfig.Output));
+        var outputFile = Assert.IsType<TextFieldViewModel>(outputSection.Fields.Single(field => field.Name == nameof(OutputConfig.File)));
+
+        outputFile.Value = "docs/new-output.md";
+
+        Assert.Contains("file: docs/new-output.md", viewModel.YamlPreview);
+    }
+
+    [Fact]
+    public void MainViewModel_WhenValidationHasNoErrors_ShouldHideValidationErrorsBar()
+    {
+        var validator = new MutableConfigurationValidator();
+        var viewModel = new MainViewModel(new ConfigurationFormBuilder(), validator, new NoOpClipboardService());
+
+        Assert.False(viewModel.HasValidationErrors);
+        Assert.False(viewModel.IsValidationErrorsExpanded);
+        Assert.Equal(string.Empty, viewModel.ValidationErrorsSummary);
+    }
+
+    [Fact]
+    public void MainViewModel_WhenValidationHasErrors_ShouldShowCollapsedValidationErrorsBarWithSummary()
+    {
+        var validator = new MutableConfigurationValidator("Missing solution", "Invalid UI mode");
+        var viewModel = new MainViewModel(new ConfigurationFormBuilder(), validator, new NoOpClipboardService());
+
+        Assert.True(viewModel.HasValidationErrors);
+        Assert.False(viewModel.IsValidationErrorsExpanded);
+        Assert.Equal("2 validation errors", viewModel.ValidationErrorsSummary);
+        Assert.Equal(new[] { "Missing solution", "Invalid UI mode" }, viewModel.ValidationErrors);
+    }
+
+    [Fact]
+    public void MainViewModel_WhenErrorsAreResolved_ShouldCollapseAndHideValidationErrorsBar()
+    {
+        var validator = new MutableConfigurationValidator("Missing solution");
+        var viewModel = new MainViewModel(new ConfigurationFormBuilder(), validator, new NoOpClipboardService())
+        {
+            IsValidationErrorsExpanded = true
+        };
+
+        validator.Errors = Array.Empty<string>();
+        viewModel.ValidateConfigCommand.Execute(null);
+
+        Assert.False(viewModel.HasValidationErrors);
+        Assert.False(viewModel.IsValidationErrorsExpanded);
+        Assert.Equal(string.Empty, viewModel.ValidationErrorsSummary);
+    }
+
     private sealed class TestConfiguration
     {
         public string? Name { get; set; }
@@ -214,5 +310,17 @@ public sealed class ConfigurationFormBuilderTests
         Light,
         Dark,
         System
+    }
+
+    private sealed class MutableConfigurationValidator(params string[] errors) : IConfigurationValidator
+    {
+        public IReadOnlyList<string> Errors { get; set; } = errors;
+
+        public ConfigurationValidationResult Validate(SlnxMermaidConfig config, string? baseDirectory = null) => new(Errors);
+    }
+
+    private sealed class NoOpClipboardService : IClipboardService
+    {
+        public Task SetTextAsync(string text) => Task.CompletedTask;
     }
 }

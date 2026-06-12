@@ -5,6 +5,12 @@ using YamlDotNet.Core;
 
 namespace SlnxMermaid.UnitTests.Config;
 
+// These tests intentionally exercise partially populated YAML documents. The
+// loader preserves null sections/collections so validation can report them
+// later, while individual assertions document when a fixture is expected to
+// contain those optional values.
+#pragma warning disable CS8602, CS8604
+
 public class YamlConfigLoaderLoadTests
 {
     [Fact]
@@ -363,3 +369,5 @@ public class YamlConfigLoaderLoadTests
     private static string GetConfigPath(string fileName) =>
         Path.Combine(AppContext.BaseDirectory, "TestData", "Config", fileName);
 }
+
+#pragma warning restore CS8602, CS8604

@@ -15,6 +15,8 @@ public interface IConfigurationFormBuilder
 
 public sealed class ConfigurationFormBuilder : IConfigurationFormBuilder
 {
+    private static readonly string[] MermaidDirectionChoices = ["TD", "TB", "BT", "LR", "RL"];
+
     public IReadOnlyList<FormFieldViewModel> Build(object configuration)
     {
         if (configuration == null)
@@ -48,6 +50,9 @@ public sealed class ConfigurationFormBuilder : IConfigurationFormBuilder
 
             if (owner is SlnxMermaidConfig && string.Equals(name, nameof(SlnxMermaidConfig.Solution), StringComparison.Ordinal))
                 return new FilePathFieldViewModel(name, displayName, description, valueType, value?.ToString(), owner, property);
+
+            if (owner is DiagramConfig && string.Equals(name, nameof(DiagramConfig.Direction), StringComparison.Ordinal))
+                return new ChoiceFieldViewModel(name, displayName, description, valueType, MermaidDirectionChoices, value?.ToString(), owner, property);
 
             var allowedValues = property.GetCustomAttribute<ConfigurationAllowedValuesAttribute>()?.Values;
             if (allowedValues != null)

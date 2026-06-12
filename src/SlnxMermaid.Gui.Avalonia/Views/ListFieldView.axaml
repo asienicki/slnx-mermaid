@@ -5,11 +5,27 @@
     <StackPanel Margin="12,8,0,0" Spacing="6">
       <TextBlock Text="{Binding Description}" Opacity="0.7" FontSize="12" />
       <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-        <TextBox Text="{Binding NewItemValue, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Add list value" />
+        <TextBox Text="{Binding NewItemValue, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Add list value">
+          <TextBox.KeyBindings>
+            <KeyBinding Gesture="Enter" Command="{Binding AddItemCommand}" />
+          </TextBox.KeyBindings>
+        </TextBox>
         <Button Grid.Column="1" Content="Add" Command="{Binding AddItemCommand}" />
       </Grid>
-      <ListBox ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" MinHeight="80" />
-      <Button Content="Remove selected" Command="{Binding RemoveSelectedItemCommand}" HorizontalAlignment="Left" />
+      <ListBox ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" MinHeight="80">
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+              <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+              <Button Grid.Column="1"
+                      Content="🗑"
+                      Command="{Binding $parent[UserControl].DataContext.RemoveItemCommand}"
+                      CommandParameter="{Binding}"
+                      Padding="6,2" />
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
     </StackPanel>
   </Expander>
 </UserControl>
